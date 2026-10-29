@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="{{ language }}">
+<head><meta charset="utf-8"><title>AgentSec – {{ project.engagement_name }}</title>
+<style>body{font:14px/1.5 Arial,sans-serif;color:#172033;margin:40px}h1,h2{color:#075985}.meta{color:#475569}.finding{page-break-inside:avoid;border-left:4px solid #0891b2;padding:8px 16px;margin:18px 0}.critical,.high{border-color:#dc2626}.medium{border-color:#d97706}table{border-collapse:collapse;width:100%}td,th{padding:8px;border:1px solid #cbd5e1;text-align:left}</style></head>
+<body>
+<h1>AgentSec Inspector — {{ project.engagement_name }}</h1><p class="meta">{{ project.client_name }} · {{ report_type }} · {{ language }}</p>
+<h2>{{ "Périmètre" if language == "fr" else "Scope" }}</h2><p>{{ project.authorized_scope }}</p>
+<h2>{{ "Méthodologie" if language == "fr" else "Methodology" }}</h2><p>{{ methodology }}</p>
+<h2>{{ "Synthèse des risques" if language == "fr" else "Risk summary" }}</h2><p>{{ findings|length }} finding(s), {{ audits|length }} audit(s).</p>
+<h2>{{ "Résultats" if language == "fr" else "Results" }}</h2>
+{% for f in findings %}<section class="finding {{ f.severity }}"><h3>{{ f.title }}</h3><p><strong>{{ f.severity|upper }} · {{ f.classification }} · {{ f.confidence }}</strong></p><p>{{ f.description }}</p><p><strong>Impact:</strong> {{ f.impact }}</p><p><strong>{{ "Recommandation" if language == "fr" else "Recommendation" }}:</strong> {{ f.recommendation }}</p></section>{% else %}<p>{{ "Aucun finding enregistré." if language == "fr" else "No findings recorded." }}</p>{% endfor %}
+<h2>{{ "Limites de l’audit" if language == "fr" else "Audit limitations" }}</h2><p>{{ limitations }}</p>
+</body></html>

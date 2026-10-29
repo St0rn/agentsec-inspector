@@ -1,0 +1,17 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "AgentSec Inspector",
+  "version": "1.0.0",
+  "identifier": "com.agentsec.inspector",
+  "build": {"beforeDevCommand":"npm --prefix frontend run dev","devUrl":"http://127.0.0.1:1420","beforeBuildCommand":"npm --prefix frontend run build","frontendDist":"../frontend/dist"},
+  "app": {
+    "windows": [{"title":"AgentSec Inspector","width":1440,"height":900,"minWidth":1100,"minHeight":700,"center":true}],
+    "security": {"csp":"default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; connect-src 'self' http://127.0.0.1:* ws://127.0.0.1:*; font-src 'self'"}
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis","msi"],
+    "externalBin": ["binaries/agentsec-backend"],
+    "windows": {"webviewInstallMode":{"type":"downloadBootstrapper","silent":false},"nsis":{"installMode":"currentUser"}}
+  }
+}

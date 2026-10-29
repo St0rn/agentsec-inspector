@@ -1,0 +1,65 @@
+name: Windows x64 build and installation smoke test
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+  pull_request:
+jobs:
+  build:
+    runs-on: windows-2022
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12", cache: pip, cache-dependency-path: backend/requirements.lock}
+      - uses: actions/setup-node@v4
+        with: {node-version: "22", cache: npm, cache-dependency-path: frontend/package-lock.json}
+      - uses: dtolnay/rust-toolchain@stable
+        with: {targets: x86_64-pc-windows-msvc}
+      - name: Install Windows build dependencies
+        shell: pwsh
+        run: |
+          python -m venv .venv
+          .\.venv\Scripts\python.exe -m pip install -r backend\requirements.lock
+          npm --prefix frontend ci --no-audit --no-fund
+      - name: Parse and analyse every PowerShell script
+        shell: pwsh
+        run: |
+          Set-PSRepository PSGallery -InstallationPolicy Trusted
+          Install-Module PSScriptAnalyzer -Scope CurrentUser -Force
+          Install-Module Pester -MinimumVersion 5.5.0 -Scope CurrentUser -Force -SkipPublisherCheck
+          $files = Get-ChildItem scripts -Recurse -Filter *.ps1
+          foreach ($file in $files) {
+            [void][scriptblock]::Create((Get-Content -Raw $file.FullName))
+            $issues = Invoke-ScriptAnalyzer -Path $file.FullName -Severity Error
+            if ($issues) { $issues | Format-Table; throw "PowerShell analysis failed: $($file.Name)" }
+          }
+      - name: Script idempotence and error-path tests
+        shell: pwsh
+        run: Invoke-Pester -Path scripts\tests\Scripts.Tests.ps1 -Output Detailed
+      - name: Build MSI and NSIS
+        shell: pwsh
+        run: .\scripts\build-windows.ps1
+      - name: Install generated MSI in CI
+        shell: pwsh
+        run: |
+          $msi = Get-ChildItem src-tauri\target\x86_64-pc-windows-msvc\release\bundle -Recurse -Filter *.msi | Select-Object -First 1
+          if (-not $msi) { throw 'MSI artifact missing' }
+          $p = Start-Process msiexec -ArgumentList @('/i', $msi.FullName, '/qn', '/norestart') -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "MSI installation failed: $($p.ExitCode)" }
+      - name: Verify installed backend and desktop launch
+        shell: pwsh
+        run: .\scripts\verify-installation.ps1
+      - name: Record validation matrix evidence
+        shell: pwsh
+        run: .\scripts\ci\write-validation-matrix.ps1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: agentsec-windows-x64
+          path: |
+            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/**/*.msi
+            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/**/*.exe
+            logs/**/*.log
+            logs/**/*.json
+            INSTALLATION_VALIDATION_MATRIX.md

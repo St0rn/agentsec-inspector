@@ -1,0 +1,19 @@
+[package]
+name = "agentsec-inspector"
+version = "1.0.0"
+description = "AI Red Team & MCP Security Auditing Platform"
+authors = ["AgentSec"]
+edition = "2021"
+
+[lib]
+name = "agentsec_inspector_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.2.0", features = [] }
+
+[dependencies]
+tauri = { version = "2.5.1", features = [] }
+tauri-plugin-shell = "2.2.1"
+serde = { version = "1.0.219", features = ["derive"] }
+uuid = { version = "1.16.0", features = ["v4"] }

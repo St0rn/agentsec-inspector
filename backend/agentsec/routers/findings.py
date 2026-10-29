@@ -1,0 +1,90 @@
+from __future__ import annotations
+
+from fastapi import APIRouter, Depends, HTTPException, Response
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from ..database import get_db
+from ..models import Finding, FindingHistory, Project
+from ..schemas import FindingCreate, FindingRead, FindingUpdate
+
+router = APIRouter(tags=["findings"])
+
+
+@router.get("/findings", response_model=list[FindingRead])
+async def list_findings(
+    project_id: str | None = None, db: Session = Depends(get_db)
+) -> list[Finding]:
+    statement = select(Finding).order_by(Finding.created_at.desc())
+    if project_id:
+        statement = statement.where(Finding.project_id == project_id)
+    return list(db.scalars(statement))
+
+
+@router.post("/findings", response_model=FindingRead, status_code=201)
+async def create_finding(body: FindingCreate, db: Session = Depends(get_db)) -> Finding:
+    if not db.get(Project, body.project_id):
+        raise HTTPException(404, "Project not found")
+    finding = Finding(**body.model_dump())
+    db.add(finding)
+    db.flush()
+    db.add(FindingHistory(finding_id=finding.id, changes={"created": body.model_dump(mode="json")}))
+    db.commit()
+    db.refresh(finding)
+    return finding
+
+
+@router.put("/findings/{finding_id}", response_model=FindingRead)
+async def update_finding(
+    finding_id: str, body: FindingUpdate, db: Session = Depends(get_db)
+) -> Finding:
+    finding = db.get(Finding, finding_id)
+    if not finding:
+        raise HTTPException(404, "Finding not found")
+    updates = body.model_dump(exclude_unset=True)
+    changes: dict[str, object] = {}
+    for key, value in updates.items():
+        old = getattr(finding, key)
+        if old != value:
+            changes[key] = {
+                "from": getattr(old, "value", old),
+                "to": getattr(value, "value", value),
+            }
+            setattr(finding, key, value)
+    if changes:
+        db.add(FindingHistory(finding_id=finding.id, changes=changes))
+    db.commit()
+    db.refresh(finding)
+    return finding
+
+
+@router.get("/findings/{finding_id}/history")
+async def finding_history(
+    finding_id: str, db: Session = Depends(get_db)
+) -> list[dict[str, object]]:
+    if not db.get(Finding, finding_id):
+        raise HTTPException(404, "Finding not found")
+    rows = db.scalars(
+        select(FindingHistory)
+        .where(FindingHistory.finding_id == finding_id)
+        .order_by(FindingHistory.changed_at.desc())
+    )
+    return [
+        {
+            "id": row.id,
+            "changed_at": row.changed_at,
+            "changed_by": row.changed_by,
+            "changes": row.changes,
+        }
+        for row in rows
+    ]
+
+
+@router.delete("/findings/{finding_id}", status_code=204)
+async def delete_finding(finding_id: str, db: Session = Depends(get_db)) -> Response:
+    finding = db.get(Finding, finding_id)
+    if not finding:
+        raise HTTPException(404, "Finding not found")
+    db.delete(finding)
+    db.commit()
+    return Response(status_code=204)

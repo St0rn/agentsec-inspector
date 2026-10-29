@@ -1,0 +1,9 @@
+import { AlertTriangle, Inbox } from "lucide-react";
+import type { ReactNode } from "react";
+
+export function PageHeader({title,description,action}:{title:string;description:string;action?:ReactNode}){return <div className="mb-6 flex items-start justify-between gap-4"><div><h2 className="text-2xl font-bold tracking-tight text-white">{title}</h2><p className="mt-1 max-w-3xl text-sm text-slate-400">{description}</p></div>{action}</div>}
+export function Empty({title="Aucune donnée",detail="Créez ou exécutez un élément pour voir des résultats réels."}:{title?:string;detail?:string}){return <div className="empty"><Inbox size={28}/><div><p className="font-medium text-slate-300">{title}</p><p className="mt-1 text-sm">{detail}</p></div></div>}
+export function ErrorBox({message}:{message:string}){return <div role="alert" className="mb-5 flex gap-3 rounded-lg border border-red-900 bg-red-950/40 p-4 text-sm text-red-200"><AlertTriangle size={18}/>{message}</div>}
+export function Severity({value}:{value:string}){const color:{[k:string]:string}={critical:"border-red-500/50 bg-red-500/10 text-red-300",high:"border-orange-500/50 bg-orange-500/10 text-orange-300",medium:"border-amber-500/50 bg-amber-500/10 text-amber-300",low:"border-blue-500/50 bg-blue-500/10 text-blue-300",info:"border-slate-600 bg-slate-800 text-slate-300"};return <span className={`badge ${color[value]||color.info}`}>{value.toUpperCase()}</span>}
+export function Status({value}:{value:string}){const good=["completed","PASS","Remediated","connected"].includes(value);const bad=["failed","FAIL","Open","Confirmed"].includes(value);return <span className={`badge ${good?"border-emerald-600 bg-emerald-950 text-emerald-300":bad?"border-red-700 bg-red-950 text-red-300":"border-slate-600 bg-slate-800 text-slate-300"}`}>{value}</span>}
+export function Loading(){return <div className="py-20 text-center text-sm text-slate-500">Chargement des données locales…</div>}
