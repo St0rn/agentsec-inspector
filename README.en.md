@@ -358,7 +358,7 @@ In **Settings**, import a versioned JSON pack. Only declarative `chat` steps are
 | Standalone binary | Linux PyInstaller build verified with fresh migration, authentication, CORS, integrity, and PDF generation |
 | Laboratory | Passive MCP discovery, bounded active MCP call, and actual LLM exchanges executed successfully |
 | Linux scripts | Development install executed twice; startup, tests, backup/restore, and primary error paths validated |
-| Desktop packages | Dedicated workflows for AppImage/DEB and Windows installers; current status is shown by the CI badges |
+| Desktop packages | AppImage/DEB built, then AppImage installed and verified twice in Linux CI; Windows remains reported separately |
 | Windows/PowerShell | Scripts and workflow supplied, but not locally validated because no Windows host was available |
 
 The Windows build is **not** reported as validated without evidence from a Windows run. See [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md), the [installation validation matrix](INSTALLATION_VALIDATION_MATRIX.md), and the [detailed validation report](docs/VALIDATION_REPORT.md).

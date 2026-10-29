@@ -358,7 +358,7 @@ Dans **Settings**, importez un pack JSON versionné. Seules les étapes déclara
 | Binaire autonome | Build Linux PyInstaller, migration neuve, auth, CORS, intégrité et PDF vérifiés |
 | Laboratoire | Découverte MCP passive, appel MCP actif borné et échange LLM réellement exécutés |
 | Scripts Linux | Installation développeur exécutée deux fois, démarrage, tests, sauvegarde/restauration et erreurs principales validés |
-| Paquets desktop | Workflows dédiés pour AppImage/DEB et installateurs Windows ; leur statut est visible dans les badges CI |
+| Paquets desktop | AppImage/DEB construits puis AppImage installée et vérifiée deux fois en CI Linux ; Windows reste indiqué séparément |
 | Windows/PowerShell | Scripts et workflow fournis, mais non validés localement faute d’hôte Windows |
 
 La compilation Windows n’est **pas** déclarée validée sans preuve d’un run Windows. Voir [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md), la [matrice de validation](INSTALLATION_VALIDATION_MATRIX.md) et le [rapport détaillé](docs/VALIDATION_REPORT.md).

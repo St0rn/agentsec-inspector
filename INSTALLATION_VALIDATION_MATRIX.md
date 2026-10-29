@@ -1,6 +1,6 @@
 # Installation Validation Matrix
 
-État local au 2026-10-29. « Statique » signifie présence et relecture de structure, pas analyse par PowerShell. La CI Windows remplace cette matrice par des résultats d’exécution lors d’un run réussi.
+État au 2026-10-29. « Statique » signifie présence et relecture de structure, pas analyse par PowerShell. Les résultats Linux CI cités proviennent du run GitHub Actions `40916996042`; Windows reste non validé.
 
 | Script | Syntaxe | Exécution | Tests d’erreur | Résultat | Statut |
 |---|---|---|---|---|---|
@@ -33,10 +33,10 @@
 | test-scripts.sh | Bash `-n` réussi | Exécutée | Confirmation, downgrade, artefact invalide | Tous les cas isolés réussis | Validé localement |
 | backup.sh | Bash `-n` réussi | Exécutée | Données absentes couvertes | Archive et SHA-256 créés | Validé localement |
 | restore.sh | Bash `-n` réussi | Exécutée | Confirmation obligatoire | SQLite intègre, ancienne donnée préservée | Validé localement |
-| install.sh | Bash `-n` réussi | Fixture exécutée deux fois | Artefact manquant/invalide | Copie atomique et idempotence vérifiées | Partiel — AppImage CI attendue |
-| verify-installation.sh | Bash `-n` réussi | Artefact invalide exécuté | Rejet attendu | Échec non nul correct | Partiel — AppImage CI attendue |
+| install.sh | Bash `-n` et ShellCheck réussis | AppImage réelle installée deux fois en CI | Artefact manquant/invalide | Copie atomique, checksum et idempotence vérifiés | Validé Linux CI |
+| verify-installation.sh | Bash `-n` et ShellCheck réussis | AppImage réelle vérifiée deux fois en CI | Rejet d’artefact invalide | Backend embarqué, auth, DB, CRUD et JSONL vérifiés | Validé Linux CI |
 | update.sh | Bash `-n` réussi | Chemins sans changement/downgrade testés | Downgrade refusé | Contrôles de version réussis | Partiel — AppImage CI attendue |
 | uninstall.sh | Bash `-n` réussi | Exécutée en environnement isolé | Confirmation suppression testée | Conservation/suppression explicite réussies | Validé localement |
-| build-linux.sh | Bash `-n` réussi | Arrêt au contrôle des prérequis | Dépendances absentes | Aucun faux succès | Non validé jusqu’à la CI |
+| build-linux.sh | Bash `-n` et ShellCheck réussis | AppImage et DEB construits en CI | Dépendances locales absentes | Artefacts `agentsec-linux-x64` publiés | Validé Linux CI |
 | start-production.sh | Bash `-n` réussi | Non exécutée avec AppImage réelle | Installation absente couverte | — | Non validé jusqu’à la CI |
 | clean.sh | Bash `-n` réussi | Non exécutée | Cibles bornées au dépôt | — | Statique uniquement |

@@ -98,6 +98,18 @@ test-scripts.sh : syntaxe, backup/restore, idempotence, downgrade, artefact inva
 backup.sh / restore.sh : archive SHA-256, integrity_check=ok, ancienne donnée préservée
 ```
 
+Packaging et installation Linux sur GitHub Actions Ubuntu x64 :
+
+```text
+Run : https://github.com/St0rn/agentsec-inspector/actions/runs/40916996042
+build-linux.sh : AppImage et DEB Tauri générés
+install.sh : AppImage 1.0.0 installée deux fois
+verify-installation.sh : deux exécutions réussies
+Contrôles : checksum, sidecar PyInstaller, /health, rejet 401 sans jeton, migration SQLite,
+création/lecture d’un projet et événement backend_started JSON valide
+Artefact publié : agentsec-linux-x64 (archive CI 206 041 396 octets)
+```
+
 Les captures du manuel utilisateur (`manual-project`, `manual-target`, `mcp-passive`, `rag-security`, `agent-behavior`, `reports`) ont été générées depuis le frontend réel connecté au laboratoire contrôlé.
 
 ## Non exécuté dans cet environnement
@@ -109,9 +121,9 @@ Les captures du manuel utilisateur (`manual-project`, `manual-target`, `mcp-pass
 - MSI/NSIS
 - Installation, mise à jour, restauration et désinstallation Windows
 - Lancement WebView2 sur Windows propre
-- Build Tauri AppImage/DEB local, bloqué avant compilation par les bibliothèques système absentes; workflow Linux fourni
+- Build Tauri AppImage/DEB local, bloqué avant compilation par les bibliothèques système absentes; build et installation validés séparément sur le runner Ubuntu du run `40916996042`
 
-Ces éléments sont donc **non validés Windows**, même si leurs scripts et workflows sont présents. `.github/workflows/windows-build.yml` exécute les validations manquantes sur `windows-2022`, génère les artefacts et publie les journaux. Aucun run CI n’a été observé dans cet environnement local.
+Les éléments Windows sont donc **non validés Windows**, même si leurs scripts et workflows sont présents. `.github/workflows/windows-build.yml` exécute les validations manquantes sur `windows-2022`, génère les artefacts et publie les journaux. La réussite Linux ne constitue pas une preuve de fonctionnement Windows.
 
 ## Limites constatées
 
