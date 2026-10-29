@@ -70,8 +70,10 @@ Describe 'PowerShell delivery scripts' {
     It 'preserves native arguments, spaces, quotes, and trailing slashes' {
         $expected = @('space value','embedded"quote','C:\Program Files\AgentSec\')
         $result = Invoke-Checked python (@($script:NativeHelper) + $expected)
-        $actual = @($result.StdOut | ConvertFrom-Json)
-        ($actual -join '|') | Should -Be ($expected -join '|')
+        $actual = $result.StdOut | ConvertFrom-Json
+        $actual[0] | Should -Be $expected[0]
+        $actual[1] | Should -Be $expected[1]
+        $actual[2] | Should -Be $expected[2]
         $result.ExitCode | Should -Be 0
     }
 
@@ -83,7 +85,8 @@ Describe 'PowerShell delivery scripts' {
 
     It 'runs a batch command from a path containing spaces' {
         $result = Invoke-Checked $script:BatchWrapper @('space value')
-        (@($result.StdOut | ConvertFrom-Json) -join '|') | Should -Be 'space value'
+        $actual = $result.StdOut | ConvertFrom-Json
+        $actual[0] | Should -Be 'space value'
     }
 
     It 'blocks on the real nonzero native exit code' {
