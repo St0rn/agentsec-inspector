@@ -155,7 +155,9 @@ function New-PrerequisiteCheck {
 }
 
 function Get-WebView2Runtime {
-    $clientId = '{F1E7E7D1-9A4B-4E8A-BE7A-4A476B48FC48}'
+    # Microsoft WebView2 Evergreen Runtime product identifier documented at:
+    # https://learn.microsoft.com/microsoft-edge/webview2/concepts/distribution
+    $clientId = '{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}'
     $keys = @(
         "HKLM:\SOFTWARE\Microsoft\EdgeUpdate\Clients\$clientId",
         "HKLM:\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\$clientId",

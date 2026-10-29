@@ -61,7 +61,7 @@ Describe 'PowerShell delivery scripts' {
 
     It 'checks official WebView2 user and system registrations and reads the version' {
         $source = Get-Content -Raw (Join-Path $script:RepoRoot 'scripts\lib\Common.ps1')
-        $source | Should -Match ([regex]::Escape('{F1E7E7D1-9A4B-4E8A-BE7A-4A476B48FC48}'))
+        $source | Should -Match ([regex]::Escape('{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}'))
         $source | Should -Match 'HKLM:'
         $source | Should -Match 'HKCU:'
         $source | Should -Match "Properties\['pv'\]"
