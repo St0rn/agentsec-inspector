@@ -54,7 +54,22 @@ project_id="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["id"])' <<
 [[ -n "${project_id}" ]] || die "Project creation smoke test failed."
 curl --fail --silent -H "Authorization: Bearer ${token}" "http://127.0.0.1:${port}/api/v1/projects/${project_id}" >/dev/null
 [[ -f "${test_data}/agentsec.db" ]] || die "Database initialization check failed."
-find "${test_data}" -type f -name '*.log' -print -quit | grep -q . || die "Structured logging check failed."
+structured_log="${test_data}/logs/agentsec.jsonl"
+[[ -s "${structured_log}" ]] || die "Structured logging check failed: agentsec.jsonl is missing or empty."
+python3 - "${structured_log}" <<'PY' || die "Structured logging check failed: no backend_started JSON event."
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as handle:
+    events = []
+    for line in handle:
+        try:
+            events.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+if not any(event.get("event") == "backend_started" for event in events):
+    raise SystemExit(1)
+PY
 
 log OK "AppImage, checksum, bundled backend, authentication, database, API CRUD, and logging verified."
 finish 0

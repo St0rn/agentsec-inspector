@@ -15,6 +15,9 @@ def configure_logging(settings: Settings) -> None:
         backupCount=5,
         encoding="utf-8",
     )
+    # Keep the JSONL audit log machine-readable. Framework logs remain on the
+    # console; AgentSec records are rendered as JSON by structlog below.
+    handler.addFilter(logging.Filter("agentsec"))
     handler.setFormatter(logging.Formatter("%(message)s"))
     logging.basicConfig(level=settings.log_level, handlers=[handler, logging.StreamHandler()])
     structlog.configure(

@@ -3,6 +3,7 @@ from __future__ import annotations
 import hmac
 from contextlib import asynccontextmanager
 
+import structlog
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -16,6 +17,7 @@ from .services.scenarios import SCENARIOS
 
 settings = get_settings()
 configure_logging(settings)
+log = structlog.get_logger(__name__)
 
 
 def seed_scenarios() -> None:
@@ -45,7 +47,11 @@ def seed_scenarios() -> None:
 async def lifespan(_app: FastAPI):
     migrate_db()
     seed_scenarios()
-    yield
+    log.info("backend_started", host=settings.host, port=settings.port, version=settings.version)
+    try:
+        yield
+    finally:
+        log.info("backend_stopped")
 
 
 app = FastAPI(
