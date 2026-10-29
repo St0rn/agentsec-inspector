@@ -83,6 +83,13 @@ Describe 'PowerShell delivery scripts' {
         $result.StdErr | Should -Match 'npm warn deprecated'
     }
 
+    It 'can consume sensitive command output without copying it to logs' {
+        Mock Write-Step {}
+        $result = Invoke-Checked python @($script:NativeHelper,'controlled-secret') -SuppressOutputLogging
+        $result.StdOut | Should -Match 'controlled-secret'
+        Should -Invoke Write-Step -ParameterFilter { $Message -match 'stdout|stderr|controlled-secret' } -Times 0
+    }
+
     It 'runs a batch command from a path containing spaces' {
         $result = Invoke-Checked $script:BatchWrapper @('space value')
         $result.StdOut.Trim() | Should -Be '["space value"]'

@@ -82,6 +82,24 @@ jobs:
           Invoke-Pester -Path scripts\tests\Scripts.Tests.ps1 -Output Detailed
           New-Item -ItemType File -Force logs\tests\pester-windows-powershell.ok | Out-Null
 
+      - name: Install Microsoft WebView2 Runtime for packaged smoke tests
+        shell: powershell
+        run: |
+          . .\scripts\lib\Common.ps1
+          $runtime = Get-WebView2Runtime
+          if (-not $runtime.installed) {
+            $installer = Join-Path $env:RUNNER_TEMP 'MicrosoftEdgeWebView2RuntimeInstallerX64.exe'
+            Invoke-WebRequest -UseBasicParsing -Uri 'https://go.microsoft.com/fwlink/p/?LinkId=2124703' -OutFile $installer
+            $process = Start-Process -FilePath $installer -ArgumentList '/silent','/install' -Wait -PassThru
+            if ($process.ExitCode -notin @(0, 1641, 3010)) {
+              throw "Microsoft WebView2 Runtime installer exited with code $($process.ExitCode)"
+            }
+            Remove-Item -LiteralPath $installer -Force -ErrorAction SilentlyContinue
+          }
+          $runtime = Get-WebView2Runtime
+          if (-not $runtime.installed) { throw 'Microsoft WebView2 Runtime was not registered after installation.' }
+          "WebView2 $($runtime.version) detected at $($runtime.registry_path)"
+
       - name: Validate MSVC x64 and Windows SDK with a real compiler probe
         shell: powershell
         run: .\scripts\check-prerequisites.ps1 -ForBuild

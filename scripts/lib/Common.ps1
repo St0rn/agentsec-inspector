@@ -63,7 +63,8 @@ function Invoke-Checked {
         [Parameter(Mandatory)][string]$FilePath,
         [string[]]$Arguments = @(),
         [string]$WorkingDirectory = $script:RepoRoot,
-        [int[]]$AllowedExitCodes = @(0)
+        [int[]]$AllowedExitCodes = @(0),
+        [switch]$SuppressOutputLogging
     )
 
     $resolved = Resolve-NativeCommand $FilePath
@@ -101,8 +102,10 @@ function Invoke-Checked {
         $process.Dispose()
     }
 
-    foreach ($line in @($stdout -split "`r?`n" | Where-Object { $_ })) { Write-Step "  stdout | $line" }
-    foreach ($line in @($stderr -split "`r?`n" | Where-Object { $_ })) { Write-Step "  stderr | $line" 'WARN' }
+    if (-not $SuppressOutputLogging) {
+        foreach ($line in @($stdout -split "`r?`n" | Where-Object { $_ })) { Write-Step "  stdout | $line" }
+        foreach ($line in @($stderr -split "`r?`n" | Where-Object { $_ })) { Write-Step "  stderr | $line" 'WARN' }
+    }
 
     $result = [pscustomobject][ordered]@{
         FilePath = $resolved
@@ -204,7 +207,9 @@ function Import-MsvcEnvironment {
             'if errorlevel 1 exit /b %errorlevel%',
             'set'
         ) | Set-Content -LiteralPath $bootstrap -Encoding ASCII
-        $result = Invoke-Checked $bootstrap
+        # `set` returns the complete process environment, which can contain CI
+        # credentials. Consume it in memory without copying it to logs.
+        $result = Invoke-Checked $bootstrap -SuppressOutputLogging
         foreach ($line in $result.StdOut -split "`r?`n") {
             if ($line -notmatch '^([^=]+)=(.*)$') { continue }
             [Environment]::SetEnvironmentVariable($Matches[1], $Matches[2], 'Process')
