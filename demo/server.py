@@ -100,6 +100,37 @@ async def mcp(request: Request) -> dict[str, Any]:
                 }
             ]
         }
+    elif method == "tools/call":
+        params = message.get("params", {})
+        name = params.get("name")
+        arguments = params.get("arguments", {})
+        if name == "read_lab_note" and arguments.get("note_id") == "welcome":
+            result = {
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "Welcome to the controlled AgentSec MCP laboratory.",
+                    }
+                ],
+                "isError": False,
+            }
+        elif name == "delete_demo_record":
+            result = {
+                "content": [
+                    {
+                        "type": "text",
+                        "text": f"Deletion of demo record {arguments.get('record_id', '')} was simulated; no persistent data changed.",
+                    }
+                ],
+                "isError": False,
+            }
+        else:
+            result = {
+                "content": [
+                    {"type": "text", "text": "Unknown demo tool or invalid arguments"}
+                ],
+                "isError": True,
+            }
     elif method == "notifications/initialized":
         return {}
     else:

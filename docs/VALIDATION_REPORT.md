@@ -18,8 +18,8 @@ ruff check agentsec tests ../demo
 All checks passed!
 
 pytest --cov=agentsec --cov-report=term-missing
-19 passed
-Couverture totale : 70 %
+46 passed
+Couverture totale : 85,40 % (seuil bloquant : 80 %)
 
 mypy agentsec
 0 erreur
@@ -32,7 +32,9 @@ npm run lint
 0 erreur
 
 npm run test
-3 fichiers, 4 tests réussis
+5 fichiers, 9 tests réussis
+Couverture : 66,4 % statements, 61,37 % branches, 55,31 % fonctions, 83,46 % lignes
+Seuils bloquants : 65 % statements, 60 % branches, 55 % fonctions, 80 % lignes
 
 npm run build
 TypeScript + Vite réussis, 2404 modules transformés; chunks inférieurs à 500 ko
@@ -50,7 +52,9 @@ bandit -r backend/agentsec -x backend/tests -ll
 Intégration réseau locale contrôlée :
 
 ```text
-MCP Streamable HTTP : 2 outils, 1 ressource, 1 prompt réellement découverts
+MCP Streamable HTTP passif : 2 outils, 1 ressource, 1 prompt réellement découverts, 0 appel d’outil
+MCP Streamable HTTP actif : read_lab_note appelé avec le paramètre exact note_id=welcome, statut SUCCESS
+Protection active : capacité delete_demo_record refusée sans confirmation sensible individuelle (HTTP 409)
 OpenAI-compatible : réponse réelle reçue du laboratoire déterministe
 ```
 
@@ -67,6 +71,8 @@ Pré-vérification CORS autorisée : 200
 Création et lecture de projet : réussies
 Contrôle d’intégrité : database=ok, répertoire accessible
 Rapport PDF : signature %PDF, téléchargement réussi
+Rebuild après extension active : 53 123 616 octets
+Smoke test final : MCP passif completed, appel actif SUCCESS, scénario multi-tour 2 échanges PASS
 ```
 
 Tauri/Rust :
@@ -77,7 +83,7 @@ cargo metadata --locked --no-deps : réussi
 cargo check --target x86_64-pc-windows-msvc : tenté, bloqué par llvm-rc absent sous Linux
 ```
 
-Une capture du dashboard réellement connecté aux données du laboratoire est conservée dans `docs/images/dashboard.png`.
+Six captures du frontend réellement connecté au laboratoire sont conservées dans `docs/images/` : dashboard, MCP actif, prompt injection, findings, graphe observé et packs de scénarios.
 
 ## Non exécuté dans cet environnement
 
@@ -93,5 +99,5 @@ Ces éléments sont donc **non validés Windows**, même si leurs scripts et wor
 
 ## Limites constatées
 
-- La couverture des transports MCP/LLM est surtout assurée par l’intégration contrôlée; les branches d’erreur restent moins couvertes.
+- Les clients MCP/LLM couvrent les chemins nominaux, retries, réponses invalides, limites de taille, allowlist stdio et credentials manquants; les particularités de fournisseurs tiers restent à valider sur chaque mission.
 - Le processus MCP stdio est restreint, mais son isolation forte dépend d’une VM ou Windows Sandbox externe.

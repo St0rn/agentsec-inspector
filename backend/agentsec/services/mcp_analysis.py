@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 from typing import Any
 
@@ -10,6 +11,32 @@ INSTRUCTION_TEXT = re.compile(
     r"(ignore (all|previous)|system prompt|do not tell|override instruction|act as)", re.I
 )
 PATH_NAMES = re.compile(r"(path|file|directory|folder|filename)", re.I)
+
+
+def is_sensitive_tool(tool: dict[str, Any] | str) -> bool:
+    if isinstance(tool, str):
+        text = tool
+    else:
+        text = f"{tool.get('name', '')} {tool.get('description', '')}"
+    return bool(SENSITIVE_NAMES.search(text))
+
+
+def analyse_tool_result(tool_name: str, result: dict[str, Any]) -> list[dict[str, Any]]:
+    text = json.dumps(result, ensure_ascii=False, default=str)
+    if not INSTRUCTION_TEXT.search(text):
+        return []
+    return [
+        _item(
+            tool_name,
+            "Instruction-like content returned by MCP tool",
+            "The observed tool result contains instruction-like language that could influence an agent.",
+            text,
+            "medium",
+            "medium",
+            "Risk potential",
+            "Treat tool output as untrusted data and preserve instruction boundaries before LLM use.",
+        )
+    ]
 
 
 def analyse_discovery(discovery: dict[str, Any]) -> list[dict[str, Any]]:
@@ -33,7 +60,7 @@ def analyse_discovery(discovery: dict[str, Any]) -> list[dict[str, Any]]:
                     "Review and rewrite the description as neutral capability documentation.",
                 )
             )
-        if SENSITIVE_NAMES.search(name + " " + description):
+        if is_sensitive_tool(tool):
             observations.append(
                 _item(
                     name,

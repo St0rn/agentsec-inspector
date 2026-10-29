@@ -1,0 +1,212 @@
+from __future__ import annotations
+
+from collections.abc import Callable
+from typing import Any
+
+import httpx
+import pytest
+
+from agentsec.config import Settings
+from agentsec.models import Target
+from agentsec.security import TargetSecurityError
+from agentsec.services import llm_client, mcp_client
+from agentsec.services.mcp_client import HTTPMCPClient, MCPProtocolError, StdioMCPClient
+
+
+class AsyncHTTPFixture:
+    responder: Callable[[str, dict[str, str], dict[str, Any]], httpx.Response]
+
+    def __init__(self, *_args: object, **_kwargs: object):
+        pass
+
+    async def __aenter__(self) -> AsyncHTTPFixture:
+        return self
+
+    async def __aexit__(self, *_args: object) -> None:
+        return None
+
+    async def post(
+        self, url: str, *, headers: dict[str, str], json: dict[str, Any]
+    ) -> httpx.Response:
+        return self.responder(url, headers, json)
+
+
+def response(status: int, payload: dict[str, Any], **headers: str) -> httpx.Response:
+    return httpx.Response(
+        status,
+        json=payload,
+        headers=headers,
+        request=httpx.Request("POST", "http://127.0.0.1:9999/mcp"),
+    )
+
+
+@pytest.mark.asyncio
+async def test_http_mcp_discovery_and_active_call(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    observed: list[tuple[str, str | None]] = []
+
+    def responder(_url: str, headers: dict[str, str], body: dict[str, Any]) -> httpx.Response:
+        observed.append((body["method"], headers.get("Mcp-Session-Id")))
+        method = body["method"]
+        results = {
+            "initialize": {
+                "serverInfo": {"name": "fixture"},
+                "capabilities": {"tools": {}, "resources": {}, "prompts": {}},
+            },
+            "tools/list": {"tools": [{"name": "read_note", "inputSchema": {}}]},
+            "resources/list": {"resources": [{"uri": "fixture://policy"}]},
+            "prompts/list": {"prompts": [{"name": "summary"}]},
+            "tools/call": {"content": [{"type": "text", "text": "ok"}], "isError": False},
+        }
+        if method == "notifications/initialized":
+            return httpx.Response(202, request=httpx.Request("POST", _url))
+        return response(
+            200,
+            {"jsonrpc": "2.0", "id": body.get("id"), "result": results[method]},
+            **({"mcp-session-id": "fixture-session"} if method == "initialize" else {}),
+        )
+
+    AsyncHTTPFixture.responder = staticmethod(responder)
+    monkeypatch.setattr(mcp_client.httpx, "AsyncClient", AsyncHTTPFixture)
+    client = HTTPMCPClient("http://127.0.0.1:9999/mcp", {}, Settings(data_dir=tmp_path), False)
+    discovery = await client.discover()
+    result = await client.call_tool("read_note", {})
+    assert discovery.server_info["name"] == "fixture"
+    assert len(discovery.tools) == len(discovery.resources) == len(discovery.prompts) == 1
+    assert result["isError"] is False
+    assert observed[0] == ("initialize", None)
+    assert all(session == "fixture-session" for _, session in observed[1:])
+
+
+@pytest.mark.asyncio
+async def test_http_mcp_errors_and_response_limits(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    def forbidden(_url: str, _headers: dict[str, str], _body: dict[str, Any]) -> httpx.Response:
+        return response(403, {"error": "forbidden"})
+
+    AsyncHTTPFixture.responder = staticmethod(forbidden)
+    monkeypatch.setattr(mcp_client.httpx, "AsyncClient", AsyncHTTPFixture)
+    client = HTTPMCPClient("http://127.0.0.1:9999/mcp", {}, Settings(data_dir=tmp_path), False)
+    with pytest.raises(MCPProtocolError, match="status 403"):
+        await client.call("tools/list")
+
+    def rpc_error(_url: str, _headers: dict[str, str], body: dict[str, Any]) -> httpx.Response:
+        return response(200, {"jsonrpc": "2.0", "id": body["id"], "error": {"code": -1}})
+
+    AsyncHTTPFixture.responder = staticmethod(rpc_error)
+    with pytest.raises(MCPProtocolError, match="MCP error"):
+        await client.call("tools/list")
+
+    def oversized(_url: str, _headers: dict[str, str], body: dict[str, Any]) -> httpx.Response:
+        return response(200, {"jsonrpc": "2.0", "id": body["id"], "result": {"data": "x" * 100}})
+
+    AsyncHTTPFixture.responder = staticmethod(oversized)
+    client.max_bytes = 10
+    with pytest.raises(MCPProtocolError, match="size limit"):
+        await client.call("tools/list")
+
+
+def test_stdio_mcp_requires_exact_executable_allowlist(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    monkeypatch.setattr(mcp_client.shutil, "which", lambda _command: "/opt/lab/mcp-server")
+    monkeypatch.delenv("AGENTSEC_ALLOWED_MCP_EXECUTABLES", raising=False)
+    with pytest.raises(TargetSecurityError, match="not allowed"):
+        StdioMCPClient("mcp-server", [], Settings(data_dir=tmp_path))
+    monkeypatch.setenv("AGENTSEC_ALLOWED_MCP_EXECUTABLES", "/opt/lab/mcp-server")
+    client = StdioMCPClient("mcp-server", ["--safe"], Settings(data_dir=tmp_path))
+    assert client.command == "/opt/lab/mcp-server"
+    with pytest.raises(TargetSecurityError, match="Invalid MCP process arguments"):
+        StdioMCPClient("mcp-server", ["x"] * 65, Settings(data_dir=tmp_path))
+
+
+def llm_target(target_type: str = "openai", configuration: dict[str, Any] | None = None) -> Target:
+    return Target(
+        project_id="project",
+        name="fixture",
+        target_type=target_type,
+        endpoint="http://127.0.0.1:9999",
+        configuration=configuration or {"model": "fixture-model", "retries": 0},
+        remote_authorized=False,
+    )
+
+
+@pytest.mark.asyncio
+async def test_openai_compatible_and_ollama_clients(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    bodies: list[dict[str, Any]] = []
+
+    def responder(url: str, _headers: dict[str, str], body: dict[str, Any]) -> httpx.Response:
+        bodies.append(body)
+        if url.endswith("/api/chat"):
+            payload = {"message": {"content": "ollama response"}}
+        else:
+            payload = {
+                "choices": [
+                    {
+                        "message": {
+                            "content": "compatible response",
+                            "tool_calls": [{"id": "call-1"}],
+                        }
+                    }
+                ]
+            }
+        return response(200, payload)
+
+    AsyncHTTPFixture.responder = staticmethod(responder)
+    monkeypatch.setattr(llm_client.httpx, "AsyncClient", AsyncHTTPFixture)
+    settings = Settings(data_dir=tmp_path)
+    compatible = await llm_client.send_chat(
+        llm_target(), [{"role": "user", "content": "test"}], 100, settings
+    )
+    ollama = await llm_client.send_chat(
+        llm_target("ollama"), [{"role": "user", "content": "test"}], 100, settings
+    )
+    assert compatible.text == "compatible response" and compatible.tool_calls
+    assert ollama.text == "ollama response"
+    assert bodies[0]["temperature"] == 0
+    assert bodies[1]["stream"] is False
+
+
+@pytest.mark.asyncio
+async def test_llm_client_retries_transient_status_and_rejects_bad_payload(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    attempts = 0
+
+    def responder(_url: str, _headers: dict[str, str], _body: dict[str, Any]) -> httpx.Response:
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            return response(503, {"detail": "retry"})
+        return response(200, {"choices": []})
+
+    async def no_delay(_seconds: float) -> None:
+        return None
+
+    AsyncHTTPFixture.responder = staticmethod(responder)
+    monkeypatch.setattr(llm_client.httpx, "AsyncClient", AsyncHTTPFixture)
+    monkeypatch.setattr(llm_client.asyncio, "sleep", no_delay)
+    target = llm_target(configuration={"model": "fixture", "retries": 1})
+    with pytest.raises(RuntimeError, match="no choices"):
+        await llm_client.send_chat(
+            target, [{"role": "user", "content": "test"}], 20, Settings(data_dir=tmp_path)
+        )
+    assert attempts == 2
+
+
+@pytest.mark.asyncio
+async def test_llm_client_never_reads_missing_credential_as_success(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    monkeypatch.delenv("AGENTSEC_MISSING_TEST_KEY", raising=False)
+    target = llm_target(
+        configuration={"model": "fixture", "api_key_env": "AGENTSEC_MISSING_TEST_KEY"}
+    )
+    with pytest.raises(RuntimeError, match="unavailable"):
+        await llm_client.send_chat(
+            target, [{"role": "user", "content": "test"}], 20, Settings(data_dir=tmp_path)
+        )

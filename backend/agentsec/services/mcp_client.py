@@ -112,6 +112,9 @@ class HTTPMCPClient:
             initialized.get("serverInfo", {}), capabilities, tools, resources, prompts
         )
 
+    async def call_tool(self, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+        return await self.call("tools/call", {"name": name, "arguments": arguments})
+
 
 class StdioMCPClient:
     def __init__(self, command: str, args: list[str], settings: Settings):
@@ -203,3 +206,6 @@ class StdioMCPClient:
         return MCPDiscovery(
             initialized.get("serverInfo", {}), capabilities, tools, resources, prompts
         )
+
+    async def call_tool(self, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+        return await self.call("tools/call", {"name": name, "arguments": arguments})

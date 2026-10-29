@@ -9,9 +9,10 @@ from sqlalchemy.orm import Session
 from ..config import get_settings
 from ..database import get_db
 from ..models import AgentEvent, AuditRun, Project, Scenario, Target
-from ..schemas import AuditRead, MCPAuditRequest, PromptTestRequest
+from ..schemas import AuditRead, MCPAuditRequest, PromptTestRequest, ScenarioPackImport
 from ..services.audits import run_mcp_audit, run_prompt_test
 from ..services.events import event_hub
+from ..services.mcp_analysis import is_sensitive_tool
 
 router = APIRouter(tags=["audits"])
 
@@ -39,6 +40,46 @@ async def list_scenarios(db: Session = Depends(get_db)) -> list[dict[str, object
     ]
 
 
+@router.post("/scenarios/import", status_code=201)
+async def import_scenario_pack(
+    body: ScenarioPackImport, db: Session = Depends(get_db)
+) -> dict[str, object]:
+    imported = 0
+    updated = 0
+    for definition in body.scenarios:
+        item = db.get(Scenario, (definition.id, definition.version))
+        if item and not body.replace_existing:
+            raise HTTPException(
+                409,
+                f"Scenario {definition.id}@{definition.version} already exists; set replace_existing explicitly",
+            )
+        values = definition.model_dump()
+        values["configuration"] = {
+            **values["configuration"],
+            "scenario_pack": {
+                "id": body.pack_id,
+                "version": body.pack_version,
+                "name": body.name,
+            },
+        }
+        if item:
+            for key, value in values.items():
+                setattr(item, key, value)
+            item.active = True
+            updated += 1
+        else:
+            db.add(Scenario(**values))
+            imported += 1
+    db.commit()
+    return {
+        "pack_id": body.pack_id,
+        "pack_version": body.pack_version,
+        "imported": imported,
+        "updated": updated,
+        "code_execution": False,
+    }
+
+
 @router.get("/audits", response_model=list[AuditRead])
 async def list_audits(
     project_id: str | None = None, db: Session = Depends(get_db)
@@ -64,12 +105,21 @@ async def start_mcp_audit(body: MCPAuditRequest, db: Session = Depends(get_db)) 
         raise HTTPException(422, "Target is not MCP")
     if not body.passive and not body.confirm_active_operations:
         raise HTTPException(409, "Active operations require explicit confirmation")
+    for call in body.active_tool_calls:
+        if is_sensitive_tool(call.tool_name) and not call.confirm_sensitive_operation:
+            raise HTTPException(
+                409,
+                f"Sensitive MCP tool {call.tool_name!r} requires individual confirmation",
+            )
     audit = AuditRun(
         project_id=body.project_id,
         target_id=body.target_id,
         audit_type="mcp_security",
         passive=body.passive,
-        configuration={"confirmed_active": body.confirm_active_operations},
+        configuration={
+            "confirmed_active": body.confirm_active_operations,
+            "active_tool_calls": [item.model_dump() for item in body.active_tool_calls],
+        },
     )
     db.add(audit)
     db.commit()
@@ -85,7 +135,7 @@ async def start_prompt_test(body: PromptTestRequest, db: Session = Depends(get_d
         raise HTTPException(422, "Target is not an LLM chat endpoint")
     if not body.confirm_active_test:
         raise HTTPException(409, "Sending an active test requires explicit confirmation")
-    if not db.get(Scenario, (body.scenario_id, "1.0.0")):
+    if not db.get(Scenario, (body.scenario_id, body.scenario_version)):
         raise HTTPException(404, "Scenario not found")
     audit = AuditRun(
         project_id=body.project_id,
@@ -94,6 +144,7 @@ async def start_prompt_test(body: PromptTestRequest, db: Session = Depends(get_d
         passive=False,
         configuration={
             "scenario_id": body.scenario_id,
+            "scenario_version": body.scenario_version,
             "security_objective": body.security_objective,
         },
     )

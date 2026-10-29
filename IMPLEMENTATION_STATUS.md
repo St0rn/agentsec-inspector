@@ -8,10 +8,12 @@ Date : 2026-10-29. Ce document distingue livraison de code, exécution locale Li
 - Schéma relationnel avec projets, cibles, connecteurs, scénarios versionnés, audits, exécutions, findings, preuves, événements, rapports, paramètres et données RAG.
 - CRUD projets/cibles/findings; isolation et intégrité référentielle; historique des findings.
 - Dashboard calculé à partir de la base, sans données fictives.
-- MCP Streamable HTTP et stdio passif : initialisation, capacités, outils, ressources et prompts; aucune invocation d’outil.
+- MCP Streamable HTTP et stdio : découverte passive sans invocation, plus appels actifs explicitement sélectionnés et confirmés.
+- Mode actif MCP borné : validation des arguments contre le schéma annoncé, seconde confirmation des capacités sensibles, redaction des secrets, preuves et événements observables.
 - Analyse MCP conservatrice avec Observation / Risk potential / Confirmed vulnerability.
 - Connecteurs LLM OpenAI-compatible, Ollama et HTTP de chat; timeout, limite de réponse, redirections désactivées, credentials via variable d’environnement.
 - Dix scénarios de prompt injection versionnés, marqueur fictif, statuts PASS/FAIL/INCONCLUSIVE/ERROR et preuves.
+- API de packs de scénarios JSON déclaratifs, versionnés et strictement validés; aucun code plugin n’est exécuté.
 - RAG : import de document, inspection d’instructions, import de trace, respect du drapeau de télémétrie, comparaison obtenu/attendu.
 - Événements observables d’agent, timeline et graphe d’interactions observées.
 - Findings complets et modifiables.
@@ -19,11 +21,11 @@ Date : 2026-10-29. Ce document distingue livraison de code, exécution locale Li
 - Sauvegarde SQLite en ligne via API; scripts archive/restauration hors ligne.
 - Frontend React/TypeScript/Tailwind sombre avec les 12 menus demandés et états vides.
 - Laboratoire distinct : endpoint chat déterministe, MCP et corpus RAG contrôlé.
-- 19 tests backend réussis (70 %); 4 tests frontend réussis; Ruff, mypy, ESLint et build web réussis.
-- Intégration loopback réelle MCP + LLM réussie contre le laboratoire.
+- 46 tests backend réussis (85,4 %, seuil bloquant 80 %); 9 tests frontend réussis (83,46 % des lignes et seuils bloquants); Ruff, mypy, ESLint et build web réussis.
+- Intégration loopback réelle : découverte MCP passive, appel actif autorisé et test LLM réussis contre le laboratoire.
 - Backend autonome Linux PyInstaller vérifié sur base neuve : migration, santé, rejet sans jeton, CORS authentifié, CRUD, intégrité et génération/téléchargement PDF.
 - Audits de dépendances `pip-audit` et `npm audit` réussis sans vulnérabilité connue; Bandit sans finding moyen ou élevé.
-- Capture réelle du dashboard produite depuis le frontend connecté au backend distribué et aux résultats du laboratoire contrôlé.
+- Six captures réelles produites depuis le frontend connecté aux résultats du laboratoire contrôlé : dashboard, MCP actif, prompt injection, findings, attack chains et packs de scénarios.
 
 ## Fourni mais non validé sur Windows
 
@@ -42,7 +44,7 @@ Raison : l’environnement courant ne contient ni Windows ni PowerShell. Rust/Ca
 - RAG : import et analyse de télémétrie réelle fournie; adaptateurs automatiques propres à chaque fournisseur RAG non fournis.
 - Frameworks : modèle de correspondance et OWASP LLM01 basé sur preuve; pas de catalogue automatique complet, afin d’éviter les correspondances artificielles.
 - Modèles de rapports : modèle livré et champ `template_name`; édition visuelle, logo client et chargement de modèles personnalisés non fournis.
-- Plugin API : modèle de scénario versionné extensible; chargement dynamique de code tiers volontairement non fourni en V1 pour des raisons de sécurité.
+- Plugin API : packs de scénarios déclaratifs opérationnels; chargement dynamique de code tiers volontairement non fourni en V1 pour des raisons de sécurité.
 - Gestion de secrets : chiffrement local Fernet et ACL utilisateur; intégration Windows Credential Manager/DPAPI non fournie.
 
 ## Non implémenté
@@ -62,9 +64,9 @@ Aucun script `.ps1` n’a été exécuté, PowerShell étant absent. Les command
 
 ## Résultats de tests
 
-- Backend : 19/19 réussis; couverture 70 %; Ruff et mypy réussis.
-- Frontend : 4/4 réussis; lint réussi; build réussi.
-- Intégration laboratoire : MCP et LLM réussis.
+- Backend : 46/46 réussis; couverture 85,4 % (minimum imposé 80 %); Ruff et mypy réussis.
+- Frontend : 9/9 réussis; 83,46 % des lignes avec seuils minimums; lint et build réussis.
+- Intégration laboratoire : MCP passif, MCP actif contrôlé et LLM réussis.
 - Dépendances : `pip-audit` et `npm audit` sans vulnérabilité connue.
 - PyInstaller Linux : binaire autonome construit et smoke-testé, rapports PDF inclus.
 - Tauri : `cargo fmt --check` et `cargo metadata --locked --no-deps` réussis; compilation Windows non réalisée.

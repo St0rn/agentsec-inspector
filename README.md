@@ -6,7 +6,7 @@
 
 ### AI Red Team & MCP Security Auditing Platform
 
-Un poste de travail Windows local-first pour auditer, avec autorisation, les agents IA, serveurs MCP, pipelines RAG et applications LLM.
+Un framework Windows local-first pour conduire, avec autorisation, des campagnes de red team sur les agents IA, serveurs MCP, pipelines RAG et applications LLM.
 
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.162-009688?style=flat-square&logo=fastapi&logoColor=white)
@@ -21,18 +21,39 @@ Un poste de travail Windows local-first pour auditer, avec autorisation, les age
 
 <p align="center"><sub>Capture réelle de la V1 exécutée contre le laboratoire contrôlé inclus — aucune donnée fictive n’est injectée dans le dashboard de production.</sub></p>
 
+## Framework de red team IA reproductible
+
+Le framework ne dépend d’aucun « juge IA » externe. Ses décisions reposent sur des critères versionnés, des marqueurs fictifs, les traces réellement observées et des preuves conservées. Les équipes peuvent importer leurs propres [packs déclaratifs de scénarios](docs/SCENARIO_PACKS.md), sans charger ni exécuter de code tiers.
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/images/mcp-active.png" alt="Audit MCP actif contrôlé"/><br/><sub>Appel MCP actif borné et explicitement autorisé</sub></td>
+    <td width="50%"><img src="docs/images/prompt-injection.png" alt="Prompt Injection Tester"/><br/><sub>Scénarios d’injection versionnés avec marqueur fictif</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/images/findings.png" alt="Gestion des findings"/><br/><sub>Finding traçable, sévérité, confiance et remédiation</sub></td>
+    <td width="50%"><img src="docs/images/attack-chains.png" alt="Visualisation de chaîne d’attaque"/><br/><sub>Graphe construit uniquement à partir d’interactions observées</sub></td>
+  </tr>
+  <tr>
+    <td colspan="2"><img src="docs/images/scenario-packs.png" alt="Import de packs de scénarios"/><br/><sub>Extension du framework par packs JSON validés et versionnés</sub></td>
+  </tr>
+</table>
+
+<p align="center"><sub>Galerie générée depuis le frontend réel connecté au laboratoire local contrôlé.</sub></p>
+
 ## Une surface d’audit unifiée
 
 AgentSec Inspector centralise les preuves techniques sans prétendre observer le raisonnement caché des modèles. Les résultats distinguent explicitement une **observation**, un **risque potentiel** et une **vulnérabilité confirmée**.
 
 | Domaine | Capacités opérationnelles |
 |---|---|
-| MCP Security | Découverte Streamable HTTP/stdio, outils, ressources, prompts, capacités et analyse passive conservatrice |
+| MCP Security | Découverte passive Streamable HTTP/stdio et appels actifs explicitement sélectionnés, paramétrés et confirmés |
 | Prompt & LLM | 10 scénarios versionnés, OpenAI-compatible, Ollama et endpoint HTTP, statuts PASS/FAIL/INCONCLUSIVE/ERROR |
 | RAG Security | Documents et métadonnées, injections contrôlées, traces réelles et parcours Document → Retrieval → LLM → Réponse |
 | Agent Behavior | Timeline des messages, appels MCP, paramètres, résultats, erreurs, durées et décisions observables |
 | Findings | Cycle de vie complet, historique, preuves, confiance, impact, reproduction et remédiation |
 | Reporting | Rapports techniques/exécutifs en français ou anglais, HTML, JSON et PDF |
+| Scenario Packs | Import JSON versionné, critères et références extensibles, sans exécution de code plugin |
 
 ## Architecture locale sécurisée
 
@@ -49,10 +70,11 @@ flowchart LR
 - Le backend refuse toute écoute non-loopback et l’API locale exige un jeton transmis par IPC Tauri.
 - Les sorties réseau sont protégées contre le SSRF, les redirections sont désactivées et les cibles distantes doivent être explicitement autorisées.
 - La découverte MCP n’appelle aucun outil. Les opérations actives nécessitent une confirmation explicite.
+- Une capacité MCP sensible exige une seconde confirmation individuelle et ses paramètres sont validés contre le schéma annoncé.
 - Les secrets de connecteurs sont chiffrés au repos ; aucun token ne doit être placé en clair dans la configuration d’une cible.
 - Un échec de transport reste un statut `ERROR`, jamais une attaque réussie.
 
-Le [modèle de sécurité](docs/SECURITY.md) documente les frontières de confiance et les limites d’isolation.
+Le [catalogue des contrôles et attaques](docs/TEST_CATALOG.md) énumère exactement ce qui est exécuté et les limites de la V1. Le [modèle de sécurité](docs/SECURITY.md) documente les frontières de confiance et les limites d’isolation. La [Scenario Pack API](docs/SCENARIO_PACKS.md) décrit l’extension sûre du framework.
 
 ## Démarrage développeur sous Windows
 
@@ -85,11 +107,11 @@ Consultez les procédures exactes : [installation Windows](docs/INSTALLATION_WIN
 
 | Contrôle | Résultat local |
 |---|---|
-| Backend | 19/19 tests, 70 % de couverture, Ruff et mypy réussis |
-| Frontend | 4/4 tests, ESLint, TypeScript et build Vite réussis |
+| Backend | 46/46 tests, 85,4 % de couverture (seuil bloquant 80 %), Ruff et mypy réussis |
+| Frontend | 9/9 tests, 83,46 % des lignes couvertes avec seuils bloquants, ESLint, TypeScript et build Vite réussis |
 | Sécurité source/dépendances | `pip-audit` et `npm audit` sans vulnérabilité connue ; Bandit sans finding moyen/élevé |
 | Binaire autonome | Build Linux PyInstaller, migration neuve, auth, CORS, intégrité et PDF vérifiés |
-| Laboratoire | Découverte MCP réelle (2 outils, 1 ressource, 1 prompt) et échange LLM réel réussis |
+| Laboratoire | Découverte MCP passive, appel MCP actif borné et échange LLM réellement exécutés |
 | Rust/Tauri | `cargo fmt` et métadonnées verrouillées réussis ; build Windows confié à la CI |
 | Windows/PowerShell | Scripts et workflow fournis, mais non validés localement faute d’hôte Windows |
 
