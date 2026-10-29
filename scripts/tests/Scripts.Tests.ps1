@@ -1,6 +1,10 @@
+$discoveryRepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
+$scriptCases = Get-ChildItem (Join-Path $discoveryRepoRoot 'scripts') -Recurse -Filter *.ps1 |
+    Where-Object { $_.FullName -notlike '*Scripts.Tests.ps1' } |
+    ForEach-Object { @{ Path = $_.FullName; Name = $_.Name } }
+
 BeforeAll {
     $script:RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
-    $script:Files = Get-ChildItem (Join-Path $script:RepoRoot 'scripts') -Recurse -Filter *.ps1 | Where-Object { $_.FullName -notlike '*Scripts.Tests.ps1' }
     . (Join-Path $script:RepoRoot 'scripts\lib\Common.ps1')
     $script:NativeTestDirectory = Join-Path $TestDrive 'native command with spaces'
     New-Item -ItemType Directory -Path $script:NativeTestDirectory | Out-Null
@@ -31,7 +35,6 @@ Describe 'PowerShell delivery scripts' {
         Test-Path (Join-Path $script:RepoRoot "scripts\$Name") | Should -BeTrue
     }
 
-    $scriptCases = $script:Files | ForEach-Object { @{ Path = $_.FullName; Name = $_.Name } }
     It 'parses <Name> without syntax errors' -ForEach $scriptCases {
         $errors = $null
         [void][System.Management.Automation.Language.Parser]::ParseFile($Path, [ref]$null, [ref]$errors)
@@ -58,7 +61,7 @@ Describe 'PowerShell delivery scripts' {
 
     It 'checks official WebView2 user and system registrations and reads the version' {
         $source = Get-Content -Raw (Join-Path $script:RepoRoot 'scripts\lib\Common.ps1')
-        $source | Should -Match [regex]::Escape('{F1E7E7D1-9A4B-4E8A-BE7A-4A476B48FC48}')
+        $source | Should -Match ([regex]::Escape('{F1E7E7D1-9A4B-4E8A-BE7A-4A476B48FC48}'))
         $source | Should -Match 'HKLM:'
         $source | Should -Match 'HKCU:'
         $source | Should -Match "Properties\['pv'\]"
