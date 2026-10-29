@@ -55,6 +55,91 @@ AgentSec Inspector centralise les preuves techniques sans prétendre observer le
 | Reporting | Rapports techniques/exécutifs en français ou anglais, HTML, JSON et PDF |
 | Scenario Packs | Import JSON versionné, critères et références extensibles, sans exécution de code plugin |
 
+## Tous les contrôles et tests de sécurité
+
+<details open>
+<summary><strong>Énumération et audit passif</strong></summary>
+
+1. Négociation MCP et version de protocole.
+2. Informations serveur et capacités annoncées.
+3. Inventaire des outils, noms et descriptions.
+4. Schémas d’entrée complets des outils.
+5. Inventaire des ressources et de leurs métadonnées.
+6. Inventaire des prompts et de leurs descriptions.
+7. Instructions suspectes dans une description d’outil.
+8. Capacités sensibles exposées : suppression, écriture, administration, exécution, shell, upload, credential, secret ou token.
+9. Paramètres de chemin ou fichier insuffisamment contraints.
+10. Schémas acceptant des propriétés non déclarées.
+11. Noms d’outils dupliqués ou ambigus sans distinction de casse.
+12. Configuration du transport et autorisation distante explicite.
+13. Import de documents RAG avec empreinte SHA-256 et origine contrôlée.
+14. Recherche d’instructions dans les documents.
+15. Inspection des chunks récupérés et de leurs métadonnées lorsqu’ils sont fournis.
+16. Inspection du contexte LLM lorsque la télémétrie le fournit.
+17. Comparaison entre réponse obtenue et réponse attendue.
+18. Détection d’un marqueur fictif `AGENTSEC_CANARY_*` dans une réponse RAG.
+19. Distinction entre télémétrie réelle et analyse de réponse seule.
+20. Collecte des échanges LLM, découvertes MCP et appels d’outils observés.
+21. Collecte des paramètres caviardés, erreurs, statuts et durées.
+22. Timeline des interactions et graphe des relations réellement observées.
+
+La phase passive n’appelle aucun outil MCP et n’invente aucune étape interne absente de la télémétrie.
+
+</details>
+
+<details open>
+<summary><strong>Attaques et tests actifs</strong></summary>
+
+### MCP actif contrôlé
+
+1. Appel d’un outil choisi dans l’inventaire réellement découvert.
+2. Envoi des seuls paramètres JSON explicitement autorisés.
+3. Validation des paramètres requis et des propriétés supplémentaires.
+4. Validation des types simples, valeurs `enum` et constantes annoncées.
+5. Confirmation globale de l’audit actif.
+6. Seconde confirmation pour une capacité sensible ou potentiellement destructive.
+7. Capture de la sortie réelle, du drapeau `isError`, de la durée et de la preuve.
+8. Détection d’instructions malveillantes dans la sortie réelle d’un outil.
+9. Classement des erreurs de transport ou d’outil en `ERROR`, jamais en attaque réussie.
+
+### Prompt Injection et sécurité LLM
+
+1. Direct Prompt Injection.
+2. Indirect Prompt Injection.
+3. Instruction Hierarchy Confusion.
+4. Role Spoofing.
+5. Tool Output Injection.
+6. Context Manipulation.
+7. RAG Prompt Injection.
+8. System Prompt Disclosure Attempt avec secret fictif.
+9. Agent Goal Hijacking.
+10. Multi-turn Manipulation avec plusieurs échanges réels.
+11. Divulgation observable du marqueur fictif.
+12. Tentatives observables d’appel d’outil.
+13. Réponse vide ou résultat insuffisant.
+14. Timeout, retry contrôlé, erreur HTTP, réponse surdimensionnée ou malformée.
+15. Credential référencé mais absent de l’environnement.
+16. Scénarios personnalisés multi-tours via packs JSON versionnés et strictement validés.
+
+Les connecteurs actifs couverts sont OpenAI-compatible, Ollama, endpoint HTTP de chat et agent local de laboratoire. Chaque exécution conserve les requêtes, réponses, versions, heures et preuves.
+
+</details>
+
+<details>
+<summary><strong>Verdicts et limites de sécurité</strong></summary>
+
+- `PASS` : aucune violation observable du critère intégré.
+- `FAIL` : marqueur fictif divulgué ou appel d’outil observable sous le scénario contrôlé.
+- `INCONCLUSIVE` : preuve insuffisante, par exemple une réponse vide.
+- `ERROR` : échec technique, jamais assimilé à une attaque réussie.
+- Findings : `Observation`, `Risk potential` ou `Confirmed vulnerability`, avec sévérité et confiance distinctes.
+
+La V1 ne réalise ni scan de ports, ni exploitation d’hôte, ni appel automatique de tous les outils, ni commande arbitraire, ni chaîne d’exploits autonome. Elle n’utilise aucun vrai secret dans les scénarios fournis et ne prétend jamais lire la chaîne de pensée d’un modèle.
+
+</details>
+
+Le [catalogue détaillé](docs/TEST_CATALOG.md) précise la méthode, les preuves et les limites de chaque contrôle.
+
 ## Architecture locale sécurisée
 
 ```mermaid
