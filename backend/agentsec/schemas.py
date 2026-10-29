@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import date, datetime
 from typing import Any, Literal
+from urllib.parse import urlparse
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -44,7 +46,14 @@ class TargetCreate(BaseModel):
     project_id: str
     name: str = Field(min_length=1, max_length=200)
     target_type: Literal[
-        "mcp_stdio", "mcp_http", "openai", "ollama", "custom_http", "rag", "agent_lab"
+        "mcp_stdio",
+        "mcp_http",
+        "openai",
+        "ollama",
+        "custom_http",
+        "chatbot",
+        "rag",
+        "agent_lab",
     ]
     endpoint: str | None = Field(default=None, max_length=2048)
     configuration: dict[str, Any] = Field(default_factory=dict)
@@ -53,13 +62,21 @@ class TargetCreate(BaseModel):
     @field_validator("configuration")
     @classmethod
     def target_configuration_has_no_secret(cls, value: dict[str, Any]) -> dict[str, Any]:
-        forbidden = {"secret", "password", "token", "api_key", "apikey", "authorization"}
+        forbidden = {"secret", "password", "token", "apikey", "authorization"}
+        safe_references = {"api_key_env", "api_key_header", "api_key_prefix"}
 
         def visit(item: Any) -> bool:
             if isinstance(item, dict):
-                return any(
-                    str(key).casefold() in forbidden or visit(child) for key, child in item.items()
-                )
+                for key, child in item.items():
+                    key_text = str(key).casefold()
+                    normalized = re.sub(r"[^a-z0-9]", "", key_text)
+                    if key_text not in safe_references and any(
+                        sensitive in normalized for sensitive in forbidden
+                    ):
+                        return True
+                    if visit(child):
+                        return True
+                return False
             if isinstance(item, list):
                 return any(visit(child) for child in item)
             return False
@@ -69,6 +86,20 @@ class TargetCreate(BaseModel):
                 "Plaintext credentials are forbidden; reference an environment variable"
             )
         return value
+
+    @model_validator(mode="after")
+    def valid_target_url(self) -> TargetCreate:
+        url_types = {"mcp_http", "openai", "ollama", "custom_http", "chatbot", "agent_lab"}
+        if self.target_type not in url_types:
+            return self
+        if not self.endpoint:
+            raise ValueError("This target type requires an HTTP or HTTPS URL")
+        parsed = urlparse(self.endpoint)
+        if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+            raise ValueError("Target URL must use http:// or https:// and include a host")
+        if parsed.username or parsed.password:
+            raise ValueError("Credentials in target URLs are forbidden")
+        return self
 
 
 class TargetRead(TargetCreate, ORMModel):

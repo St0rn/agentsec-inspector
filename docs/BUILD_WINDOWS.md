@@ -10,7 +10,9 @@ Dans un terminal PowerShell x64 :
 .\scripts\build-windows.ps1
 ```
 
-Le script exécute lint et tests, compile React, génère le backend PyInstaller autonome, crée les icônes, intègre le sidecar et lance Tauri pour produire MSI et NSIS. Les artefacts attendus se trouvent sous :
+Le premier contrôle charge `vcvars64.bat`, vérifie `cl.exe`, `link.exe`, `rc.exe`, `mt.exe`, `INCLUDE`, `LIB`, les headers MSVC/Windows SDK et compile réellement un programme C++ minimal. Il détecte ainsi une installation SDK incomplète avant le build Rust.
+
+Le build exécute lint et tests, compile React, génère le backend PyInstaller autonome, compare l’empreinte du sidecar copié, crée les icônes et lance Tauri pour produire **les deux** installateurs. Les artefacts attendus se trouvent exactement sous :
 
 ```text
 src-tauri\target\x86_64-pc-windows-msvc\release\bundle\msi\
@@ -18,6 +20,14 @@ src-tauri\target\x86_64-pc-windows-msvc\release\bundle\nsis\
 ```
 
 Le rapport avec empreintes est `logs\build\windows-build-report.json`.
+
+Pour construire sans relancer les tests uniquement après un passage réussi dans la même session contrôlée :
+
+```powershell
+.\scripts\build-windows.ps1 -SkipTests
+```
+
+Ne pas utiliser cette option pour une release.
 
 ## Validation après build
 
@@ -28,3 +38,5 @@ Start-Process msiexec -ArgumentList @('/i', $msi.FullName) -Wait
 ```
 
 Une compilation réussie ne vaut pas validation d’installation. Seul le rapport de `verify-installation.ps1` avec `success: true` constitue le smoke test Windows.
+
+Le workflow `.github\workflows\windows-build.yml` effectue en plus l’analyse PowerShell, les tests Pester sous PowerShell 5.1 et 7, deux installations successives du MSI, sa désinstallation, deux installations successives du NSIS, sa désinstallation et la génération des SHA-256.

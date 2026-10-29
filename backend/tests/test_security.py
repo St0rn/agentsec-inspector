@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from agentsec.config import Settings
+from agentsec.schemas import TargetCreate
 from agentsec.security import (
     SecretStore,
     TargetSecurityError,
@@ -78,3 +79,26 @@ def test_jailbreak_catalog_is_versioned_and_uses_only_fictional_markers() -> Non
         messages = scenario_messages(scenario, "AGENTSEC_CANARY_7F3A", "Protect it")
         assert messages[-1]["role"] == "user"
         assert "AGENTSEC_CANARY_7F3A" in messages[-1]["content"]
+
+
+def test_target_url_validation_accepts_web_urls_and_rejects_unsafe_forms() -> None:
+    common = {"project_id": "project", "name": "Chatbot", "target_type": "chatbot"}
+    assert TargetCreate(**common, endpoint="http://127.0.0.1:8000/chat").endpoint
+    assert TargetCreate(**common, endpoint="https://chatbot.example.test/chat").endpoint
+    with pytest.raises(ValueError, match="http:// or https://"):
+        TargetCreate(**common, endpoint="ftp://chatbot.example.test/chat")
+    with pytest.raises(ValueError, match="requires"):
+        TargetCreate(**common, endpoint=None)
+    with pytest.raises(ValueError, match="Credentials"):
+        TargetCreate(**common, endpoint="https://user:password@example.test/chat")
+
+
+def test_target_configuration_rejects_plaintext_api_key_headers() -> None:
+    with pytest.raises(ValueError, match="Plaintext credentials"):
+        TargetCreate(
+            project_id="project",
+            name="Unsafe chatbot",
+            target_type="chatbot",
+            endpoint="https://example.test/chat",
+            configuration={"headers": {"X-API-Key": "plaintext-secret"}},
+        )

@@ -1,6 +1,23 @@
 BeforeAll {
     $script:RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
     $script:Files = Get-ChildItem (Join-Path $script:RepoRoot 'scripts') -Recurse -Filter *.ps1 | Where-Object { $_.FullName -notlike '*Scripts.Tests.ps1' }
+    . (Join-Path $script:RepoRoot 'scripts\lib\Common.ps1')
+    $script:NativeTestDirectory = Join-Path $TestDrive 'native command with spaces'
+    New-Item -ItemType Directory -Path $script:NativeTestDirectory | Out-Null
+    $script:NativeHelper = Join-Path $script:NativeTestDirectory 'argument helper.py'
+    @'
+import json
+import sys
+sys.stderr.write("npm warn deprecated: controlled warning\n")
+print(json.dumps(sys.argv[1:]))
+'@ | Set-Content -LiteralPath $script:NativeHelper -Encoding UTF8
+    $script:FailureHelper = Join-Path $script:NativeTestDirectory 'failure helper.py'
+    'import sys; sys.stderr.write("controlled failure\n"); raise SystemExit(23)' | Set-Content -LiteralPath $script:FailureHelper -Encoding UTF8
+    $script:BatchWrapper = Join-Path $script:NativeTestDirectory 'native wrapper.cmd'
+    @'
+@echo off
+python "%~dp0argument helper.py" %*
+'@ | Set-Content -LiteralPath $script:BatchWrapper -Encoding ASCII
 }
 
 Describe 'PowerShell delivery scripts' {
@@ -21,21 +38,86 @@ Describe 'PowerShell delivery scripts' {
         $errors | Should -BeNullOrEmpty
     }
 
+    It 'does not read the unavailable Win32_OperatingSystem.OSArchitecture property' {
+        Get-Content -Raw (Join-Path $script:RepoRoot 'scripts\check-prerequisites.ps1') | Should -Not -Match '\.OSArchitecture'
+    }
+
+    It 'creates uniform prerequisite records under strict mode' {
+        $check = New-PrerequisiteCheck -Name 'example' -Value '1.0' -Ok $true -Required $true -Details 'test'
+        (@($check.PSObject.Properties.Name) -join ',') | Should -Be 'name,value,ok,required,details'
+        $check.value | Should -Be '1.0'
+        $check.ok | Should -BeTrue
+    }
+
+    It 'returns a WebView2 result with stable properties' {
+        $runtime = Get-WebView2Runtime
+        @($runtime.PSObject.Properties.Name) | Should -Contain 'installed'
+        @($runtime.PSObject.Properties.Name) | Should -Contain 'version'
+        @($runtime.PSObject.Properties.Name) | Should -Contain 'registry_path'
+    }
+
+    It 'checks official WebView2 user and system registrations and reads the version' {
+        $source = Get-Content -Raw (Join-Path $script:RepoRoot 'scripts\lib\Common.ps1')
+        $source | Should -Match [regex]::Escape('{F1E7E7D1-9A4B-4E8A-BE7A-4A476B48FC48}')
+        $source | Should -Match 'HKLM:'
+        $source | Should -Match 'HKCU:'
+        $source | Should -Match "Properties\['pv'\]"
+    }
+
+    It 'preserves native arguments, spaces, quotes, and trailing slashes' {
+        $expected = @('space value','embedded"quote','C:\Program Files\AgentSec\')
+        $result = Invoke-Checked python (@($script:NativeHelper) + $expected)
+        $actual = @($result.StdOut | ConvertFrom-Json)
+        ($actual -join '|') | Should -Be ($expected -join '|')
+        $result.ExitCode | Should -Be 0
+    }
+
+    It 'logs native stderr warnings without treating them as failure' {
+        $result = Invoke-Checked python @($script:NativeHelper,'ok')
+        $result.ExitCode | Should -Be 0
+        $result.StdErr | Should -Match 'npm warn deprecated'
+    }
+
+    It 'runs a batch command from a path containing spaces' {
+        $result = Invoke-Checked $script:BatchWrapper @('space value')
+        (@($result.StdOut | ConvertFrom-Json) -join '|') | Should -Be 'space value'
+    }
+
+    It 'blocks on the real nonzero native exit code' {
+        { Invoke-Checked python @($script:FailureHelper) } | Should -Throw '*exited with code 23*'
+    }
+
+    It 'accepts only explicitly allowed nonzero native exit codes' {
+        $result = Invoke-Checked python @($script:FailureHelper) -AllowedExitCodes @(0,23)
+        $result.ExitCode | Should -Be 23
+    }
+
+    It 'requires distinct MSI and NSIS artifact directories' {
+        $source = Get-Content -Raw (Join-Path $script:RepoRoot 'scripts\build-windows.ps1')
+        $source | Should -Match 'msiDirectory=Join-Path \$bundle'
+        $source | Should -Match 'nsisDirectory=Join-Path \$bundle'
+        $source | Should -Match 'MSI installer was not generated'
+        $source | Should -Match 'NSIS installer was not generated'
+    }
+
     It '<Name> uses strict error handling' -ForEach $scriptCases {
         if ($Path -notmatch '\\(tests|ci|lib)\\') { Get-Content -Raw $Path | Should -Match 'try\s*\{' }
     }
 
     It 'rejects restore without explicit confirmation' {
-        & (Join-Path $script:RepoRoot 'scripts\restore.ps1') -BackupPath 'missing.zip'
-        $LASTEXITCODE | Should -Not -Be 0
+        $hostExecutable=(Get-Process -Id $PID).Path
+        $restoreScript=Join-Path $script:RepoRoot 'scripts\restore.ps1'
+        $result=Invoke-Checked $hostExecutable @('-NoLogo','-NoProfile','-ExecutionPolicy','Bypass','-File',$restoreScript,'-BackupPath','missing.zip') -AllowedExitCodes @(0,1)
+        $result.ExitCode | Should -Be 1
     }
 
     It 'initializes the database idempotently' {
         $testData = Join-Path $TestDrive 'data'
-        & (Join-Path $script:RepoRoot 'scripts\setup-database.ps1') -DataDir $testData
-        $LASTEXITCODE | Should -Be 0
-        & (Join-Path $script:RepoRoot 'scripts\setup-database.ps1') -DataDir $testData
-        $LASTEXITCODE | Should -Be 0
+        $hostExecutable=(Get-Process -Id $PID).Path
+        $databaseScript=Join-Path $script:RepoRoot 'scripts\setup-database.ps1'
+        $arguments=@('-NoLogo','-NoProfile','-ExecutionPolicy','Bypass','-File',$databaseScript,'-DataDir',$testData)
+        (Invoke-Checked $hostExecutable $arguments).ExitCode | Should -Be 0
+        (Invoke-Checked $hostExecutable $arguments).ExitCode | Should -Be 0
         Test-Path (Join-Path $testData 'agentsec.db') | Should -BeTrue
     }
 }

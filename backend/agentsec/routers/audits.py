@@ -131,7 +131,7 @@ async def start_mcp_audit(body: MCPAuditRequest, db: Session = Depends(get_db)) 
 @router.post("/audits/prompt", response_model=AuditRead, status_code=202)
 async def start_prompt_test(body: PromptTestRequest, db: Session = Depends(get_db)) -> AuditRun:
     target = _validate_target(db, body.project_id, body.target_id)
-    if target.target_type not in {"openai", "ollama", "custom_http", "agent_lab"}:
+    if target.target_type not in {"openai", "ollama", "custom_http", "chatbot", "agent_lab"}:
         raise HTTPException(422, "Target is not an LLM chat endpoint")
     if not body.confirm_active_test:
         raise HTTPException(409, "Sending an active test requires explicit confirmation")

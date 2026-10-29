@@ -72,12 +72,37 @@ def test_project_crud_and_isolation(
             "project_id": "00000000-0000-0000-0000-000000000000",
             "name": "Bad",
             "target_type": "mcp_http",
-            "endpoint": None,
+            "endpoint": "https://example.invalid/mcp",
             "configuration": {},
             "remote_authorized": False,
         },
     )
     assert missing_project.status_code == 404
+
+
+def test_target_accepts_https_chatbot_url(
+    client: APIClient, headers: dict[str, str], project: dict[str, object]
+) -> None:
+    response = client.post(
+        "/api/v1/targets",
+        headers=headers,
+        json={
+            "project_id": project["id"],
+            "name": "Support chatbot",
+            "target_type": "chatbot",
+            "endpoint": "https://chatbot.example.test/api/conversation",
+            "configuration": {
+                "message_path": "input.message",
+                "response_path": "answer.text",
+                "api_key_env": "CHATBOT_API_KEY",
+                "api_key_header": "X-API-Key",
+                "api_key_prefix": "",
+            },
+            "remote_authorized": True,
+        },
+    )
+    assert response.status_code == 201
+    assert response.json()["endpoint"].startswith("https://")
 
 
 def test_validation_rejects_invalid_dates(client: APIClient, headers: dict[str, str]) -> None:

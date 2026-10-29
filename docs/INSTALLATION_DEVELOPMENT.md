@@ -6,7 +6,7 @@
 - Python 3.12
 - Node.js 20, 22 ou 24 et npm
 - Rust stable MSVC et Cargo
-- Visual Studio 2022 Build Tools avec `Microsoft.VisualStudio.Component.VC.Tools.x86.x64`
+- Visual Studio 2022 Build Tools avec **Développement Desktop en C++**, MSVC v143 x64/x86 et un Windows 10/11 SDK complet
 - WebView2 Runtime
 
 ## Commandes
@@ -19,6 +19,8 @@ Set-ExecutionPolicy -Scope Process Bypass
 ```
 
 `install-dev.ps1` crée `.venv`, installe `backend\requirements.lock`, exécute `npm ci`, compile le frontend et initialise `%LOCALAPPDATA%\AgentSec\agentsec.db`. Il est réexécutable.
+
+`check-prerequisites.ps1 -ForBuild` ne se limite pas à détecter Visual Studio : il charge l’environnement x64, vérifie les principaux outils et headers puis compile un programme C++ minimal. En cas d’échec, consulter `logs\installation\prerequisites.json` avant de lancer le build complet.
 
 ## Démonstration isolée
 

@@ -1,65 +1,160 @@
-name: Windows x64 build and installation smoke test
+name: Windows x64 build and installer validation
+
 on:
   workflow_dispatch:
   push:
     tags: ["v*"]
   pull_request:
+
+permissions:
+  contents: read
+
 jobs:
-  build:
+  build-and-validate:
     runs-on: windows-2022
-    timeout-minutes: 60
+    timeout-minutes: 90
+    env:
+      CARGO_TERM_COLOR: always
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
-        with: {python-version: "3.12", cache: pip, cache-dependency-path: backend/requirements.lock}
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.lock
+
       - uses: actions/setup-node@v4
-        with: {node-version: "22", cache: npm, cache-dependency-path: frontend/package-lock.json}
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
       - uses: dtolnay/rust-toolchain@stable
-        with: {targets: x86_64-pc-windows-msvc}
-      - name: Install Windows build dependencies
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Install locked project dependencies
         shell: pwsh
         run: |
           python -m venv .venv
-          .\.venv\Scripts\python.exe -m pip install -r backend\requirements.lock
+          .\.venv\Scripts\python.exe -m pip install --disable-pip-version-check -r backend\requirements.lock
           npm --prefix frontend ci --no-audit --no-fund
-      - name: Parse and analyse every PowerShell script
+
+      - name: Install PowerShell validation modules
         shell: pwsh
         run: |
           Set-PSRepository PSGallery -InstallationPolicy Trusted
           Install-Module PSScriptAnalyzer -Scope CurrentUser -Force
           Install-Module Pester -MinimumVersion 5.5.0 -Scope CurrentUser -Force -SkipPublisherCheck
+
+      - name: Parse and analyze every PowerShell script
+        shell: pwsh
+        run: |
           $files = Get-ChildItem scripts -Recurse -Filter *.ps1
           foreach ($file in $files) {
-            [void][scriptblock]::Create((Get-Content -Raw $file.FullName))
+            $tokens = $null
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$tokens, [ref]$errors)
+            if ($errors) { $errors | Format-List; throw "PowerShell parse failed: $($file.Name)" }
             $issues = Invoke-ScriptAnalyzer -Path $file.FullName -Severity Error
             if ($issues) { $issues | Format-Table; throw "PowerShell analysis failed: $($file.Name)" }
           }
-      - name: Script idempotence and error-path tests
-        shell: pwsh
-        run: Invoke-Pester -Path scripts\tests\Scripts.Tests.ps1 -Output Detailed
-      - name: Build MSI and NSIS
-        shell: pwsh
-        run: .\scripts\build-windows.ps1
-      - name: Install generated MSI in CI
+          New-Item -ItemType Directory -Force logs\tests | Out-Null
+          New-Item -ItemType File -Force logs\tests\powershell-static.ok | Out-Null
+
+      - name: Pester regression tests on PowerShell 7
         shell: pwsh
         run: |
-          $msi = Get-ChildItem src-tauri\target\x86_64-pc-windows-msvc\release\bundle -Recurse -Filter *.msi | Select-Object -First 1
-          if (-not $msi) { throw 'MSI artifact missing' }
-          $p = Start-Process msiexec -ArgumentList @('/i', $msi.FullName, '/qn', '/norestart') -Wait -PassThru
-          if ($p.ExitCode -ne 0) { throw "MSI installation failed: $($p.ExitCode)" }
-      - name: Verify installed backend and desktop launch
-        shell: pwsh
-        run: .\scripts\verify-installation.ps1
-      - name: Record validation matrix evidence
+          Invoke-Pester -Path scripts\tests\Scripts.Tests.ps1 -Output Detailed
+          New-Item -ItemType File -Force logs\tests\pester-pwsh.ok | Out-Null
+
+      - name: Install Pester for Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+          Set-PSRepository PSGallery -InstallationPolicy Trusted
+          Install-Module Pester -MinimumVersion 5.5.0 -Scope CurrentUser -Force -SkipPublisherCheck
+
+      - name: Pester regression tests on Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          Invoke-Pester -Path scripts\tests\Scripts.Tests.ps1 -Output Detailed
+          New-Item -ItemType File -Force logs\tests\pester-windows-powershell.ok | Out-Null
+
+      - name: Validate MSVC x64 and Windows SDK with a real compiler probe
+        shell: powershell
+        run: .\scripts\check-prerequisites.ps1 -ForBuild
+
+      - name: Build standalone backend, MSI, and NSIS
+        shell: powershell
+        run: .\scripts\build-windows.ps1
+
+      - name: Verify both installer artifacts and generate SHA-256
+        shell: powershell
+        run: |
+          $msi = @(Get-ChildItem src-tauri\target\x86_64-pc-windows-msvc\release\bundle\msi -File -Filter *.msi)
+          $nsis = @(Get-ChildItem src-tauri\target\x86_64-pc-windows-msvc\release\bundle\nsis -File -Filter *.exe)
+          if ($msi.Count -eq 0) { throw 'MSI artifact missing' }
+          if ($nsis.Count -eq 0) { throw 'NSIS artifact missing' }
+          $artifacts = @($msi + $nsis)
+          foreach ($artifact in $artifacts) {
+            if ($artifact.Length -lt 1MB) { throw "Artifact is unexpectedly small: $($artifact.FullName)" }
+          }
+          New-Item -ItemType Directory -Force logs\build | Out-Null
+          $artifacts | ForEach-Object {
+            $hash = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$hash  $($_.Name)"
+          } | Set-Content -Encoding ASCII logs\build\SHA256SUMS-windows.txt
+
+      - name: Install MSI twice and run packaged smoke tests
+        shell: powershell
+        run: |
+          $msi = Get-ChildItem src-tauri\target\x86_64-pc-windows-msvc\release\bundle\msi -File -Filter *.msi | Select-Object -First 1
+          .\scripts\install.ps1 -InstallerPath $msi.FullName -Confirmed -Quiet
+          if ($LASTEXITCODE -ne 0) { throw 'First MSI installation or verification failed' }
+          .\scripts\install.ps1 -InstallerPath $msi.FullName -Confirmed -Quiet
+          if ($LASTEXITCODE -ne 0) { throw 'Repeated MSI installation or verification failed' }
+          New-Item -ItemType File -Force logs\tests\msi-install-twice.ok | Out-Null
+
+      - name: Uninstall MSI while preserving user data
+        shell: powershell
+        run: |
+          .\scripts\uninstall.ps1 -Quiet -Confirm:$false
+          if ($LASTEXITCODE -ne 0) { throw 'MSI uninstall failed' }
+          New-Item -ItemType File -Force logs\tests\msi-uninstall.ok | Out-Null
+
+      - name: Install NSIS twice and run packaged smoke tests
+        shell: powershell
+        run: |
+          $nsis = Get-ChildItem src-tauri\target\x86_64-pc-windows-msvc\release\bundle\nsis -File -Filter *.exe | Select-Object -First 1
+          .\scripts\install.ps1 -InstallerPath $nsis.FullName -Confirmed -Quiet
+          if ($LASTEXITCODE -ne 0) { throw 'First NSIS installation or verification failed' }
+          .\scripts\install.ps1 -InstallerPath $nsis.FullName -Confirmed -Quiet
+          if ($LASTEXITCODE -ne 0) { throw 'Repeated NSIS installation or verification failed' }
+          New-Item -ItemType File -Force logs\tests\nsis-install-twice.ok | Out-Null
+
+      - name: Uninstall NSIS while preserving user data
+        shell: powershell
+        run: |
+          .\scripts\uninstall.ps1 -Quiet -Confirm:$false
+          if ($LASTEXITCODE -ne 0) { throw 'NSIS uninstall failed' }
+          New-Item -ItemType File -Force logs\tests\nsis-uninstall.ok | Out-Null
+
+      - name: Record Windows validation matrix evidence
+        if: always()
         shell: pwsh
         run: .\scripts\ci\write-validation-matrix.ps1
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: agentsec-windows-x64
+          if-no-files-found: error
           path: |
-            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/**/*.msi
-            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/**/*.exe
+            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi
+            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe
             logs/**/*.log
             logs/**/*.json
+            logs/build/SHA256SUMS-windows.txt
             INSTALLATION_VALIDATION_MATRIX.md

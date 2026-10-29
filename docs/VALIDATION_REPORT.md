@@ -6,7 +6,7 @@
 - Python 3.12.14
 - Node.js 24.19.0, npm 11.9.0
 - Rust 1.99.1 et Cargo installés dans un répertoire temporaire de validation
-- PowerShell absent
+- PowerShell absent de l’hôte; PowerShell 7 utilisé dans un conteneur isolé pour le contrôle syntaxique
 - Aucun dépôt initial : implémentation créée dans `/workspace`
 
 ## Exécutions réussies
@@ -18,8 +18,8 @@ ruff check agentsec tests ../demo
 All checks passed!
 
 pytest --cov=agentsec --cov-report=term-missing
-48 passed
-Couverture totale : 85,92 % (seuil bloquant : 80 %)
+53 passed
+Couverture totale : 86,00 % (seuil bloquant : 80 %)
 
 mypy agentsec
 0 erreur
@@ -32,8 +32,8 @@ npm run lint
 0 erreur
 
 npm run test
-6 fichiers, 10 tests réussis
-Couverture : 67,98 % statements, 64,87 % branches, 57,29 % fonctions, 85,93 % lignes
+7 fichiers, 13 tests réussis
+Couverture : 72,56 % statements, 66,10 % branches, 64,28 % fonctions, 88,46 % lignes
 Seuils bloquants : 65 % statements, 60 % branches, 55 % fonctions, 80 % lignes
 
 npm run build
@@ -85,6 +85,14 @@ cargo check --target x86_64-pc-windows-msvc : tenté, bloqué par llvm-rc absent
 
 Six captures du frontend réellement connecté au laboratoire sont conservées dans `docs/images/` : dashboard, MCP actif, prompt injection, findings, graphe observé et packs de scénarios.
 
+Scripts PowerShell :
+
+```text
+Parseur PowerShell 7 conteneurisé : 20 fichiers .ps1 chargés sans erreur de syntaxe
+Invoke-Checked sous PowerShell 7 : avertissement stderr + code 0 accepté; stderr + code 23 bloqué
+PowerShell 5.1, MSVC et installateurs : non disponibles sur l’hôte Linux
+```
+
 Scripts Linux :
 
 ```text
@@ -114,7 +122,7 @@ Les captures du manuel utilisateur (`manual-project`, `manual-target`, `mcp-pass
 
 ## Non exécuté dans cet environnement
 
-- Analyse syntaxique PowerShell avec le parseur PowerShell
+- Analyse et exécution sous Windows PowerShell 5.1
 - Exécution nominale ou erreur des scripts `.ps1`
 - Build complet Rust/Tauri Windows (seuls formatage et métadonnées ont été validés localement)
 - PyInstaller Windows

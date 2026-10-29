@@ -11,7 +11,7 @@ Date : 2026-10-29. Ce document distingue livraison de code, exécution locale Li
 - MCP Streamable HTTP et stdio : découverte passive sans invocation, plus appels actifs explicitement sélectionnés et confirmés.
 - Mode actif MCP borné : validation des arguments contre le schéma annoncé, seconde confirmation des capacités sensibles, redaction des secrets, preuves et événements observables.
 - Analyse MCP conservatrice avec Observation / Risk potential / Confirmed vulnerability.
-- Connecteurs LLM OpenAI-compatible, Ollama et HTTP de chat; timeout, limite de réponse, redirections désactivées, credentials via variable d’environnement.
+- Connecteurs LLM OpenAI-compatible, Ollama, HTTP Chat Completions et chatbot JSON générique; mapping déclaratif requête/réponse, timeout, limite de réponse, redirections désactivées et identifiants via variable d’environnement.
 - Dix scénarios de prompt injection et neuf scénarios de jailbreak versionnés, marqueur fictif, statuts PASS/FAIL/INCONCLUSIVE/ERROR et preuves.
 - API de packs de scénarios JSON déclaratifs, versionnés et strictement validés; aucun code plugin n’est exécuté.
 - RAG : import de document, inspection d’instructions, import de trace, respect du drapeau de télémétrie, comparaison obtenu/attendu.
@@ -21,7 +21,7 @@ Date : 2026-10-29. Ce document distingue livraison de code, exécution locale Li
 - Sauvegarde SQLite en ligne via API; scripts archive/restauration hors ligne.
 - Frontend React/TypeScript/Tailwind sombre avec les 12 menus demandés, un module Jailbreak dédié supplémentaire et des états vides explicites.
 - Laboratoire distinct : endpoint chat déterministe, MCP et corpus RAG contrôlé.
-- 48 tests backend réussis (85,92 %, seuil bloquant 80 %); 10 tests frontend réussis (85,93 % des lignes et seuils bloquants); Ruff, mypy, ESLint et build web réussis.
+- 53 tests backend réussis (86,00 %, seuil bloquant 80 %); 13 tests frontend réussis (88,46 % des lignes et seuils bloquants); Ruff, mypy, ESLint et build web réussis.
 - Intégration loopback réelle : découverte MCP passive, appel actif autorisé et test LLM réussis contre le laboratoire.
 - Backend autonome Linux PyInstaller vérifié sur base neuve : migration, santé, rejet sans jeton, CORS authentifié, CRUD, intégrité et génération/téléchargement PDF.
 - Audits de dépendances `pip-audit` et `npm audit` réussis sans vulnérabilité connue; Bandit sans finding moyen ou élevé.
@@ -34,17 +34,17 @@ Date : 2026-10-29. Ce document distingue livraison de code, exécution locale Li
 - Vérification des prérequis standard réussie; erreur de build contrôlée et dépendances système manquantes correctement détaillées sans installation automatique.
 - `install-dev.sh` exécuté deux fois sur le même environnement; base SQLite restée intègre.
 - `start-dev.sh` vérifié avec backend sain, API protégée (401 sans jeton) et frontend disponible.
-- `test-all.sh` exécuté avec les 48 tests backend, 10 tests frontend, lint, typage et build.
+- `test-all.sh` exécuté avant cette extension; la validation directe actuelle couvre 53 tests backend, 13 tests frontend, lint, typage et build.
 - Tests isolés des scripts réussis : syntaxe Bash, sauvegarde, restauration avec confirmation, idempotence, refus de downgrade, rejet d’un artefact invalide, préservation et suppression confirmée des données.
 - Sauvegarde et restauration réelles exécutées sur une base SQLite; empreinte et intégrité vérifiées, ancienne arborescence préservée.
 - Workflow `linux-build.yml` exécuté avec succès sur Ubuntu x64 : AppImage et DEB construits, AppImage installée et vérifiée deux fois, artefact CI `agentsec-linux-x64` publié (run `40916996042`).
 
-## Fourni mais non validé sur Windows
+## Fourni et contrôlé statiquement, mais non validé sur Windows
 
 - Sidecar PyInstaller et cycle de vie Tauri 2.
 - Build MSI/NSIS Windows x64.
-- Scripts PowerShell d’installation, développement, configuration, base, lancement, build, tests, vérification, update, backup, restore, uninstall et nettoyage.
-- Workflow Windows avec analyse PowerShell, Pester, build, installation MSI et smoke test.
+- Scripts PowerShell d’installation, développement, configuration, base, lancement, build, tests, vérification, update, backup, restore, uninstall et nettoyage; les 20 fichiers sont syntaxiquement valides selon le parseur PowerShell 7 exécuté en conteneur.
+- Workflow Windows avec analyse PowerShell 5.1/7, Pester, sonde MSVC/Windows SDK par compilation C++, build, installation répétée MSI/NSIS, smoke test et désinstallation.
 
 Raison : l’environnement courant ne contient ni Windows ni PowerShell. Rust/Cargo a été installé pour les contrôles statiques, mais la vérification de la cible MSVC est bloquée sous Linux par l’absence de `llvm-rc`. Ces éléments ne portent donc pas le statut « validé Windows ».
 
@@ -78,15 +78,15 @@ Tous les scripts PowerShell obligatoires sont présents dans `scripts/`, plus `s
 
 ## Scripts réellement exécutés
 
-Aucun script `.ps1` n’a été exécuté, PowerShell étant absent. Les scripts Bash Linux de prérequis, installation développeur, base, démarrage, tests, build, installation, vérification, sauvegarde, restauration et tests de cycle de vie ont été exécutés localement ou sur le runner Ubuntu documenté. Voir `docs/VALIDATION_REPORT.md` et `INSTALLATION_VALIDATION_MATRIX.md`.
+Aucun script métier `.ps1` n’a été exécuté sur Windows. Le parseur PowerShell 7 a néanmoins chargé les 20 scripts sans erreur dans un conteneur Linux isolé; `Invoke-Checked` y a également accepté un avertissement `stderr` avec code 0 et bloqué un code 23. Les scripts Bash Linux de prérequis, installation développeur, base, démarrage, tests, build, installation, vérification, sauvegarde, restauration et tests de cycle de vie ont été exécutés localement ou sur le runner Ubuntu documenté. Voir `docs/VALIDATION_REPORT.md` et `INSTALLATION_VALIDATION_MATRIX.md`.
 
 ## Résultats de tests
 
-- Backend : 48/48 réussis; couverture 85,92 % (minimum imposé 80 %); Ruff et mypy réussis.
-- Frontend : 10/10 réussis; 85,93 % des lignes avec seuils minimums; lint et build réussis.
+- Backend : 53/53 réussis; couverture 86,00 % (minimum imposé 80 %); Ruff et mypy réussis.
+- Frontend : 13/13 réussis; 88,46 % des lignes avec seuils minimums; lint et build réussis.
 - Intégration laboratoire : MCP passif, MCP actif contrôlé et LLM réussis.
 - Dépendances : `pip-audit` et `npm audit` sans vulnérabilité connue.
 - PyInstaller Linux : binaire autonome construit et smoke-testé, rapports PDF inclus.
 - Tauri : `cargo fmt --check` et `cargo metadata --locked --no-deps` réussis; compilation Windows non réalisée.
-- Windows/PowerShell : non exécutés, donc non validés.
+- Windows/PowerShell : syntaxe PowerShell 7 validée en conteneur; PowerShell 5.1, MSVC, MSI/NSIS et installation restent non exécutés localement, donc non validés Windows.
 - Linux/Bash : scripts principaux exécutés; AppImage/DEB construits et AppImage installée/vérifiée deux fois dans le run CI `40916996042`.

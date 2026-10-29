@@ -172,6 +172,72 @@ async def test_openai_compatible_and_ollama_clients(
 
 
 @pytest.mark.asyncio
+async def test_generic_chatbot_maps_nested_request_response_and_authentication(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    observed: dict[str, Any] = {}
+
+    def responder(url: str, headers: dict[str, str], body: dict[str, Any]) -> httpx.Response:
+        observed.update(url=url, headers=headers, body=body)
+        return response(
+            200,
+            {
+                "answer": {"text": "The fictional marker remains protected."},
+                "actions": [{"name": "search", "blocked": True}],
+            },
+        )
+
+    AsyncHTTPFixture.responder = staticmethod(responder)
+    monkeypatch.setattr(llm_client.httpx, "AsyncClient", AsyncHTTPFixture)
+    monkeypatch.setenv("CHATBOT_TEST_KEY", "controlled-test-key")
+    target = llm_target(
+        "chatbot",
+        {
+            "message_path": "input.message",
+            "history_path": "input.history",
+            "max_tokens_path": "generation.limit",
+            "response_path": "answer.text",
+            "tool_calls_path": "actions",
+            "static_payload": {"tenant": "authorised-lab"},
+            "api_key_env": "CHATBOT_TEST_KEY",
+            "api_key_header": "X-API-Key",
+            "api_key_prefix": "",
+            "retries": 0,
+        },
+    )
+    target.endpoint = "https://127.0.0.1:9999/conversation"
+    messages = [
+        {"role": "system", "content": "Protect the marker."},
+        {"role": "user", "content": "Run the controlled test."},
+    ]
+    result = await llm_client.send_chat(target, messages, 321, Settings(data_dir=tmp_path))
+    assert observed["url"] == "https://127.0.0.1:9999/conversation"
+    assert observed["headers"]["X-API-Key"] == "controlled-test-key"
+    assert observed["body"] == {
+        "tenant": "authorised-lab",
+        "input": {"message": "Run the controlled test.", "history": messages},
+        "generation": {"limit": 321},
+    }
+    assert result.text == "The fictional marker remains protected."
+    assert result.tool_calls == [{"name": "search", "blocked": True}]
+
+
+@pytest.mark.asyncio
+async def test_generic_chatbot_rejects_transport_header_overrides(tmp_path) -> None:
+    target = llm_target(
+        "chatbot",
+        {"headers": {"Host": "attacker.invalid"}, "response_path": "answer"},
+    )
+    with pytest.raises(ValueError, match="forbidden name"):
+        await llm_client.send_chat(
+            target,
+            [{"role": "user", "content": "controlled test"}],
+            20,
+            Settings(data_dir=tmp_path),
+        )
+
+
+@pytest.mark.asyncio
 async def test_llm_client_retries_transient_status_and_rejects_bad_payload(
     monkeypatch: pytest.MonkeyPatch, tmp_path
 ) -> None:

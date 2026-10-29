@@ -1,25 +1,25 @@
 # Installation Validation Matrix
 
-État au 2026-10-29. « Statique » signifie présence et relecture de structure, pas analyse par PowerShell. Les résultats Linux CI cités proviennent du run GitHub Actions `40916996042`; Windows reste non validé.
+État au 2026-10-29. « Syntaxe PS7 » signifie que le fichier a été chargé sans erreur par le parseur PowerShell 7 dans un conteneur Linux; cela ne constitue pas une exécution Windows. Les résultats Linux CI cités proviennent du run GitHub Actions `40916996042`; PowerShell 5.1, MSVC et les installateurs Windows restent non validés tant qu’un run Windows réussi n’est pas disponible.
 
 | Script | Syntaxe | Exécution | Tests d’erreur | Résultat | Statut |
 |---|---|---|---|---|---|
-| install.ps1 | À vérifier sous PowerShell | Non exécutée | Non exécutés | Environnement sans Windows | Non validé |
-| install-dev.ps1 | À vérifier sous PowerShell | Non exécutée | Non exécutés | Environnement sans Windows | Non validé |
-| check-prerequisites.ps1 | À vérifier sous PowerShell | Non exécutée | Non exécutés | Environnement sans Windows | Non validé |
-| setup-backend.ps1 | À vérifier sous PowerShell | Non exécutée | Non exécutés | Équivalent Python exécuté | Non validé Windows |
-| setup-frontend.ps1 | À vérifier sous PowerShell | Non exécutée | Non exécutés | Équivalent npm exécuté | Non validé Windows |
-| setup-database.ps1 | À vérifier sous PowerShell | Non exécutée | Non exécutés | Initialisation Python exécutée | Non validé Windows |
-| start-dev.ps1 | À vérifier sous PowerShell | Non exécutée | Non exécutés | — | Non validé |
-| start-production.ps1 | À vérifier sous PowerShell | Non exécutée | Non exécutés | — | Non validé |
-| build-windows.ps1 | À vérifier sous PowerShell | Non exécutée | Non exécutés | Rust/Windows absents | Non validé |
-| test-all.ps1 | À vérifier sous PowerShell | Non exécutée | Non exécutés | Tests appelés directement, réussis | Non validé Windows |
-| verify-installation.ps1 | À vérifier sous PowerShell | Non exécutée | Non exécutés | — | Non validé |
-| update.ps1 | À vérifier sous PowerShell | Non exécutée | Non exécutés | — | Non validé |
-| backup.ps1 | À vérifier sous PowerShell | Non exécutée | Non exécutés | API backup testée | Non validé Windows |
-| restore.ps1 | À vérifier sous PowerShell | Non exécutée | Non exécutés | Opération destructive non lancée | Non validé |
-| uninstall.ps1 | À vérifier sous PowerShell | Non exécutée | Non exécutés | Opération destructive non lancée | Non validé |
-| clean.ps1 | À vérifier sous PowerShell | Non exécutée | Non exécutés | — | Non validé |
+| install.ps1 | Syntaxe PS7 réussie | Non exécutée | Cas prévus par Pester, non exécutés localement | Environnement sans Windows | Non validé Windows |
+| install-dev.ps1 | Syntaxe PS7 réussie | Non exécutée | Venv incomplet traité dans le code | Environnement sans Windows | Non validé Windows |
+| check-prerequisites.ps1 | Syntaxe PS7 réussie | Non exécutée | Tests Pester fournis | Sonde MSVC/SDK non exécutable sous Linux | Non validé Windows |
+| setup-backend.ps1 | Syntaxe PS7 réussie | Non exécutée | Venv absent/incomplet couvert | Équivalent Python exécuté | Non validé Windows |
+| setup-frontend.ps1 | Syntaxe PS7 réussie | Non exécutée | `stderr` natif couvert par Pester fourni | Équivalent npm exécuté | Non validé Windows |
+| setup-database.ps1 | Syntaxe PS7 réussie | Non exécutée | Idempotence Pester fournie | Initialisation Python exécutée directement | Non validé Windows |
+| start-dev.ps1 | Syntaxe PS7 réussie | Non exécutée | Non exécutés | — | Non validé Windows |
+| start-production.ps1 | Syntaxe PS7 réussie | Non exécutée | Installation absente couverte dans le code | — | Non validé Windows |
+| build-windows.ps1 | Syntaxe PS7 réussie | Non exécutée | MSI/NSIS manquants bloquants | Rust/MSVC Windows absents | Non validé Windows |
+| test-all.ps1 | Syntaxe PS7 réussie | Non exécutée | Seuils bloquants | Tests appelés directement, réussis | Non validé Windows |
+| verify-installation.ps1 | Syntaxe PS7 réussie | Non exécutée | Rapport d’échec prévu | — | Non validé Windows |
+| update.ps1 | Syntaxe PS7 réussie | Non exécutée | Backup/rollback prévus | — | Non validé Windows |
+| backup.ps1 | Syntaxe PS7 réussie | Non exécutée | Données absentes couvertes | API backup testée | Non validé Windows |
+| restore.ps1 | Syntaxe PS7 réussie | Non exécutée | Confirmation obligatoire fournie | Opération destructive non lancée | Non validé Windows |
+| uninstall.ps1 | Syntaxe PS7 réussie | Non exécutée | Suppression des données doublement confirmée | Opération destructive non lancée | Non validé Windows |
+| clean.ps1 | Syntaxe PS7 réussie | Non exécutée | Cibles bornées au dépôt | — | Non validé Windows |
 
 ## Scripts Linux
 

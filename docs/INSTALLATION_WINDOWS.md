@@ -9,7 +9,7 @@
 
 ## Installation par paquet
 
-1. Télécharger le `.msi` ou le programme `-setup.exe` depuis une release approuvée.
+1. Télécharger le `.msi` ou le programme NSIS `-setup.exe` depuis une release approuvée ou l’artefact `agentsec-windows-x64` d’un workflow Windows réussi.
 2. Vérifier son empreinte publiée :
 
 ```powershell
@@ -25,6 +25,20 @@ Set-ExecutionPolicy -Scope Process Bypass
 
 Le script demande une confirmation, installe le paquet puis exécute un contrôle fonctionnel. Il ne désactive aucune protection Windows et n’installe aucun logiciel tiers silencieusement.
 
+Pour le programme NSIS :
+
+```powershell
+.\scripts\install.ps1 -InstallerPath '.\AgentSec Inspector_1.0.0_x64-setup.exe'
+```
+
+Dans une CI ou un environnement de test isolé, l’installation sans interface reste explicite :
+
+```powershell
+.\scripts\install.ps1 -InstallerPath '.\AgentSec Inspector_1.0.0_x64_en-US.msi' -Confirmed -Quiet
+```
+
+Les codes MSI `1641` et `3010` signifient qu’un redémarrage est demandé. Le script les reconnaît sans masquer les autres erreurs.
+
 ## Données
 
 Les projets, preuves, rapports, sauvegardes, journaux et secrets chiffrés sont placés sous `%LOCALAPPDATA%\AgentSec`. Le backend n’écoute que sur une adresse de bouclage et utilise un jeton éphémère fourni à l’interface par IPC Tauri.
@@ -38,3 +52,29 @@ Get-Content .\logs\tests\installation-verification.json
 ```
 
 La vérification crée un répertoire temporaire et un projet temporaire, teste l’authentification, la base, l’API, les journaux et le démarrage desktop, puis supprime les données temporaires.
+
+## Désinstallation
+
+La désinstallation conserve les projets, preuves et rapports :
+
+```powershell
+.\scripts\uninstall.ps1
+```
+
+La suppression des données nécessite deux options et la confirmation PowerShell :
+
+```powershell
+.\scripts\backup.ps1
+.\scripts\uninstall.ps1 -DeleteUserData -Confirmed
+```
+
+## Récupérer les installateurs de la CI
+
+Ouvrir **Actions → Windows x64 build and installer validation**, sélectionner un run réussi, puis télécharger `agentsec-windows-x64`. L’archive contient :
+
+- le MSI sous `bundle\msi` ;
+- le setup NSIS sous `bundle\nsis` ;
+- `SHA256SUMS-windows.txt` ;
+- les rapports JSON et journaux de validation.
+
+Une compilation seule n’est pas une preuve d’installation. Vérifier que les étapes MSI, NSIS, vérification du sidecar et désinstallation sont toutes vertes.
