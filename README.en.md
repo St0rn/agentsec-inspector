@@ -6,24 +6,26 @@
 
 ### AI Red Team & MCP Security Auditing Platform
 
-A local-first Windows framework for authorized red-team campaigns against AI agents, MCP servers, RAG pipelines, and LLM applications.
+A Windows desktop application for authorized security assessments of AI agents, MCP servers, RAG pipelines, and LLM applications.
 
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.162-009688?style=flat-square&logo=fastapi&logoColor=white)
 ![React](https://img.shields.io/badge/React-19-149ECA?style=flat-square&logo=react&logoColor=white)
 ![Tauri](https://img.shields.io/badge/Tauri-2-24C8DB?style=flat-square&logo=tauri&logoColor=white)
 ![Windows](https://img.shields.io/badge/Windows-x64-0078D4?style=flat-square&logo=windows11&logoColor=white)
+![Linux](https://img.shields.io/badge/Linux-x64-FCC624?style=flat-square&logo=linux&logoColor=111)
 ![Mode](https://img.shields.io/badge/passive%20audit%20by%20default-22C55E?style=flat-square)
 
 [![Backend tests](https://github.com/St0rn/agentsec-inspector/actions/workflows/backend-tests.yml/badge.svg?branch=main)](https://github.com/St0rn/agentsec-inspector/actions/workflows/backend-tests.yml)
 [![Frontend tests](https://github.com/St0rn/agentsec-inspector/actions/workflows/frontend-tests.yml/badge.svg?branch=main)](https://github.com/St0rn/agentsec-inspector/actions/workflows/frontend-tests.yml)
 [![Security checks](https://github.com/St0rn/agentsec-inspector/actions/workflows/security-checks.yml/badge.svg?branch=main)](https://github.com/St0rn/agentsec-inspector/actions/workflows/security-checks.yml)
+[![Linux build](https://github.com/St0rn/agentsec-inspector/actions/workflows/linux-build.yml/badge.svg?branch=main)](https://github.com/St0rn/agentsec-inspector/actions/workflows/linux-build.yml)
 
-**Evidence-first · Passive-first · Local-first**
+**Verifiable evidence · Passive by default · Runs locally**
 
 [🇫🇷 Français](README.md) · [🇬🇧 English](README.en.md)
 
-[Capabilities](#one-unified-audit-surface) · [Tests](#every-security-control-and-test) · [Architecture](#secure-local-architecture) · [Installation](#windows-development-setup) · [Validation](#observed-validation)
+[Capabilities](#one-place-for-the-complete-assessment) · [Tests](#every-security-control-and-test) · [User guide](#user-guide) · [Architecture](#secure-local-architecture) · [Installation](#installation) · [Validation](#validation-results)
 
 </div>
 
@@ -33,15 +35,15 @@ A local-first Windows framework for authorized red-team campaigns against AI age
 
 <table>
   <tr>
-    <td align="center" width="33%"><strong>🛡️ Evidence before verdicts</strong><br/><sub>Every conclusion remains linked to an actually observed request, response, trace, or event.</sub></td>
-    <td align="center" width="33%"><strong>⚡ Active under control</strong><br/><sub>No sensitive action without precise selection, authorized scope, and explicit confirmation.</sub></td>
-    <td align="center" width="33%"><strong>🔒 Local data</strong><br/><sub>Authenticated loopback backend, isolated projects, and secrets encrypted at rest.</sub></td>
+    <td align="center" width="33%"><strong>🛡️ Evidence for every conclusion</strong><br/><sub>Every result remains linked to an actual request, response, trace, or observed event.</sub></td>
+    <td align="center" width="33%"><strong>⚡ Active tests stay under control</strong><br/><sub>No sensitive action without a precise selection, authorized scope, and explicit approval.</sub></td>
+    <td align="center" width="33%"><strong>🔒 Data stays local</strong><br/><sub>Loopback-only API, isolated projects, and secrets encrypted at rest.</sub></td>
   </tr>
 </table>
 
-## A reproducible AI red-team framework
+## Repeatable security assessments backed by evidence
 
-The framework does not depend on an external “AI judge.” Its decisions rely on versioned criteria, fictional canary markers, actually observed traces, and retained evidence. Teams can import their own [declarative scenario packs](docs/SCENARIO_PACKS.md) without loading or executing third-party code.
+AgentSec Inspector uses deterministic checks; it does not ask a second AI model to decide whether a test passed. Results are based on versioned criteria, fictional canary markers, and actual traces. Teams can add their own [declarative scenario packs](docs/SCENARIO_PACKS.md) without loading or executing third-party code.
 
 <table>
   <tr>
@@ -53,30 +55,30 @@ The framework does not depend on an external “AI judge.” Its decisions rely 
     <td width="50%"><img src="docs/images/attack-chains.png" alt="Attack-chain visualization"/><br/><sub>Graph built exclusively from observed interactions</sub></td>
   </tr>
   <tr>
-    <td colspan="2"><img src="docs/images/scenario-packs.png" alt="Scenario-pack import"/><br/><sub>Framework extension through validated, versioned JSON packs</sub></td>
+    <td colspan="2"><img src="docs/images/scenario-packs.png" alt="Scenario-pack import"/><br/><sub>Add scenarios through validated, versioned JSON packs</sub></td>
   </tr>
 </table>
 
 <p align="center"><sub>Gallery generated from the real frontend connected to the controlled local laboratory.</sub></p>
 
-## One unified audit surface
+## One place for the complete assessment
 
-AgentSec Inspector centralizes technical evidence without claiming to observe a model's hidden reasoning. Results explicitly distinguish an **observation**, a **potential risk**, and a **confirmed vulnerability**.
+AgentSec Inspector brings a project's targets, tests, evidence, findings, and reports together. It analyzes only observable behavior and never claims access to a model's hidden reasoning. Results clearly distinguish an **observation**, a **potential risk**, and a **confirmed vulnerability**.
 
 | Domain | Operational capabilities |
 |---|---|
 | MCP Security | Passive Streamable HTTP/stdio discovery and explicitly selected, configured, and confirmed active calls |
-| Prompt & LLM | 10 versioned scenarios, OpenAI-compatible, Ollama, and HTTP endpoints, with PASS/FAIL/INCONCLUSIVE/ERROR outcomes |
+| Prompt & LLM | 10 built-in versioned scenarios, OpenAI-compatible, Ollama, and HTTP connectors, with PASS/FAIL/INCONCLUSIVE/ERROR results |
 | RAG Security | Documents and metadata, controlled injection cases, real traces, and Document → Retrieval → LLM → Response visualization |
-| Agent Behavior | Timeline of messages, MCP calls, parameters, results, errors, durations, and observable decisions |
+| Agent Behavior | Chronological view of messages, MCP calls, parameters, results, errors, durations, and observable decisions |
 | Findings | Full lifecycle, history, evidence, confidence, impact, reproduction, and remediation |
 | Reporting | Technical and executive reports in English or French, exported as HTML, JSON, or PDF |
-| Scenario Packs | Versioned JSON import with extensible criteria and references, without plugin-code execution |
+| Scenario Packs | Import versioned JSON scenarios without executing code from the pack |
 
 ## Every security control and test
 
 <details open>
-<summary><strong>Enumeration and passive auditing</strong></summary>
+<summary><strong>Passive discovery and analysis</strong></summary>
 
 1. MCP negotiation and protocol version.
 2. Server information and advertised capabilities.
@@ -106,9 +108,9 @@ Passive mode never calls an MCP tool and never fabricates internal stages missin
 </details>
 
 <details open>
-<summary><strong>Active attacks and security tests</strong></summary>
+<summary><strong>Active security tests</strong></summary>
 
-### Controlled active MCP
+### Active MCP tests with explicit approval
 
 1. Calling a tool selected from the actually discovered inventory.
 2. Sending only explicitly authorized JSON parameters.
@@ -146,8 +148,8 @@ Active connectors cover OpenAI-compatible APIs, Ollama, custom HTTP chat endpoin
 <details>
 <summary><strong>Outcomes and security boundaries</strong></summary>
 
-- `PASS`: no observable violation of the built-in criterion.
-- `FAIL`: fictional marker disclosed or observable tool call under the controlled scenario.
+- `PASS`: no violation found under the scenario's criteria.
+- `FAIL`: the fictional marker was disclosed or the target attempted a prohibited tool call.
 - `INCONCLUSIVE`: insufficient evidence, such as an empty response.
 - `ERROR`: technical failure, never treated as a successful attack.
 - Findings: `Observation`, `Risk potential`, or `Confirmed vulnerability`, with separate severity and confidence.
@@ -158,6 +160,108 @@ V1 does not perform port scanning, host exploitation, automatic invocation of ev
 
 The [detailed test catalog](docs/TEST_CATALOG.md) documents the method, evidence, and boundaries of every control.
 
+## User guide
+
+Follow the workflow from the least intrusive action to the most intrusive one. Document the authorized scope first, then complete passive discovery before approving any active test.
+
+> [!IMPORTANT]
+> Add only systems covered by explicit authorization. Remote targets remain blocked until you confirm that they are within the assessment scope.
+
+<details open>
+<summary><strong>1. Create an engagement and define its scope</strong></summary>
+
+Open **Projects**, select **Nouveau projet**, and enter the client, engagement name, dates, and authorized scope. Every target, item of evidence, and report remains attached to this project.
+
+<img src="docs/images/manual-project.png" alt="Creating an engagement and entering its authorized scope"/>
+
+</details>
+
+<details>
+<summary><strong>2. Add a target</strong></summary>
+
+In **Targets**, select the project and target type: MCP HTTP/stdio, OpenAI-compatible, Ollama, HTTP endpoint, RAG system, or laboratory agent. Reference secrets through environment variables instead of entering them in JSON configuration. Approve remote access only when the engagement scope allows it.
+
+<img src="docs/images/manual-target.png" alt="Adding an MCP HTTP target to a project"/>
+
+</details>
+
+<details>
+<summary><strong>3. Start with passive MCP discovery</strong></summary>
+
+In **MCP Security**, select the project and target, keep **Passif — découverte seule**, then start the inspection. AgentSec inventories capabilities, tools, resources, prompts, and schemas without calling a tool.
+
+<img src="docs/images/mcp-passive.png" alt="Configuring a passive MCP audit"/>
+
+</details>
+
+<details>
+<summary><strong>4. Approve an active MCP test</strong></summary>
+
+After passive discovery, switch to **Actif — appel contrôlé**. Choose one discovered tool, review the exact JSON arguments, and approve that specific call. Sensitive capabilities require a second confirmation. The result, duration, and errors are retained as evidence.
+
+<img src="docs/images/mcp-active.png" alt="Configuring an explicitly approved active MCP call"/>
+
+</details>
+
+<details>
+<summary><strong>5. Test Prompt and LLM protections</strong></summary>
+
+In **Prompt Injection** or **LLM Security**, choose the target, a versioned scenario, and the security objective. Tests use fictional markers only. Review the resulting `PASS`, `FAIL`, `INCONCLUSIVE`, or `ERROR` status and its evidence.
+
+<img src="docs/images/prompt-injection.png" alt="Selecting a Prompt Injection scenario"/>
+
+</details>
+
+<details>
+<summary><strong>6. Analyze a RAG system</strong></summary>
+
+In **RAG Security**, import a controlled document or a real trace. When telemetry is available, provide retrieved chunks and the LLM context; otherwise leave them absent. Enter the expected and observed responses to compare behavior without inventing internal stages.
+
+<img src="docs/images/rag-security.png" alt="Analyzing a RAG document and trace"/>
+
+</details>
+
+<details>
+<summary><strong>7. Review behavior and the observed attack path</strong></summary>
+
+**Agent Behavior** shows exchanges and calls in the order they were observed. **Attack Chains** links the components involved. The graph represents recorded events, not the model's hidden reasoning.
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/images/agent-behavior.png" alt="Timeline of observed events"/></td>
+    <td width="50%"><img src="docs/images/attack-chains.png" alt="Graph of observed interactions"/></td>
+  </tr>
+</table>
+
+</details>
+
+<details>
+<summary><strong>8. Review and track findings</strong></summary>
+
+In **Findings**, open each finding and review its evidence, classification, severity, and confidence. Update its status during validation and remediation: Open, Confirmed, False Positive, Accepted Risk, or Remediated.
+
+<img src="docs/images/findings.png" alt="Reviewing and tracking a security finding"/>
+
+</details>
+
+<details>
+<summary><strong>9. Generate the report</strong></summary>
+
+In **Reports**, select the project, technical or executive report, language, and HTML, PDF, or JSON format. Reports are generated from actual project data and receive a SHA-256 fingerprint.
+
+<img src="docs/images/reports.png" alt="Generating and downloading reports"/>
+
+</details>
+
+<details>
+<summary><strong>10. Add your team's scenarios</strong></summary>
+
+In **Settings**, import a versioned JSON pack. Only declarative `chat` steps are accepted; commands and executable code are rejected. Publish a new version when a scenario changes so previous audit results remain traceable.
+
+<img src="docs/images/scenario-packs.png" alt="Importing a versioned scenario pack"/>
+
+</details>
+
 ## Secure local architecture
 
 <table>
@@ -166,7 +270,7 @@ The [detailed test catalog](docs/TEST_CATALOG.md) documents the method, evidence
     <td align="center">→<br/><sub>local IPC</sub></td>
     <td align="center"><strong>Tauri 2</strong><br/><sub>Launch · supervision</sub></td>
     <td align="center">→<br/><sub>ephemeral token</sub></td>
-    <td align="center"><strong>FastAPI sidecar</strong><br/><sub>127.0.0.1 only</sub></td>
+    <td align="center"><strong>Bundled FastAPI backend</strong><br/><sub>127.0.0.1 only</sub></td>
   </tr>
   <tr>
     <td align="center"><strong>SQLite</strong><br/><sub>Isolated projects</sub></td>
@@ -184,7 +288,32 @@ The [detailed test catalog](docs/TEST_CATALOG.md) documents the method, evidence
 
 The [test and attack catalog](docs/TEST_CATALOG.md) states exactly what V1 executes and where its boundaries are. The [security model](docs/SECURITY.md) documents trust boundaries and isolation limits. The [Scenario Pack API](docs/SCENARIO_PACKS.md) describes safe framework extension.
 
-## Windows development setup
+## Installation
+
+### Windows x64
+
+Use the published MSI/NSIS installer or run the following from source:
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+.\scripts\install.ps1
+.\scripts\verify-installation.ps1
+```
+
+### Linux x86_64
+
+The AppImage contains the frontend and standalone backend, so end users do not need Python or Node.js.
+
+```bash
+chmod +x scripts/linux/*.sh
+scripts/linux/install.sh --artifact /path/to/AgentSec-Inspector.AppImage
+scripts/linux/verify-installation.sh
+agentsec-inspector
+```
+
+See the [Linux installation](docs/INSTALLATION_LINUX.md) and [Linux build](docs/BUILD_LINUX.md) guides.
+
+### Windows development environment
 
 Requirements: Windows 10 22H2/Windows 11 x64, Python 3.12, Node.js 22+, stable Rust, MSVC build tools, and WebView2.
 
@@ -211,7 +340,15 @@ Build the x64 MSI and NSIS installer:
 
 Exact procedures are available in the [Windows installation](docs/INSTALLATION_WINDOWS.md), [development setup](docs/INSTALLATION_DEVELOPMENT.md), [build guide](docs/BUILD_WINDOWS.md), and [troubleshooting guide](docs/TROUBLESHOOTING.md).
 
-## Observed validation
+### Linux development environment
+
+```bash
+scripts/linux/check-prerequisites.sh --build
+scripts/linux/install-dev.sh
+scripts/linux/start-dev.sh
+```
+
+## Validation results
 
 | Control | Local result |
 |---|---|
@@ -220,7 +357,8 @@ Exact procedures are available in the [Windows installation](docs/INSTALLATION_W
 | Source and dependency security | `pip-audit` and `npm audit` found no known vulnerabilities; Bandit found no medium/high issue |
 | Standalone binary | Linux PyInstaller build verified with fresh migration, authentication, CORS, integrity, and PDF generation |
 | Laboratory | Passive MCP discovery, bounded active MCP call, and actual LLM exchanges executed successfully |
-| Rust/Tauri | `cargo fmt` and locked metadata successful; Windows build delegated to CI |
+| Linux scripts | Development install executed twice; startup, tests, backup/restore, and primary error paths validated |
+| Desktop packages | Dedicated workflows for AppImage/DEB and Windows installers; current status is shown by the CI badges |
 | Windows/PowerShell | Scripts and workflow supplied, but not locally validated because no Windows host was available |
 
 The Windows build is **not** reported as validated without evidence from a Windows run. See [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md), the [installation validation matrix](INSTALLATION_VALIDATION_MATRIX.md), and the [detailed validation report](docs/VALIDATION_REPORT.md).
@@ -232,7 +370,7 @@ backend/       API, models, migrations, audit engines, and reports
 frontend/      React, TypeScript, Tailwind, charts, and visualizations
 src-tauri/     desktop application, sidecar supervision, and IPC
 demo/          controlled MCP / LLM / RAG laboratory
-scripts/       installation, build, test, update, backup, and uninstall
+scripts/       complete PowerShell lifecycle for Windows and Bash lifecycle for Linux
 docs/          architecture, security, and Windows procedures
 .github/       backend/frontend tests, security checks, and Windows x64 build
 ```
@@ -241,6 +379,13 @@ docs/          architecture, security, and Windows procedures
 
 This tool is intended exclusively for audits with explicit authorization and a documented scope. Run untrusted MCP servers inside a dedicated VM or Windows Sandbox: stdio subprocess restrictions alone are not a security sandbox.
 
+## Author and contact
+
+AgentSec Inspector is created and maintained by **St0rn**.
+
+- Contact: [fabien.dromas@cybersecurit.fr](mailto:fabien.dromas@cybersecurit.fr)
+- Website: [www.cybersecurit.fr](https://www.cybersecurit.fr)
+
 ---
 
-<div align="center"><sub>AgentSec Inspector V1.0 · outcomes based on observable executions and retained evidence</sub></div>
+<div align="center"><sub>AgentSec Inspector V1.0 · created by St0rn · results based on executed tests and verifiable evidence</sub></div>

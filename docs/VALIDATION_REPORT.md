@@ -85,6 +85,21 @@ cargo check --target x86_64-pc-windows-msvc : tenté, bloqué par llvm-rc absent
 
 Six captures du frontend réellement connecté au laboratoire sont conservées dans `docs/images/` : dashboard, MCP actif, prompt injection, findings, graphe observé et packs de scénarios.
 
+Scripts Linux :
+
+```text
+check-prerequisites.sh : succès sur Linux x86_64, Python 3.12.14 et Node.js 24.19.0
+check-prerequisites.sh --build : échec attendu, dépendances WebKitGTK/Rust absentes correctement signalées
+install-dev.sh : deux exécutions successives, base SQLite intègre
+setup-database.sh : migration et scénarios réussis
+start-dev.sh : backend /health=200, API sans jeton=401, frontend=200
+test-all.sh : backend, frontend, lint, typage et build réussis
+test-scripts.sh : syntaxe, backup/restore, idempotence, downgrade, artefact invalide et uninstall réussis
+backup.sh / restore.sh : archive SHA-256, integrity_check=ok, ancienne donnée préservée
+```
+
+Les captures du manuel utilisateur (`manual-project`, `manual-target`, `mcp-passive`, `rag-security`, `agent-behavior`, `reports`) ont été générées depuis le frontend réel connecté au laboratoire contrôlé.
+
 ## Non exécuté dans cet environnement
 
 - Analyse syntaxique PowerShell avec le parseur PowerShell
@@ -94,6 +109,7 @@ Six captures du frontend réellement connecté au laboratoire sont conservées d
 - MSI/NSIS
 - Installation, mise à jour, restauration et désinstallation Windows
 - Lancement WebView2 sur Windows propre
+- Build Tauri AppImage/DEB local, bloqué avant compilation par les bibliothèques système absentes; workflow Linux fourni
 
 Ces éléments sont donc **non validés Windows**, même si leurs scripts et workflows sont présents. `.github/workflows/windows-build.yml` exécute les validations manquantes sur `windows-2022`, génère les artefacts et publie les journaux. Aucun run CI n’a été observé dans cet environnement local.
 

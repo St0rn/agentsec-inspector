@@ -20,3 +20,23 @@
 | restore.ps1 | À vérifier sous PowerShell | Non exécutée | Non exécutés | Opération destructive non lancée | Non validé |
 | uninstall.ps1 | À vérifier sous PowerShell | Non exécutée | Non exécutés | Opération destructive non lancée | Non validé |
 | clean.ps1 | À vérifier sous PowerShell | Non exécutée | Non exécutés | — | Non validé |
+
+## Scripts Linux
+
+| Script | Syntaxe | Exécution | Tests d’erreur | Résultat | Statut |
+|---|---|---|---|---|---|
+| check-prerequisites.sh | Bash `-n` réussi | Exécutée | Dépendances build absentes | Prérequis standard OK, message build exploitable | Validé localement |
+| install-dev.sh | Bash `-n` réussi | Exécutée deux fois | Prérequis séparés | Dépendances verrouillées, DB intègre | Validé localement |
+| setup-database.sh | Bash `-n` réussi | Exécutée plusieurs fois | Venv absent couvert | Migration idempotente | Validé localement |
+| start-dev.sh | Bash `-n` réussi | Exécutée | Auth sans jeton testée | Backend, frontend et arrêt propre OK | Validé localement |
+| test-all.sh | Bash `-n` réussi | Exécutée | Seuils bloquants | Tous les contrôles réussis | Validé localement |
+| test-scripts.sh | Bash `-n` réussi | Exécutée | Confirmation, downgrade, artefact invalide | Tous les cas isolés réussis | Validé localement |
+| backup.sh | Bash `-n` réussi | Exécutée | Données absentes couvertes | Archive et SHA-256 créés | Validé localement |
+| restore.sh | Bash `-n` réussi | Exécutée | Confirmation obligatoire | SQLite intègre, ancienne donnée préservée | Validé localement |
+| install.sh | Bash `-n` réussi | Fixture exécutée deux fois | Artefact manquant/invalide | Copie atomique et idempotence vérifiées | Partiel — AppImage CI attendue |
+| verify-installation.sh | Bash `-n` réussi | Artefact invalide exécuté | Rejet attendu | Échec non nul correct | Partiel — AppImage CI attendue |
+| update.sh | Bash `-n` réussi | Chemins sans changement/downgrade testés | Downgrade refusé | Contrôles de version réussis | Partiel — AppImage CI attendue |
+| uninstall.sh | Bash `-n` réussi | Exécutée en environnement isolé | Confirmation suppression testée | Conservation/suppression explicite réussies | Validé localement |
+| build-linux.sh | Bash `-n` réussi | Arrêt au contrôle des prérequis | Dépendances absentes | Aucun faux succès | Non validé jusqu’à la CI |
+| start-production.sh | Bash `-n` réussi | Non exécutée avec AppImage réelle | Installation absente couverte | — | Non validé jusqu’à la CI |
+| clean.sh | Bash `-n` réussi | Non exécutée | Cibles bornées au dépôt | — | Statique uniquement |

@@ -1,0 +1,47 @@
+name: Linux x64 build and installation smoke test
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    tags: ["v*"]
+  pull_request:
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12", cache: pip, cache-dependency-path: backend/requirements.lock}
+      - uses: actions/setup-node@v4
+        with: {node-version: "22", cache: npm, cache-dependency-path: frontend/package-lock.json}
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Linux desktop build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends build-essential libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libssl-dev libgtk-3-dev libsoup-3.0-dev shellcheck
+      - name: Validate shell scripts
+        run: |
+          find scripts/linux -type f -name '*.sh' -print0 | xargs -0 -n1 bash -n
+          shellcheck scripts/linux/*.sh scripts/linux/lib/*.sh
+          scripts/linux/test-scripts.sh
+      - name: Install locked development environment
+        run: scripts/linux/install-dev.sh
+      - name: Build AppImage and DEB
+        run: scripts/linux/build-linux.sh
+      - name: Install and verify AppImage
+        run: |
+          artifact="$(find src-tauri/target/release/bundle -type f -name '*.AppImage' -print -quit)"
+          scripts/linux/install.sh --artifact "$artifact"
+          scripts/linux/verify-installation.sh
+          scripts/linux/install.sh --artifact "$artifact"
+          scripts/linux/verify-installation.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: agentsec-linux-x64
+          path: |
+            src-tauri/target/release/bundle/**/*.AppImage
+            src-tauri/target/release/bundle/**/*.deb
+            logs/**/*.log
+            logs/**/*.txt

@@ -26,6 +26,18 @@ Date : 2026-10-29. Ce document distingue livraison de code, exécution locale Li
 - Backend autonome Linux PyInstaller vérifié sur base neuve : migration, santé, rejet sans jeton, CORS authentifié, CRUD, intégrité et génération/téléchargement PDF.
 - Audits de dépendances `pip-audit` et `npm audit` réussis sans vulnérabilité connue; Bandit sans finding moyen ou élevé.
 - Six captures réelles produites depuis le frontend connecté aux résultats du laboratoire contrôlé : dashboard, MCP actif, prompt injection, findings, attack chains et packs de scénarios.
+- Six captures supplémentaires produites pour le manuel utilisateur : projet, cible, MCP passif, RAG, comportement agent et rapports.
+
+## Terminé et exécuté sous Linux — cycle d’installation
+
+- Scripts Bash pour prérequis, installation développeur, base de données, démarrage, tests, build, installation AppImage, vérification, mise à jour, sauvegarde, restauration, désinstallation et nettoyage.
+- Vérification des prérequis standard réussie; erreur de build contrôlée et dépendances système manquantes correctement détaillées sans installation automatique.
+- `install-dev.sh` exécuté deux fois sur le même environnement; base SQLite restée intègre.
+- `start-dev.sh` vérifié avec backend sain, API protégée (401 sans jeton) et frontend disponible.
+- `test-all.sh` exécuté avec les 46 tests backend, 9 tests frontend, lint, typage et build.
+- Tests isolés des scripts réussis : syntaxe Bash, sauvegarde, restauration avec confirmation, idempotence, refus de downgrade, rejet d’un artefact invalide, préservation et suppression confirmée des données.
+- Sauvegarde et restauration réelles exécutées sur une base SQLite; empreinte et intégrité vérifiées, ancienne arborescence préservée.
+- Workflow `linux-build.yml` fourni pour construire et installer réellement les paquets AppImage et DEB sur Ubuntu.
 
 ## Fourni mais non validé sur Windows
 
@@ -35,6 +47,12 @@ Date : 2026-10-29. Ce document distingue livraison de code, exécution locale Li
 - Workflow Windows avec analyse PowerShell, Pester, build, installation MSI et smoke test.
 
 Raison : l’environnement courant ne contient ni Windows ni PowerShell. Rust/Cargo a été installé pour les contrôles statiques, mais la vérification de la cible MSVC est bloquée sous Linux par l’absence de `llvm-rc`. Ces éléments ne portent donc pas le statut « validé Windows ».
+
+## Fourni mais non construit localement sous Linux
+
+- Paquets desktop AppImage et DEB Tauri.
+
+Raison : l’environnement Linux courant ne contient pas WebKitGTK/GTK/libsoup ni Rust dans le `PATH` système. Le script refuse proprement le build et indique les paquets nécessaires. Le workflow Linux installe ces dépendances de manière explicite et produit les preuves manquantes. Aucun paquet AppImage/DEB n’est déclaré validé avant la réussite de ce workflow.
 
 ## Partiel
 
@@ -56,11 +74,11 @@ Raison : l’environnement courant ne contient ni Windows ni PowerShell. Rust/Ca
 
 ## Scripts fournis
 
-Tous les scripts obligatoires sont présents dans `scripts/`, plus `start-demo.ps1`, les tests Pester et la génération CI de matrice.
+Tous les scripts PowerShell obligatoires sont présents dans `scripts/`, plus `start-demo.ps1`, les tests Pester et la génération CI de matrice. Le cycle Linux équivalent est présent dans `scripts/linux/` avec ses tests isolés.
 
 ## Scripts réellement exécutés
 
-Aucun script `.ps1` n’a été exécuté, PowerShell étant absent. Les commandes Python/npm équivalentes ont été exécutées directement. Voir `docs/VALIDATION_REPORT.md` et `INSTALLATION_VALIDATION_MATRIX.md`.
+Aucun script `.ps1` n’a été exécuté, PowerShell étant absent. Les scripts Bash Linux de prérequis, installation développeur, base, démarrage, tests, sauvegarde, restauration et tests de cycle de vie ont été exécutés. Voir `docs/VALIDATION_REPORT.md` et `INSTALLATION_VALIDATION_MATRIX.md`.
 
 ## Résultats de tests
 
@@ -71,3 +89,4 @@ Aucun script `.ps1` n’a été exécuté, PowerShell étant absent. Les command
 - PyInstaller Linux : binaire autonome construit et smoke-testé, rapports PDF inclus.
 - Tauri : `cargo fmt --check` et `cargo metadata --locked --no-deps` réussis; compilation Windows non réalisée.
 - Windows/PowerShell : non exécutés, donc non validés.
+- Linux/Bash : scripts principaux exécutés; AppImage/DEB en attente de la preuve du workflow Linux.
