@@ -12,21 +12,21 @@ Date : 2026-10-29. Ce document distingue livraison de code, exécution locale Li
 - Mode actif MCP borné : validation des arguments contre le schéma annoncé, seconde confirmation des capacités sensibles, redaction des secrets, preuves et événements observables.
 - Analyse MCP conservatrice avec Observation / Risk potential / Confirmed vulnerability.
 - Connecteurs LLM OpenAI-compatible, Ollama et HTTP de chat; timeout, limite de réponse, redirections désactivées, credentials via variable d’environnement.
-- Dix scénarios de prompt injection versionnés, marqueur fictif, statuts PASS/FAIL/INCONCLUSIVE/ERROR et preuves.
+- Dix scénarios de prompt injection et neuf scénarios de jailbreak versionnés, marqueur fictif, statuts PASS/FAIL/INCONCLUSIVE/ERROR et preuves.
 - API de packs de scénarios JSON déclaratifs, versionnés et strictement validés; aucun code plugin n’est exécuté.
 - RAG : import de document, inspection d’instructions, import de trace, respect du drapeau de télémétrie, comparaison obtenu/attendu.
 - Événements observables d’agent, timeline et graphe d’interactions observées.
 - Findings complets et modifiables.
 - Rapports HTML, JSON et PDF, français/anglais, technique/exécutif.
 - Sauvegarde SQLite en ligne via API; scripts archive/restauration hors ligne.
-- Frontend React/TypeScript/Tailwind sombre avec les 12 menus demandés et états vides.
+- Frontend React/TypeScript/Tailwind sombre avec les 12 menus demandés, un module Jailbreak dédié supplémentaire et des états vides explicites.
 - Laboratoire distinct : endpoint chat déterministe, MCP et corpus RAG contrôlé.
-- 46 tests backend réussis (85,4 %, seuil bloquant 80 %); 9 tests frontend réussis (83,46 % des lignes et seuils bloquants); Ruff, mypy, ESLint et build web réussis.
+- 48 tests backend réussis (85,92 %, seuil bloquant 80 %); 10 tests frontend réussis (85,93 % des lignes et seuils bloquants); Ruff, mypy, ESLint et build web réussis.
 - Intégration loopback réelle : découverte MCP passive, appel actif autorisé et test LLM réussis contre le laboratoire.
 - Backend autonome Linux PyInstaller vérifié sur base neuve : migration, santé, rejet sans jeton, CORS authentifié, CRUD, intégrité et génération/téléchargement PDF.
 - Audits de dépendances `pip-audit` et `npm audit` réussis sans vulnérabilité connue; Bandit sans finding moyen ou élevé.
 - Six captures réelles produites depuis le frontend connecté aux résultats du laboratoire contrôlé : dashboard, MCP actif, prompt injection, findings, attack chains et packs de scénarios.
-- Six captures supplémentaires produites pour le manuel utilisateur : projet, cible, MCP passif, RAG, comportement agent et rapports.
+- Sept captures supplémentaires produites pour le manuel utilisateur : projet, cible, MCP passif, jailbreak, RAG, comportement agent et rapports.
 
 ## Terminé et exécuté sous Linux — cycle d’installation
 
@@ -34,7 +34,7 @@ Date : 2026-10-29. Ce document distingue livraison de code, exécution locale Li
 - Vérification des prérequis standard réussie; erreur de build contrôlée et dépendances système manquantes correctement détaillées sans installation automatique.
 - `install-dev.sh` exécuté deux fois sur le même environnement; base SQLite restée intègre.
 - `start-dev.sh` vérifié avec backend sain, API protégée (401 sans jeton) et frontend disponible.
-- `test-all.sh` exécuté avec les 46 tests backend, 9 tests frontend, lint, typage et build.
+- `test-all.sh` exécuté avec les 48 tests backend, 10 tests frontend, lint, typage et build.
 - Tests isolés des scripts réussis : syntaxe Bash, sauvegarde, restauration avec confirmation, idempotence, refus de downgrade, rejet d’un artefact invalide, préservation et suppression confirmée des données.
 - Sauvegarde et restauration réelles exécutées sur une base SQLite; empreinte et intégrité vérifiées, ancienne arborescence préservée.
 - Workflow `linux-build.yml` exécuté avec succès sur Ubuntu x64 : AppImage et DEB construits, AppImage installée et vérifiée deux fois, artefact CI `agentsec-linux-x64` publié (run `40916996042`).
@@ -82,8 +82,8 @@ Aucun script `.ps1` n’a été exécuté, PowerShell étant absent. Les scripts
 
 ## Résultats de tests
 
-- Backend : 46/46 réussis; couverture 85,4 % (minimum imposé 80 %); Ruff et mypy réussis.
-- Frontend : 9/9 réussis; 83,46 % des lignes avec seuils minimums; lint et build réussis.
+- Backend : 48/48 réussis; couverture 85,92 % (minimum imposé 80 %); Ruff et mypy réussis.
+- Frontend : 10/10 réussis; 85,93 % des lignes avec seuils minimums; lint et build réussis.
 - Intégration laboratoire : MCP passif, MCP actif contrôlé et LLM réussis.
 - Dépendances : `pip-audit` et `npm audit` sans vulnérabilité connue.
 - PyInstaller Linux : binaire autonome construit et smoke-testé, rapports PDF inclus.

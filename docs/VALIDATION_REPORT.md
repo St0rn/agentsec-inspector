@@ -18,8 +18,8 @@ ruff check agentsec tests ../demo
 All checks passed!
 
 pytest --cov=agentsec --cov-report=term-missing
-46 passed
-Couverture totale : 85,40 % (seuil bloquant : 80 %)
+48 passed
+Couverture totale : 85,92 % (seuil bloquant : 80 %)
 
 mypy agentsec
 0 erreur
@@ -32,8 +32,8 @@ npm run lint
 0 erreur
 
 npm run test
-5 fichiers, 9 tests réussis
-Couverture : 66,4 % statements, 61,37 % branches, 55,31 % fonctions, 83,46 % lignes
+6 fichiers, 10 tests réussis
+Couverture : 67,98 % statements, 64,87 % branches, 57,29 % fonctions, 85,93 % lignes
 Seuils bloquants : 65 % statements, 60 % branches, 55 % fonctions, 80 % lignes
 
 npm run build
@@ -110,7 +110,7 @@ création/lecture d’un projet et événement backend_started JSON valide
 Artefact publié : agentsec-linux-x64 (archive CI 206 041 396 octets)
 ```
 
-Les captures du manuel utilisateur (`manual-project`, `manual-target`, `mcp-passive`, `rag-security`, `agent-behavior`, `reports`) ont été générées depuis le frontend réel connecté au laboratoire contrôlé.
+Les captures du manuel utilisateur (`manual-project`, `manual-target`, `mcp-passive`, `jailbreak`, `rag-security`, `agent-behavior`, `reports`) ont été générées depuis le frontend réel connecté au laboratoire contrôlé. La capture `jailbreak.png` montre un scénario `jb.authority-impersonation` réellement exécuté avec un verdict `PASS` fondé sur la réponse observée.
 
 ## Non exécuté dans cet environnement
 

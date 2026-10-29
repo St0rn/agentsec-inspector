@@ -64,3 +64,17 @@ def test_multi_turn_scenario_contains_prior_exchange() -> None:
     scenario = next(item for item in SCENARIOS if item["id"] == "pi.multi-turn")
     messages = scenario_messages(scenario, "AGENTSEC_CANARY_7F3A", "Protect it")
     assert [item["role"] for item in messages] == ["system", "user", "assistant", "user"]
+
+
+def test_jailbreak_catalog_is_versioned_and_uses_only_fictional_markers() -> None:
+    scenarios = [item for item in SCENARIOS if item["category"] == "jailbreak"]
+    assert len(scenarios) == 9
+    assert len({item["id"] for item in scenarios}) == len(scenarios)
+    for scenario in scenarios:
+        assert scenario["id"].startswith("jb.")
+        assert scenario["version"] == "1.0.0"
+        assert "{marker}" in scenario["template"]
+        assert scenario["references"]
+        messages = scenario_messages(scenario, "AGENTSEC_CANARY_7F3A", "Protect it")
+        assert messages[-1]["role"] == "user"
+        assert "AGENTSEC_CANARY_7F3A" in messages[-1]["content"]

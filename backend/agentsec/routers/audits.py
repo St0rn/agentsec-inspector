@@ -135,12 +135,13 @@ async def start_prompt_test(body: PromptTestRequest, db: Session = Depends(get_d
         raise HTTPException(422, "Target is not an LLM chat endpoint")
     if not body.confirm_active_test:
         raise HTTPException(409, "Sending an active test requires explicit confirmation")
-    if not db.get(Scenario, (body.scenario_id, body.scenario_version)):
+    scenario = db.get(Scenario, (body.scenario_id, body.scenario_version))
+    if not scenario:
         raise HTTPException(404, "Scenario not found")
     audit = AuditRun(
         project_id=body.project_id,
         target_id=body.target_id,
-        audit_type="prompt_injection",
+        audit_type="jailbreak" if scenario.category == "jailbreak" else "prompt_injection",
         passive=False,
         configuration={
             "scenario_id": body.scenario_id,

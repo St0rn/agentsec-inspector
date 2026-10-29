@@ -17,7 +17,7 @@ describe("navigation", () => {
   it("shows every primary security module", async () => {
     render(<MemoryRouter initialEntries={["/"]}><App /></MemoryRouter>);
     expect(await screen.findByText("Vue d’ensemble")).toBeInTheDocument();
-    for (const label of ["Projects", "Targets", "MCP Security", "Prompt Injection", "RAG Security", "Agent Behavior", "LLM Security", "Attack Chains", "Findings", "Reports", "Settings"]) {
+    for (const label of ["Projects", "Targets", "MCP Security", "Prompt Injection", "Jailbreak", "RAG Security", "Agent Behavior", "LLM Security", "Attack Chains", "Findings", "Reports", "Settings"]) {
       expect(screen.getByRole("link", { name: new RegExp(label) })).toBeInTheDocument();
     }
   });

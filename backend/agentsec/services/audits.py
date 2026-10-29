@@ -211,6 +211,7 @@ async def run_prompt_test(audit_id: str, request: dict[str, Any]) -> None:
                 "id": scenario_record.id,
                 "version": scenario_record.version,
                 "name": scenario_record.name,
+                "category": scenario_record.category,
                 "template": chat_steps[0]["template"],
             }
             messages = scenario_messages(
@@ -290,6 +291,7 @@ async def run_prompt_test(audit_id: str, request: dict[str, Any]) -> None:
                     target=target.name,
                     payload={
                         "scenario": scenario["id"],
+                        "category": scenario["category"],
                         "status": status,
                         "turns": len(turns),
                         "tool_calls": len(all_tool_calls),
@@ -325,6 +327,7 @@ async def run_prompt_test(audit_id: str, request: dict[str, Any]) -> None:
             audit.summary = {
                 "scenario": scenario["id"],
                 "scenario_version": scenario["version"],
+                "category": scenario["category"],
                 "turns": len(turns),
                 "test_status": status,
                 "analysis": analysis,

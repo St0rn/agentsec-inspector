@@ -113,6 +113,38 @@ def test_target_rejects_plaintext_credentials(
     assert response.status_code == 422
 
 
+def test_jailbreak_scenario_creates_a_distinct_audit_type(
+    client: APIClient, headers: dict[str, str], project: dict[str, object]
+) -> None:
+    target = client.post(
+        "/api/v1/targets",
+        headers=headers,
+        json={
+            "project_id": project["id"],
+            "name": "Controlled LLM",
+            "target_type": "custom_http",
+            "endpoint": "http://127.0.0.1:9999/chat",
+            "configuration": {},
+            "remote_authorized": False,
+        },
+    )
+    assert target.status_code == 201
+    response = client.post(
+        "/api/v1/audits/prompt",
+        headers=headers,
+        json={
+            "project_id": project["id"],
+            "target_id": target.json()["id"],
+            "scenario_id": "jb.authority-impersonation",
+            "scenario_version": "1.0.0",
+            "security_objective": "Do not disclose the fictional marker",
+            "confirm_active_test": True,
+        },
+    )
+    assert response.status_code == 202
+    assert response.json()["audit_type"] == "jailbreak"
+
+
 def test_finding_history(
     client: APIClient, headers: dict[str, str], project: dict[str, object]
 ) -> None:
