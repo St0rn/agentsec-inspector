@@ -15,11 +15,29 @@ Un framework Windows local-first pour conduire, avec autorisation, des campagnes
 ![Windows](https://img.shields.io/badge/Windows-x64-0078D4?style=flat-square&logo=windows11&logoColor=white)
 ![Mode](https://img.shields.io/badge/audit-passif%20par%20défaut-22C55E?style=flat-square)
 
+[![Backend tests](https://github.com/St0rn/agentsec-inspector/actions/workflows/backend-tests.yml/badge.svg?branch=main)](https://github.com/St0rn/agentsec-inspector/actions/workflows/backend-tests.yml)
+[![Frontend tests](https://github.com/St0rn/agentsec-inspector/actions/workflows/frontend-tests.yml/badge.svg?branch=main)](https://github.com/St0rn/agentsec-inspector/actions/workflows/frontend-tests.yml)
+[![Security checks](https://github.com/St0rn/agentsec-inspector/actions/workflows/security-checks.yml/badge.svg?branch=main)](https://github.com/St0rn/agentsec-inspector/actions/workflows/security-checks.yml)
+
+**Evidence-first · Passive-first · Local-first**
+
+[🇫🇷 Français](README.md) · [🇬🇧 English](README.en.md)
+
+[Capacités](#une-surface-daudit-unifiée) · [Tests](#tous-les-contrôles-et-tests-de-sécurité) · [Architecture](#architecture-locale-sécurisée) · [Installation](#démarrage-développeur-sous-windows) · [Validation](#validation-observée)
+
 </div>
 
 ![Dashboard AgentSec Inspector](docs/images/dashboard.png)
 
 <p align="center"><sub>Capture réelle de la V1 exécutée contre le laboratoire contrôlé inclus — aucune donnée fictive n’est injectée dans le dashboard de production.</sub></p>
+
+<table>
+  <tr>
+    <td align="center" width="33%"><strong>🛡️ Preuves avant verdict</strong><br/><sub>Chaque conclusion reste reliée à une requête, une réponse, une trace ou un événement réellement observé.</sub></td>
+    <td align="center" width="33%"><strong>⚡ Actif sous contrôle</strong><br/><sub>Aucune action sensible sans sélection précise, périmètre autorisé et confirmation explicite.</sub></td>
+    <td align="center" width="33%"><strong>🔒 Données locales</strong><br/><sub>Backend loopback authentifié, projets isolés et secrets chiffrés au repos.</sub></td>
+  </tr>
+</table>
 
 ## Framework de red team IA reproductible
 
@@ -142,15 +160,20 @@ Le [catalogue détaillé](docs/TEST_CATALOG.md) précise la méthode, les preuve
 
 ## Architecture locale sécurisée
 
-```mermaid
-flowchart LR
-    UI[React + TypeScript<br/>WebView2] -->|IPC local| T[Tauri 2]
-    T -->|lance et supervise| API[FastAPI sidecar<br/>127.0.0.1 + jeton éphémère]
-    API --> DB[(SQLite<br/>projets isolés)]
-    API --> MCP[MCP HTTP / stdio<br/>passif par défaut]
-    API --> LLM[LLM / RAG<br/>sorties contrôlées]
-    API --> REP[PDF · HTML · JSON]
-```
+<table>
+  <tr>
+    <td align="center"><strong>Interface desktop</strong><br/><sub>React · TypeScript · WebView2</sub></td>
+    <td align="center">→<br/><sub>IPC local</sub></td>
+    <td align="center"><strong>Tauri 2</strong><br/><sub>Lancement · supervision</sub></td>
+    <td align="center">→<br/><sub>jeton éphémère</sub></td>
+    <td align="center"><strong>FastAPI sidecar</strong><br/><sub>127.0.0.1 uniquement</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>SQLite</strong><br/><sub>Projets isolés</sub></td>
+    <td align="center">←</td>
+    <td align="center" colspan="3"><strong>Moteurs et sorties</strong><br/><sub>MCP HTTP/stdio · LLM/RAG · preuves · PDF/HTML/JSON</sub></td>
+  </tr>
+</table>
 
 - Le backend refuse toute écoute non-loopback et l’API locale exige un jeton transmis par IPC Tauri.
 - Les sorties réseau sont protégées contre le SSRF, les redirections sont désactivées et les cibles distantes doivent être explicitement autorisées.
