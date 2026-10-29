@@ -85,8 +85,7 @@ Describe 'PowerShell delivery scripts' {
 
     It 'runs a batch command from a path containing spaces' {
         $result = Invoke-Checked $script:BatchWrapper @('space value')
-        $actual = $result.StdOut | ConvertFrom-Json
-        $actual[0] | Should -Be 'space value'
+        $result.StdOut.Trim() | Should -Be '["space value"]'
     }
 
     It 'blocks on the real nonzero native exit code' {
