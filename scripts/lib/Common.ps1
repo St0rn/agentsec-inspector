@@ -69,7 +69,11 @@ function Invoke-Checked {
 
     $resolved = Resolve-NativeCommand $FilePath
     $displayArguments = @($Arguments | ForEach-Object { ConvertTo-NativeArgument ([string]$_) })
-    Write-Step "Execute: $resolved $($displayArguments -join ' ')"
+    if ($SuppressOutputLogging) {
+        Write-Step "Execute: $resolved [arguments and output logging suppressed]"
+    } else {
+        Write-Step "Execute: $resolved $($displayArguments -join ' ')"
+    }
 
     $startInfo = New-Object System.Diagnostics.ProcessStartInfo
     $extension = [IO.Path]::GetExtension($resolved).ToLowerInvariant()
