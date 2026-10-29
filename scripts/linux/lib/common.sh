@@ -3,8 +3,10 @@
 set -Eeuo pipefail
 
 readonly AGENTSEC_VERSION="1.0.0"
-readonly LINUX_LIB_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
-readonly REPO_ROOT="$(cd -- "${LINUX_LIB_DIR}/../../.." && pwd -P)"
+LINUX_LIB_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+readonly LINUX_LIB_DIR
+REPO_ROOT="$(cd -- "${LINUX_LIB_DIR}/../../.." && pwd -P)"
+readonly REPO_ROOT
 LOG_FILE=""
 
 init_log() {

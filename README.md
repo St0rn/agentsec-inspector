@@ -160,6 +160,92 @@ La V1 ne réalise ni scan de ports, ni exploitation d’hôte, ni appel automati
 
 Le [catalogue détaillé](docs/TEST_CATALOG.md) précise la méthode, les preuves et les limites de chaque contrôle.
 
+## Architecture locale sécurisée
+
+<table>
+  <tr>
+    <td align="center"><strong>Interface desktop</strong><br/><sub>React · TypeScript · WebView2</sub></td>
+    <td align="center">→<br/><sub>IPC local</sub></td>
+    <td align="center"><strong>Tauri 2</strong><br/><sub>Lancement · supervision</sub></td>
+    <td align="center">→<br/><sub>jeton éphémère</sub></td>
+    <td align="center"><strong>Backend FastAPI intégré</strong><br/><sub>127.0.0.1 uniquement</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>SQLite</strong><br/><sub>Projets isolés</sub></td>
+    <td align="center">←</td>
+    <td align="center" colspan="3"><strong>Moteurs et sorties</strong><br/><sub>MCP HTTP/stdio · LLM/RAG · preuves · PDF/HTML/JSON</sub></td>
+  </tr>
+</table>
+
+- Le backend refuse toute écoute non-loopback et l’API locale exige un jeton transmis par IPC Tauri.
+- Les sorties réseau sont protégées contre le SSRF, les redirections sont désactivées et les cibles distantes doivent être explicitement autorisées.
+- La découverte MCP n’appelle aucun outil. Les opérations actives nécessitent une confirmation explicite.
+- Une capacité MCP sensible exige une seconde confirmation individuelle et ses paramètres sont validés contre le schéma annoncé.
+- Les secrets de connecteurs sont chiffrés au repos ; aucun token ne doit être placé en clair dans la configuration d’une cible.
+- Un échec de transport reste un statut `ERROR`, jamais une attaque réussie.
+
+Le [catalogue des contrôles et attaques](docs/TEST_CATALOG.md) énumère exactement ce qui est exécuté et les limites de la V1. Le [modèle de sécurité](docs/SECURITY.md) documente les frontières de confiance et les limites d’isolation. La [documentation des packs de scénarios](docs/SCENARIO_PACKS.md) explique comment ajouter des tests en toute sécurité.
+
+## Installation
+
+### Windows x64
+
+Utilisez l’installateur MSI/NSIS publié ou, depuis les sources, exécutez :
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+.\scripts\install.ps1
+.\scripts\verify-installation.ps1
+```
+
+### Linux x86_64
+
+L’AppImage contient le frontend et le backend autonome ; Python et Node.js ne sont pas nécessaires sur le poste final.
+
+```bash
+chmod +x scripts/linux/*.sh
+scripts/linux/install.sh --artifact /chemin/vers/AgentSec-Inspector.AppImage
+scripts/linux/verify-installation.sh
+agentsec-inspector
+```
+
+Consultez les guides d’[installation Linux](docs/INSTALLATION_LINUX.md) et de [build Linux](docs/BUILD_LINUX.md).
+
+### Environnement de développement Windows
+
+Prérequis : Windows 10 22H2/Windows 11 x64, Python 3.12, Node.js 22+, Rust stable, outils MSVC et WebView2.
+
+```powershell
+git clone https://github.com/St0rn/agentsec-inspector.git
+cd agentsec-inspector
+Set-ExecutionPolicy -Scope Process Bypass
+.\scripts\check-prerequisites.ps1 -Development
+.\scripts\install-dev.ps1
+.\scripts\start-dev.ps1
+```
+
+L’environnement de test contrôlé, clairement séparé des audits réels, se lance avec :
+
+```powershell
+.\scripts\start-demo.ps1
+```
+
+Pour produire le MSI et l’installateur NSIS x64 :
+
+```powershell
+.\scripts\build-windows.ps1
+```
+
+Consultez les procédures exactes : [installation Windows](docs/INSTALLATION_WINDOWS.md) · [développement](docs/INSTALLATION_DEVELOPMENT.md) · [build](docs/BUILD_WINDOWS.md) · [dépannage](docs/TROUBLESHOOTING.md).
+
+### Environnement de développement Linux
+
+```bash
+scripts/linux/check-prerequisites.sh --build
+scripts/linux/install-dev.sh
+scripts/linux/start-dev.sh
+```
+
 ## Manuel d’utilisation
 
 Le déroulement recommandé va toujours du moins intrusif au plus intrusif. Commencez par documenter le périmètre, puis effectuez une découverte passive avant d’autoriser un test actif.
@@ -261,92 +347,6 @@ Dans **Settings**, importez un pack JSON versionné. Seules les étapes déclara
 <img src="docs/images/scenario-packs.png" alt="Import d’un pack de scénarios versionné"/>
 
 </details>
-
-## Architecture locale sécurisée
-
-<table>
-  <tr>
-    <td align="center"><strong>Interface desktop</strong><br/><sub>React · TypeScript · WebView2</sub></td>
-    <td align="center">→<br/><sub>IPC local</sub></td>
-    <td align="center"><strong>Tauri 2</strong><br/><sub>Lancement · supervision</sub></td>
-    <td align="center">→<br/><sub>jeton éphémère</sub></td>
-    <td align="center"><strong>Backend FastAPI intégré</strong><br/><sub>127.0.0.1 uniquement</sub></td>
-  </tr>
-  <tr>
-    <td align="center"><strong>SQLite</strong><br/><sub>Projets isolés</sub></td>
-    <td align="center">←</td>
-    <td align="center" colspan="3"><strong>Moteurs et sorties</strong><br/><sub>MCP HTTP/stdio · LLM/RAG · preuves · PDF/HTML/JSON</sub></td>
-  </tr>
-</table>
-
-- Le backend refuse toute écoute non-loopback et l’API locale exige un jeton transmis par IPC Tauri.
-- Les sorties réseau sont protégées contre le SSRF, les redirections sont désactivées et les cibles distantes doivent être explicitement autorisées.
-- La découverte MCP n’appelle aucun outil. Les opérations actives nécessitent une confirmation explicite.
-- Une capacité MCP sensible exige une seconde confirmation individuelle et ses paramètres sont validés contre le schéma annoncé.
-- Les secrets de connecteurs sont chiffrés au repos ; aucun token ne doit être placé en clair dans la configuration d’une cible.
-- Un échec de transport reste un statut `ERROR`, jamais une attaque réussie.
-
-Le [catalogue des contrôles et attaques](docs/TEST_CATALOG.md) énumère exactement ce qui est exécuté et les limites de la V1. Le [modèle de sécurité](docs/SECURITY.md) documente les frontières de confiance et les limites d’isolation. La [documentation des packs de scénarios](docs/SCENARIO_PACKS.md) explique comment ajouter des tests en toute sécurité.
-
-## Installation
-
-### Windows x64
-
-Utilisez l’installateur MSI/NSIS publié ou, depuis les sources, exécutez :
-
-```powershell
-Set-ExecutionPolicy -Scope Process Bypass
-.\scripts\install.ps1
-.\scripts\verify-installation.ps1
-```
-
-### Linux x86_64
-
-L’AppImage contient le frontend et le backend autonome ; Python et Node.js ne sont pas nécessaires sur le poste final.
-
-```bash
-chmod +x scripts/linux/*.sh
-scripts/linux/install.sh --artifact /chemin/vers/AgentSec-Inspector.AppImage
-scripts/linux/verify-installation.sh
-agentsec-inspector
-```
-
-Consultez les guides d’[installation Linux](docs/INSTALLATION_LINUX.md) et de [build Linux](docs/BUILD_LINUX.md).
-
-### Environnement de développement Windows
-
-Prérequis : Windows 10 22H2/Windows 11 x64, Python 3.12, Node.js 22+, Rust stable, outils MSVC et WebView2.
-
-```powershell
-git clone https://github.com/St0rn/agentsec-inspector.git
-cd agentsec-inspector
-Set-ExecutionPolicy -Scope Process Bypass
-.\scripts\check-prerequisites.ps1 -Development
-.\scripts\install-dev.ps1
-.\scripts\start-dev.ps1
-```
-
-L’environnement de test contrôlé, clairement séparé des audits réels, se lance avec :
-
-```powershell
-.\scripts\start-demo.ps1
-```
-
-Pour produire le MSI et l’installateur NSIS x64 :
-
-```powershell
-.\scripts\build-windows.ps1
-```
-
-Consultez les procédures exactes : [installation Windows](docs/INSTALLATION_WINDOWS.md) · [développement](docs/INSTALLATION_DEVELOPMENT.md) · [build](docs/BUILD_WINDOWS.md) · [dépannage](docs/TROUBLESHOOTING.md).
-
-### Environnement de développement Linux
-
-```bash
-scripts/linux/check-prerequisites.sh --build
-scripts/linux/install-dev.sh
-scripts/linux/start-dev.sh
-```
 
 ## Résultats des validations
 

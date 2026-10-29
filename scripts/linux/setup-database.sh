@@ -8,7 +8,8 @@ init_log installation "$(basename -- "$0")"
 
 python_bin="$(venv_python)"
 [[ -x "${python_bin}" ]] || die "Python environment missing. Run install-dev.sh first."
-export AGENTSEC_DATA_DIR="$(data_dir)"
+AGENTSEC_DATA_DIR="$(data_dir)"
+export AGENTSEC_DATA_DIR
 mkdir -p -- "${AGENTSEC_DATA_DIR}"
 chmod 700 "${AGENTSEC_DATA_DIR}"
 

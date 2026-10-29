@@ -23,7 +23,7 @@ jobs:
       - name: Validate shell scripts
         run: |
           find scripts/linux -type f -name '*.sh' -print0 | xargs -0 -n1 bash -n
-          shellcheck scripts/linux/*.sh scripts/linux/lib/*.sh
+          shellcheck -x -P SCRIPTDIR scripts/linux/*.sh scripts/linux/lib/*.sh
           scripts/linux/test-scripts.sh
       - name: Install locked development environment
         run: scripts/linux/install-dev.sh

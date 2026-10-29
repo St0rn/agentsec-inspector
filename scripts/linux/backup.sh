@@ -16,7 +16,7 @@ trap 'rm -rf -- "${temporary_dir}"' EXIT
 mkdir -p -- "${temporary_dir}/payload"
 
 while IFS= read -r -d '' item; do
-    relative="${item#${source_dir}/}"
+    relative="${item#"${source_dir}"/}"
     [[ "${relative}" == backups/* ]] && continue
     if [[ "${relative}" == "agentsec.db" ]]; then
         python3 - "${item}" "${temporary_dir}/payload/agentsec.db" <<'PY'
