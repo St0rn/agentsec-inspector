@@ -44,11 +44,11 @@ Date : 2026-10-30. Ce document distingue livraison de code, exécution locale Li
 - `test-all.sh` exécuté ; la validation directe actuelle couvre 69 tests backend, 20 tests frontend, lint, typage et build.
 - Tests isolés des scripts réussis : syntaxe Bash, sauvegarde, restauration avec confirmation, idempotence, refus de downgrade, rejet d’un artefact invalide, préservation et suppression confirmée des données.
 - Sauvegarde et restauration réelles exécutées sur une base SQLite; empreinte et intégrité vérifiées, ancienne arborescence préservée.
-- Workflow `linux-build.yml` exécuté avec succès sur Ubuntu x64 : AppImage et DEB construits, AppImage installée et vérifiée deux fois, artefact CI `agentsec-linux-x64` publié (run `40916996042`).
+- Workflow `linux-build.yml` exécuté avec succès sur Ubuntu x64 : AppImage et DEB construits, AppImage installée et vérifiée deux fois, artefact CI `agentsec-linux-x64` publié ([run `41108334280`](https://github.com/St0rn/agentsec-inspector/actions/runs/41108334280), artefact `13001809139`).
 
 ## Validé sur Windows x64 par CI
 
-Preuve : [GitHub Actions run `41063236427`](https://github.com/St0rn/agentsec-inspector/actions/runs/41063236427), runner `windows-2022`, commit `dcd74018817c23f8af6962dbd646145bf620f292`, succès le 30 octobre 2026.
+Preuve : [GitHub Actions run `41108334253`](https://github.com/St0rn/agentsec-inspector/actions/runs/41108334253), runner `windows-2022`, commit `791cb580dee5fda3308e564c7882b8c233463195`, succès le 30 octobre 2026.
 
 - Analyse syntaxique des 20 scripts et PSScriptAnalyzer réussis.
 - 71 tests Pester réussis sous PowerShell 7 et les mêmes 71 sous Windows PowerShell 5.1.
@@ -58,13 +58,13 @@ Preuve : [GitHub Actions run `41063236427`](https://github.com/St0rn/agentsec-in
 - MSI installé et smoke-testé deux fois, puis désinstallé en préservant les données utilisateur.
 - NSIS installé et smoke-testé deux fois, puis désinstallé en préservant les données utilisateur.
 - Chaque smoke test a vérifié les fichiers packagés, le backend loopback, son port dynamique, l’origine CORS de Tauri, le rejet 401 sans jeton, le CRUD projets, SQLite, la journalisation, le lancement desktop et la création du sidecar.
-- Artefact `agentsec-windows-x64` publié : [MSI, NSIS, sommes et journaux](https://github.com/St0rn/agentsec-inspector/actions/runs/41063236427/artifacts/12983200265).
+- Artefact `agentsec-windows-x64` publié : [MSI, NSIS, sommes et journaux](https://github.com/St0rn/agentsec-inspector/actions/runs/41108334253/artifacts/13001844123).
 
 Cette preuve CI ne signifie pas que tous les scripts de maintenance ont été exécutés nominalement : la matrice indique séparément les scripts validés dynamiquement, partiellement ou seulement statiquement.
 
 ## Construit en CI Linux, non construit sur l’hôte local
 
-- Paquets desktop AppImage et DEB Tauri : build CI réussi et artefacts publiés par le run `40916996042`.
+- Paquets desktop AppImage et DEB Tauri : build CI réussi et artefacts publiés par le run `41108334280`.
 
 L’hôte local ne contient pas WebKitGTK/GTK/libsoup ni Rust dans le `PATH` système : le build local s’arrête donc proprement au contrôle des prérequis. La preuve de build et d’installation provient du runner GitHub Actions Ubuntu, pas de cet hôte local.
 
@@ -106,5 +106,6 @@ Sur Windows CI, `check-prerequisites.ps1 -ForBuild`, `setup-database.ps1` (deux 
 - Dépendances : `pip-audit` et `npm audit` sans vulnérabilité connue.
 - PyInstaller Linux : binaire autonome construit et smoke-testé, rapports PDF inclus.
 - Tauri : test Rust de la configuration IPC réussi, puis compilation Tauri Windows x64, MSI et NSIS réussis dans le run Windows.
-- Windows/PowerShell : 71/71 tests réussis sous PowerShell 7 et 71/71 sous Windows PowerShell 5.1; MSVC/SDK, MSI/NSIS, installations répétées, smoke tests, désinstallations et publication de la release validés dans le run `41063236427`.
-- Linux/Bash : scripts principaux exécutés; AppImage/DEB construits et AppImage installée/vérifiée deux fois dans le run CI `40916996042`.
+- Windows/PowerShell : 71/71 tests réussis sous PowerShell 7 et 71/71 sous Windows PowerShell 5.1; MSVC/SDK, MSI/NSIS, installations répétées, smoke tests et désinstallations validés dans le run `41108334253`.
+- Linux/Bash : scripts principaux exécutés; AppImage/DEB construits et AppImage installée/vérifiée deux fois dans le run CI `41108334280`.
+- Publication : release `v1.1.0` créée par le [run `41110672480`](https://github.com/St0rn/agentsec-inspector/actions/runs/41110672480) après validation des deux plateformes; quatre paquets et `SHA256SUMS.txt` sont disponibles dans la [release](https://github.com/St0rn/agentsec-inspector/releases/tag/v1.1.0).

@@ -41,4 +41,4 @@ Une compilation réussie ne vaut pas validation d’installation. Seul le rappor
 
 Le workflow `.github\workflows\windows-build.yml` effectue en plus l’analyse PowerShell, les tests Pester sous PowerShell 5.1 et 7, deux installations successives du MSI, sa désinstallation, deux installations successives du NSIS, sa désinstallation et la génération des SHA-256.
 
-Preuve de référence pour la version 1.0.1 : [run Windows x64 `41063236427`](https://github.com/St0rn/agentsec-inspector/actions/runs/41063236427), succès complet sur `windows-2022`, avec [artefact MSI/NSIS et journaux](https://github.com/St0rn/agentsec-inspector/actions/runs/41063236427/artifacts/12983200265).
+Preuve de référence pour la version 1.1.0 : [run Windows x64 `41108334253`](https://github.com/St0rn/agentsec-inspector/actions/runs/41108334253), succès complet sur `windows-2022`, avec [artefact MSI/NSIS et journaux](https://github.com/St0rn/agentsec-inspector/actions/runs/41108334253/artifacts/13001844123).

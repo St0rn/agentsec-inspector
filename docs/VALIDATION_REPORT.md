@@ -109,20 +109,21 @@ backup.sh / restore.sh : archive SHA-256, integrity_check=ok, ancienne donnée p
 Packaging et installation Linux sur GitHub Actions Ubuntu x64 :
 
 ```text
-Run : https://github.com/St0rn/agentsec-inspector/actions/runs/40916996042
+Run : https://github.com/St0rn/agentsec-inspector/actions/runs/41108334280
+Commit : 791cb580dee5fda3308e564c7882b8c233463195
 build-linux.sh : AppImage et DEB Tauri générés
-install.sh : AppImage 1.0.0 installée deux fois
+install.sh : AppImage 1.1.0 installée deux fois
 verify-installation.sh : deux exécutions réussies
 Contrôles : checksum, sidecar PyInstaller, /health, rejet 401 sans jeton, migration SQLite,
 création/lecture d’un projet et événement backend_started JSON valide
-Artefact publié : agentsec-linux-x64 (archive CI 206 041 396 octets)
+Artefact publié : agentsec-linux-x64, ID 13001809139, 206 105 153 octets
 ```
 
 Packaging et installation Windows sur GitHub Actions Windows Server 2022 x64 :
 
 ```text
-Run : https://github.com/St0rn/agentsec-inspector/actions/runs/41063236427
-Commit : dcd74018817c23f8af6962dbd646145bf620f292
+Run : https://github.com/St0rn/agentsec-inspector/actions/runs/41108334253
+Commit : 791cb580dee5fda3308e564c7882b8c233463195
 PowerShell 7 : 71 tests Pester réussis, 0 échec
 Windows PowerShell 5.1 : 71 tests Pester réussis, 0 échec
 PSScriptAnalyzer et parsing des 20 scripts : réussis
@@ -136,18 +137,19 @@ NSIS : installation + smoke test effectués deux fois, puis désinstallation ré
 Smoke test : fichiers packagés, /health, port dynamique, origine CORS Tauri, rejet 401,
 CRUD projets, SQLite, logs, lancement du desktop et création du sidecar vérifiés
 Préservation des données utilisateur : réussie pour les deux désinstallations
-Artefact : agentsec-windows-x64, ID 12983200265, 81 213 676 octets
+Artefact : agentsec-windows-x64, ID 13001844123, 81 279 026 octets
 ```
 
-Sommes observées dans le run :
+Sommes publiées avec la release `v1.1.0` :
 
 ```text
-MSI  569C9FBB7FC9F8AFE68B3B462C45A178973D80A5AEDF23E23038C47533CE9C07
-NSIS F13E6D7EB41803198F1428FB16BB996AC9891D71CD6ED1F51B83549B00006B61
-ZIP  73FBF5F2AC8FDF83B8D16ACB383ABC6697E573CB775FC741FF17B5E7B86FD9E3
+AppImage  1b3640f77316b7a5290942cb095c61be65a117dae9b4314a028250e1503687a7
+DEB       1863921b3aa008cac2281a93006ef6c2e43e0faf48edb450bdad21b433516739
+NSIS      a99cd189cb06d3ebf9e9c06782b7013ed8a2ac14fae4c4455906dc08cc98aa51
+MSI       359ce23388102612758a945243f403ba487ce4b47879295842ce02b7e2a3638d
 ```
 
-Artefact de validation : [MSI, NSIS et journaux Windows](https://github.com/St0rn/agentsec-inspector/actions/runs/41063236427/artifacts/12983200265).
+Artefacts de validation : [MSI, NSIS et journaux Windows](https://github.com/St0rn/agentsec-inspector/actions/runs/41108334253/artifacts/13001844123) ; [AppImage, DEB et journaux Linux](https://github.com/St0rn/agentsec-inspector/actions/runs/41108334280/artifacts/13001809139). La [release `v1.1.0`](https://github.com/St0rn/agentsec-inspector/releases/tag/v1.1.0) a été créée par le [workflow `41110672480`](https://github.com/St0rn/agentsec-inspector/actions/runs/41110672480) uniquement après la réussite des deux validations.
 
 Les captures du manuel utilisateur (`manual-project`, `manual-target`, `mcp-passive`, `jailbreak`, `rag-security`, `agent-behavior`, `reports`) ont été générées depuis le frontend réel connecté au laboratoire contrôlé. La capture `jailbreak.png` montre un scénario `jb.authority-impersonation` réellement exécuté avec un verdict `PASS` fondé sur la réponse observée.
 
@@ -160,9 +162,9 @@ Les captures du manuel utilisateur (`manual-project`, `manual-target`, `mcp-pass
 - MSI/NSIS
 - Installation, mise à jour, restauration et désinstallation Windows
 - Lancement WebView2 sur Windows propre
-- Build Tauri AppImage/DEB local, bloqué avant compilation par les bibliothèques système absentes; build et installation validés séparément sur le runner Ubuntu du run `40916996042`
+- Build Tauri AppImage/DEB local, bloqué avant compilation par les bibliothèques système absentes; build et installation validés séparément sur le runner Ubuntu du run `41108334280`
 
-Ces limites décrivent uniquement l’hôte Linux local. Les éléments Windows listés dans la section précédente sont validés par le runner `windows-2022` du run `41063236427`. Les scripts `install-dev.ps1`, `start-dev.ps1`, `update.ps1`, `backup.ps1` et `clean.ps1` n’ont toutefois pas été exécutés nominalement par ce run et conservent le statut indiqué dans `INSTALLATION_VALIDATION_MATRIX.md`.
+Ces limites décrivent uniquement l’hôte Linux local. Les éléments Windows listés dans la section précédente sont validés par le runner `windows-2022` du run `41108334253`. Les scripts `install-dev.ps1`, `start-dev.ps1`, `update.ps1`, `backup.ps1` et `clean.ps1` n’ont toutefois pas été exécutés nominalement par ce run et conservent le statut indiqué dans `INSTALLATION_VALIDATION_MATRIX.md`.
 
 ## Limites constatées
 

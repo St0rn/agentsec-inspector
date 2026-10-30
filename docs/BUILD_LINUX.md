@@ -55,3 +55,5 @@ scripts/linux/verify-installation.sh
 ```
 
 La vérification extrait réellement l’AppImage, trouve le backend intégré, initialise une base temporaire, teste la santé, l’authentification, la création/lecture d’un projet et les journaux structurés.
+
+Preuve de référence pour la version 1.1.0 : [run Linux x64 `41108334280`](https://github.com/St0rn/agentsec-inspector/actions/runs/41108334280), succès complet sur Ubuntu 22.04, avec [AppImage, DEB et journaux](https://github.com/St0rn/agentsec-inspector/actions/runs/41108334280/artifacts/13001809139).

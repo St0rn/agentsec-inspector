@@ -19,4 +19,17 @@ Cette version étend AgentSec Inspector aux laboratoires et applications qui dif
 
 Les tests locaux utilisent des transports contrôlés et reproductibles. Le service AI Red Team Range situé sur le poste de l’utilisateur n’était pas accessible depuis l’environnement de build ; aucune validation réelle contre ce service local n’est donc revendiquée.
 
-Les liens des workflows Windows et Linux, les empreintes SHA-256 et les artefacts exacts sont publiés après la réussite des deux validations de plateforme.
+Validations de plateforme :
+
+- [Windows x64 — MSI/NSIS, installations répétées et smoke tests](https://github.com/St0rn/agentsec-inspector/actions/runs/41108334253) ;
+- [Linux x64 — AppImage/DEB et installation répétée](https://github.com/St0rn/agentsec-inspector/actions/runs/41108334280) ;
+- [publication contrôlée de la release](https://github.com/St0rn/agentsec-inspector/actions/runs/41110672480).
+
+Les quatre paquets et leur fichier `SHA256SUMS.txt` sont disponibles dans cette release. Empreintes SHA-256 :
+
+```text
+1b3640f77316b7a5290942cb095c61be65a117dae9b4314a028250e1503687a7  AgentSec-Inspector_1.1.0_amd64.AppImage
+1863921b3aa008cac2281a93006ef6c2e43e0faf48edb450bdad21b433516739  AgentSec-Inspector_1.1.0_amd64.deb
+a99cd189cb06d3ebf9e9c06782b7013ed8a2ac14fae4c4455906dc08cc98aa51  AgentSec-Inspector_1.1.0_x64-setup.exe
+359ce23388102612758a945243f403ba487ce4b47879295842ce02b7e2a3638d  AgentSec-Inspector_1.1.0_x64_en-US.msi
+```
