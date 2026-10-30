@@ -244,6 +244,20 @@ function Find-AgentSecUninstallEntry {
         Select-Object -First 1
 }
 
+function Find-AgentSecDesktopExecutable {
+    param([AllowEmptyCollection()][string[]]$Roots = @())
+    $binaryNames = @('agentsec-inspector.exe', 'AgentSec Inspector.exe')
+    foreach ($root in @($Roots | Where-Object { $_ } | Select-Object -Unique)) {
+        if (-not (Test-Path -LiteralPath $root -PathType Container)) { continue }
+        foreach ($binaryName in $binaryNames) {
+            $candidate = Get-ChildItem -LiteralPath $root -Recurse -File -Filter $binaryName -ErrorAction SilentlyContinue |
+                Select-Object -First 1
+            if ($candidate) { return $candidate.FullName }
+        }
+    }
+    return $null
+}
+
 function Get-CommandVersion {
     param([string]$Name, [string[]]$Arguments = @('--version'))
     try {

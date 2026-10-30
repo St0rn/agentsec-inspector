@@ -11,6 +11,7 @@ try {
     Assert-Windows
     $installRoots=@(
         (Join-Path $env:LOCALAPPDATA 'Programs\AgentSec Inspector'),
+        (Join-Path $env:LOCALAPPDATA 'AgentSec Inspector'),
         (Join-Path $env:ProgramFiles 'AgentSec Inspector')
     )
     $registryRoots=@(
@@ -25,13 +26,7 @@ try {
     $installRoots=@($installRoots|Where-Object{$_}|Select-Object -Unique)
 
     if(-not $ApplicationPath){
-        $applicationCandidates=@()
-        foreach($root in $installRoots){
-            if(Test-Path -LiteralPath $root){
-                $applicationCandidates+=@(Get-ChildItem -LiteralPath $root -Recurse -File -Filter 'AgentSec Inspector.exe' -ErrorAction SilentlyContinue)
-            }
-        }
-        if($applicationCandidates.Count){$ApplicationPath=$applicationCandidates[0].FullName}
+        $ApplicationPath=Find-AgentSecDesktopExecutable $installRoots
     }
     if(-not $BackendPath){
         $backendCandidates=@()

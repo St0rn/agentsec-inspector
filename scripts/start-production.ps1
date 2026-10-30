@@ -4,8 +4,12 @@ param()
 $log=Initialize-AgentSecLog -Category 'installation' -ScriptName $MyInvocation.MyCommand.Name
 try {
     Assert-Windows
-    $candidates=@((Join-Path $env:LOCALAPPDATA 'Programs\AgentSec Inspector\AgentSec Inspector.exe'),(Join-Path $env:ProgramFiles 'AgentSec Inspector\AgentSec Inspector.exe'))
-    $app=$candidates|Where-Object{Test-Path $_}|Select-Object -First 1
+    $roots=@(
+        (Join-Path $env:LOCALAPPDATA 'Programs\AgentSec Inspector'),
+        (Join-Path $env:LOCALAPPDATA 'AgentSec Inspector'),
+        (Join-Path $env:ProgramFiles 'AgentSec Inspector')
+    )
+    $app=Find-AgentSecDesktopExecutable $roots
     if(-not $app){throw 'AgentSec Inspector is not installed. Run install.ps1 or the generated installer.'}
     $process=Start-Process -FilePath $app -PassThru
     Start-Sleep -Seconds 2

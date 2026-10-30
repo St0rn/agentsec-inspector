@@ -63,6 +63,13 @@ Describe 'PowerShell delivery scripts' {
         $entry.UninstallString | Should -Be 'controlled'
     }
 
+    It 'finds the packaged desktop binary by its Cargo executable name' {
+        $installRoot = Join-Path $TestDrive 'AgentSec Inspector'
+        New-Item -ItemType Directory -Path $installRoot | Out-Null
+        New-Item -ItemType File -Path (Join-Path $installRoot 'agentsec-inspector.exe') | Out-Null
+        Find-AgentSecDesktopExecutable @($installRoot) | Should -Be (Join-Path $installRoot 'agentsec-inspector.exe')
+    }
+
     It 'returns a WebView2 result with stable properties' {
         $runtime = Get-WebView2Runtime
         @($runtime.PSObject.Properties.Name) | Should -Contain 'installed'
