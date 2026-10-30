@@ -22,8 +22,8 @@ Le type **Chatbot générique** permet d’auditer une API de conversation qui n
 | `response_path` | chaîne | `response` | Emplacement du texte dans la réponse JSON |
 | `tool_calls_path` | chaîne | absent | Emplacement facultatif de la liste des appels/actions exposés |
 | `max_tokens_path` | chaîne | absent | Emplacement facultatif de la limite de génération |
-| `static_payload` | objet | `{}` | Valeurs JSON non secrètes ajoutées à chaque requête |
-| `headers` | objet | `{}` | En-têtes non secrets, par exemple un identifiant de tenant |
+| `static_payload` | objet | `{}` | Valeurs ajoutées à chaque requête ; ne pas y placer d’identifiant ni de clé |
+| `headers` | objet | `{}` | En-têtes ajoutés à la requête ; n’y placez ni clé ni jeton |
 | `api_key_env` | chaîne | absent | Nom de la variable d’environnement contenant l’identifiant |
 | `api_key_header` | chaîne | `Authorization` | En-tête recevant l’identifiant lu dans l’environnement |
 | `api_key_prefix` | chaîne | `Bearer` | Préfixe placé avant l’identifiant ; utiliser `""` pour aucun préfixe |
@@ -87,7 +87,7 @@ Définissez l’identifiant dans l’environnement qui lance AgentSec :
 
 ```powershell
 $env:CHATBOT_API_KEY = 'valeur-fournie-pour-la-mission'
-.scriptsstart-dev.ps1
+.\scripts\start-dev.ps1
 ```
 
 Ne placez jamais une clé dans l’URL, `static_payload` ou `headers`. Les en-têtes de transport sensibles (`Host`, `Content-Length`, `Authorization`, cookies, etc.) sont refusés dans `headers`; l’authentification doit utiliser `api_key_env`. Les redirections sont désactivées, la taille de réponse est bornée et une cible distante doit être explicitement autorisée dans le périmètre.

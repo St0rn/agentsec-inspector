@@ -14,6 +14,7 @@ beforeEach(()=>localStorage.setItem("agentsec-api-token","test-token"));
 
 it("lists dedicated jailbreak scenarios and submits the selected controlled test",async()=>{
   const fetchMock=vi.fn(async(url:string,options?:RequestInit)=>{
+    if(url.endsWith("/health"))return payload({status:"ok",service:"agentsec-backend",version:"1.0.1"});
     if(options?.method==="POST")return payload({id:"audit-1",project_id:"project-1",target_id:"target-1",audit_type:"jailbreak",status:"queued",passive:false,configuration:{},summary:{},error:null,created_at:"2026-01-01",started_at:null,finished_at:null},202);
     if(url.includes("/audits/audit-1"))return payload({id:"audit-1",project_id:"project-1",target_id:"target-1",audit_type:"jailbreak",status:"completed",passive:false,configuration:{},summary:{test_status:"PASS"},error:null,created_at:"2026-01-01",started_at:"2026-01-01",finished_at:"2026-01-01"});
     return payload(url.includes("/projects")?[project]:url.includes("/targets")?[target]:url.includes("/scenarios")?[jailbreak,injection]:[]);

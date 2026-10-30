@@ -7,8 +7,9 @@ beforeEach(()=>localStorage.setItem("agentsec-api-token","test-token"));
 
 it("rejects malformed scenario pack JSON before sending it",async()=>{
   const fetchMock=vi.fn(async(input:RequestInfo|URL,options?:RequestInit)=>{
-    void input; void options;
-    return new Response("[]",{status:200,headers:{"Content-Type":"application/json"}});
+    void options;
+    const value=String(input).endsWith("/health")?{status:"ok",service:"agentsec-backend",version:"1.0.1"}:[];
+    return new Response(JSON.stringify(value),{status:200,headers:{"Content-Type":"application/json"}});
   });
   vi.stubGlobal("fetch",fetchMock);
   render(<MemoryRouter initialEntries={["/settings"]}><App/></MemoryRouter>);
@@ -20,7 +21,7 @@ it("rejects malformed scenario pack JSON before sending it",async()=>{
 });
 
 it("imports a declarative scenario pack through the API",async()=>{
-  const fetchMock=vi.fn(async(_url:string,options?:RequestInit)=>new Response(JSON.stringify(options?.method==="POST"?{pack_id:"team.redteam",pack_version:"1.0.0",imported:1,updated:0}:[]),{status:options?.method==="POST"?201:200,headers:{"Content-Type":"application/json"}}));
+  const fetchMock=vi.fn(async(url:string,options?:RequestInit)=>new Response(JSON.stringify(url.endsWith("/health")?{status:"ok",service:"agentsec-backend",version:"1.0.1"}:options?.method==="POST"?{pack_id:"team.redteam",pack_version:"1.0.0",imported:1,updated:0}:[]),{status:options?.method==="POST"?201:200,headers:{"Content-Type":"application/json"}}));
   vi.stubGlobal("fetch",fetchMock);
   render(<MemoryRouter initialEntries={["/settings"]}><App/></MemoryRouter>);
   fireEvent.click(await screen.findByRole("button",{name:/Valider et importer/i}));

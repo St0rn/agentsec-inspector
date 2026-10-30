@@ -81,6 +81,15 @@ Describe 'PowerShell delivery scripts' {
         $source | Should -Match '\$attempt -le 10'
     }
 
+    It 'checks the desktop dynamic port, health endpoint, and Windows Tauri origin' {
+        $source = Get-Content -Raw (Join-Path $script:RepoRoot 'scripts\verify-installation.ps1')
+        $source | Should -Match 'Get-NetTCPConnection'
+        $source | Should -Match 'desktop_dynamic_port'
+        $source | Should -Match 'desktop_backend_health'
+        $source | Should -Match 'http://tauri\.localhost'
+        $source | Should -Match 'desktop_tauri_cors'
+    }
+
     It 'returns a WebView2 result with stable properties' {
         $runtime = Get-WebView2Runtime
         @($runtime.PSObject.Properties.Name) | Should -Contain 'installed'

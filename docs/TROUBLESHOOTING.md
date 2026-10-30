@@ -10,6 +10,17 @@ Get-NetTCPConnection -LocalAddress 127.0.0.1 -State Listen
 
 Ne pas ouvrir le port dans le pare-feu : l’API doit rester locale. Si le port sélectionné est occupé, fermer l’autre instance avant de relancer.
 
+## L’interface affiche « Backend Offline » ou une erreur de connexion
+
+L’application attend le démarrage du sidecar et de la base avant d’envoyer ses requêtes. Si le statut reste hors ligne :
+
+1. cliquer sur **Reconnecter** dans le panneau **Local Mode** ;
+2. consulter `%LOCALAPPDATA%\AgentSec\logs\agentsec.jsonl` ;
+3. fermer les autres instances d’AgentSec Inspector ;
+4. lancer `scripts\verify-installation.ps1` depuis le dépôt de livraison.
+
+Le backend doit écouter sur un port aléatoire de `127.0.0.1`. Il ne faut ni ouvrir ce port dans le pare-feu ni remplacer les restrictions CORS par un joker. Sous Windows, l’origine WebView2 attendue est `http://tauri.localhost`.
+
 ## Échec PyInstaller / WeasyPrint
 
 Réexécuter la préparation verrouillée, puis le build :

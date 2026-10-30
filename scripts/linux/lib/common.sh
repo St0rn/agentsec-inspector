@@ -2,7 +2,7 @@
 
 set -Eeuo pipefail
 
-readonly AGENTSEC_VERSION="1.0.0"
+readonly AGENTSEC_VERSION="1.0.1"
 LINUX_LIB_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 readonly LINUX_LIB_DIR
 REPO_ROOT="$(cd -- "${LINUX_LIB_DIR}/../../.." && pwd -P)"

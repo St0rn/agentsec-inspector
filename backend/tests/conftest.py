@@ -42,6 +42,9 @@ class APIClient:
     def put(self, path: str, **kwargs: Any) -> httpx.Response:
         return self.request("PUT", path, **kwargs)
 
+    def delete(self, path: str, **kwargs: Any) -> httpx.Response:
+        return self.request("DELETE", path, **kwargs)
+
     def options(self, path: str, **kwargs: Any) -> httpx.Response:
         return self.request("OPTIONS", path, **kwargs)
 

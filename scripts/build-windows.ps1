@@ -33,6 +33,8 @@ try {
         throw 'Bundled backend sidecar checksum does not match the PyInstaller output.'
     }
 
+    [void](Invoke-Checked cargo @('test','--locked','--manifest-path',(Join-Path $script:RepoRoot 'src-tauri\Cargo.toml'),'--target','x86_64-pc-windows-msvc') $script:RepoRoot)
+
     $icon=Join-Path $script:RepoRoot 'assets\icon.svg'
     [void](Invoke-Checked $tauri @('icon',$icon) $script:RepoRoot)
     [void](Invoke-Checked $tauri @('build','--target','x86_64-pc-windows-msvc') $script:RepoRoot)

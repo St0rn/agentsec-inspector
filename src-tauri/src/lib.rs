@@ -15,6 +15,13 @@ struct BackendConfig {
     token: String,
 }
 
+fn loopback_backend_config(port: u16, token: String) -> BackendConfig {
+    BackendConfig {
+        base_url: format!("http://127.0.0.1:{port}"),
+        token,
+    }
+}
+
 #[tauri::command]
 fn backend_config(state: State<'_, BackendState>) -> BackendConfig {
     state.config.clone()
@@ -40,10 +47,7 @@ pub fn run() {
                 .spawn()?;
             tauri::async_runtime::spawn(async move { while rx.recv().await.is_some() {} });
             app.manage(BackendState {
-                config: BackendConfig {
-                    base_url: format!("http://127.0.0.1:{port}"),
-                    token,
-                },
+                config: loopback_backend_config(port, token),
                 child: Mutex::new(Some(child)),
             });
             Ok(())
@@ -62,4 +66,16 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![backend_config])
         .run(tauri::generate_context!())
         .expect("error while running AgentSec Inspector");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::loopback_backend_config;
+
+    #[test]
+    fn backend_ipc_config_is_always_loopback() {
+        let config = loopback_backend_config(49152, "test-token".to_string());
+        assert_eq!(config.base_url, "http://127.0.0.1:49152");
+        assert_eq!(config.token, "test-token");
+    }
 }

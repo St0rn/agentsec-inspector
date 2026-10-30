@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import pytest
 from conftest import APIClient
+from fastapi.testclient import TestClient
+
+from agentsec.main import app
 
 
 def test_health_is_minimal_and_public(client: APIClient) -> None:
@@ -10,22 +14,95 @@ def test_health_is_minimal_and_public(client: APIClient) -> None:
     assert "token" not in response.text.lower()
 
 
+def test_fastapi_lifespan_starts_with_database_migrations() -> None:
+    with TestClient(app) as startup_client:
+        response = startup_client.get("/health")
+    assert response.status_code == 200
+    assert response.json()["service"] == "agentsec-backend"
+
+
 def test_api_rejects_missing_token(client: APIClient) -> None:
     response = client.get("/api/v1/projects")
     assert response.status_code == 401
 
 
-def test_cors_preflight_reaches_restricted_cors_middleware(client: APIClient) -> None:
+@pytest.mark.parametrize(
+    "origin",
+    [
+        "http://tauri.localhost",
+        "tauri://localhost",
+        "http://localhost:1420",
+        "http://127.0.0.1:1420",
+    ],
+)
+def test_cors_preflight_reaches_restricted_cors_middleware(
+    client: APIClient, origin: str
+) -> None:
     response = client.options(
         "/api/v1/dashboard",
         headers={
-            "Origin": "http://127.0.0.1:1420",
+            "Origin": origin,
             "Access-Control-Request-Method": "GET",
             "Access-Control-Request-Headers": "authorization,content-type",
         },
     )
     assert response.status_code == 200
-    assert response.headers["access-control-allow-origin"] == "http://127.0.0.1:1420"
+    assert response.headers["access-control-allow-origin"] == origin
+
+
+def test_cors_rejects_an_unlisted_origin(client: APIClient) -> None:
+    response = client.options(
+        "/api/v1/projects",
+        headers={
+            "Origin": "https://untrusted.example",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "authorization,content-type",
+        },
+    )
+    assert response.status_code == 400
+    assert "access-control-allow-origin" not in response.headers
+
+
+def test_health_exposes_windows_tauri_cors_header(client: APIClient) -> None:
+    response = client.get("/health", headers={"Origin": "http://tauri.localhost"})
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "http://tauri.localhost"
+
+
+def test_project_full_crud_roundtrip(client: APIClient, headers: dict[str, str]) -> None:
+    created = client.post(
+        "/api/v1/projects",
+        headers=headers,
+        json={
+            "client_name": "CRUD Client",
+            "engagement_name": "Windows desktop verification",
+            "description": "Created by the API regression test",
+            "authorized_scope": "Loopback only",
+            "start_date": None,
+            "end_date": None,
+        },
+    )
+    assert created.status_code == 201
+    project_id = created.json()["id"]
+
+    listed = client.get("/api/v1/projects", headers=headers)
+    assert any(item["id"] == project_id for item in listed.json())
+
+    payload = {
+        "client_name": "CRUD Client",
+        "engagement_name": "Updated verification",
+        "description": "Updated by the API regression test",
+        "authorized_scope": "Loopback and local test data",
+        "start_date": None,
+        "end_date": None,
+    }
+    updated = client.put(f"/api/v1/projects/{project_id}", headers=headers, json=payload)
+    assert updated.status_code == 200
+    assert updated.json()["engagement_name"] == "Updated verification"
+
+    deleted = client.delete(f"/api/v1/projects/{project_id}", headers=headers)
+    assert deleted.status_code == 204
+    assert client.get(f"/api/v1/projects/{project_id}", headers=headers).status_code == 404
 
 
 def test_project_crud_and_isolation(

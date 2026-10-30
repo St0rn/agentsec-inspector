@@ -6,7 +6,7 @@
 
 ### AI Red Team & MCP Security Auditing Platform
 
-Un framework desktop local pour auditer, dans un cadre autorisé, des chatbots, des agents IA, des serveurs MCP, des pipelines RAG et des applications LLM sous Windows ou Linux.
+Une application desktop pour auditer, dans un cadre autorisé, des chatbots, des agents IA, des serveurs MCP, des pipelines RAG et des applications LLM sous Windows ou Linux.
 
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.162-009688?style=flat-square&logo=fastapi&logoColor=white)
@@ -26,25 +26,25 @@ Un framework desktop local pour auditer, dans un cadre autorisé, des chatbots, 
 
 [🇫🇷 Français](README.md) · [🇬🇧 English](README.en.md)
 
-[Capacités](#tous-les-audits-au-même-endroit) · [Tests](#tous-les-contrôles-et-tests-de-sécurité) · [Manuel](#manuel-dutilisation) · [Architecture](#architecture-locale-sécurisée) · [Installation](#installation) · [Validation](#résultats-des-validations)
+[Capacités](#ce-que-couvre-agentsec-inspector) · [Tests](#catalogue-des-tests-de-sécurité) · [Manuel](#manuel-dutilisation) · [Architecture](#architecture-locale-sécurisée) · [Installation](#installation) · [Validation](#résultats-des-validations)
 
 </div>
 
 ![Dashboard AgentSec Inspector](docs/images/dashboard.png)
 
-<p align="center"><sub>Capture réelle de la V1 exécutée contre le laboratoire contrôlé inclus — aucune donnée fictive n’est injectée dans le dashboard de production.</sub></p>
+<p align="center"><sub>Dashboard de la V1 connecté au laboratoire de test fourni avec le projet. Les données de démonstration restent séparées des projets d’audit.</sub></p>
 
 <table>
   <tr>
-    <td align="center" width="33%"><strong>🛡️ Une preuve pour chaque conclusion</strong><br/><sub>Chaque résultat reste relié à une requête, une réponse, une trace ou un événement réellement observé.</sub></td>
-    <td align="center" width="33%"><strong>⚡ Des actions actives maîtrisées</strong><br/><sub>Aucune action sensible sans sélection précise, périmètre autorisé et confirmation explicite.</sub></td>
-    <td align="center" width="33%"><strong>🔒 Des données conservées localement</strong><br/><sub>API accessible uniquement en local, projets isolés et secrets chiffrés au repos.</sub></td>
+    <td align="center" width="33%"><strong>🛡️ Résultats traçables</strong><br/><sub>Chaque verdict renvoie à une requête, une réponse, une trace ou un événement observé.</sub></td>
+    <td align="center" width="33%"><strong>⚡ Tests actifs sous contrôle</strong><br/><sub>Les actions sensibles demandent une sélection précise et une confirmation explicite.</sub></td>
+    <td align="center" width="33%"><strong>🔒 Données locales</strong><br/><sub>API limitée à la boucle locale, projets isolés et secrets chiffrés au repos.</sub></td>
   </tr>
 </table>
 
-## Des audits de sécurité fiables et reproductibles
+## Une méthode fondée sur des critères observables
 
-AgentSec Inspector applique des règles déterministes : il n’utilise pas un second modèle d’IA pour décider si un test a réussi. Les résultats reposent sur des critères versionnés, des marqueurs fictifs et des traces réellement observées. Les équipes peuvent ajouter leurs propres [packs de scénarios déclaratifs](docs/SCENARIO_PACKS.md), sans charger ni exécuter de code tiers.
+AgentSec Inspector n’utilise pas un second modèle pour juger les réponses du système audité. Les verdicts sont calculés à partir de critères versionnés, de marqueurs de test et des traces disponibles. Il est possible d’ajouter ses propres [packs de scénarios déclaratifs](docs/SCENARIO_PACKS.md) sans charger de code tiers.
 
 <table>
   <tr>
@@ -52,20 +52,20 @@ AgentSec Inspector applique des règles déterministes : il n’utilise pas un s
     <td width="50%"><img src="docs/images/prompt-injection.png" alt="Prompt Injection Tester"/><br/><sub>Scénarios d’injection versionnés avec marqueur fictif</sub></td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs/images/findings.png" alt="Gestion des findings"/><br/><sub>Finding traçable, sévérité, confiance et remédiation</sub></td>
-    <td width="50%"><img src="docs/images/attack-chains.png" alt="Visualisation de chaîne d’attaque"/><br/><sub>Graphe construit uniquement à partir d’interactions observées</sub></td>
+    <td width="50%"><img src="docs/images/findings.png" alt="Gestion des constats"/><br/><sub>Constat, sévérité, confiance et suivi de la remédiation</sub></td>
+    <td width="50%"><img src="docs/images/attack-chains.png" alt="Visualisation de chaîne d’attaque"/><br/><sub>Graphe construit à partir des interactions observées</sub></td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs/images/jailbreak.png" alt="Jailbreak Tester avec résultat réel"/><br/><sub>Scénario de jailbreak exécuté contre le laboratoire contrôlé</sub></td>
-    <td width="50%"><img src="docs/images/scenario-packs.png" alt="Import de packs de scénarios"/><br/><sub>Ajout de scénarios au moyen de packs JSON validés et versionnés</sub></td>
+    <td width="50%"><img src="docs/images/jailbreak.png" alt="Résultat du Jailbreak Tester"/><br/><sub>Scénario de jailbreak exécuté contre le laboratoire de test</sub></td>
+    <td width="50%"><img src="docs/images/scenario-packs.png" alt="Import de packs de scénarios"/><br/><sub>Ajout de scénarios au moyen de packs JSON versionnés et vérifiés à l’import</sub></td>
   </tr>
 </table>
 
-<p align="center"><sub>Galerie générée depuis le frontend réel connecté au laboratoire local contrôlé.</sub></p>
+<p align="center"><sub>Captures réalisées avec l’application connectée au laboratoire local fourni dans <code>demo/</code>.</sub></p>
 
-## Tous les audits au même endroit
+## Ce que couvre AgentSec Inspector
 
-AgentSec Inspector regroupe les cibles, les tests, les preuves, les constats et les rapports d’une mission. Il analyse uniquement ce qui est observable et ne prétend pas accéder au raisonnement caché des modèles. Les résultats distinguent clairement une **observation**, un **risque potentiel** et une **vulnérabilité confirmée**.
+Une mission regroupe ses cibles, ses tests, ses preuves, ses constats et ses rapports. L’analyse se limite aux comportements et aux traces accessibles : elle ne prétend pas connaître le raisonnement interne du modèle. Les résultats distinguent une **observation**, un **risque potentiel** et une **vulnérabilité confirmée**.
 
 | Domaine | Capacités opérationnelles |
 |---|---|
@@ -78,7 +78,7 @@ AgentSec Inspector regroupe les cibles, les tests, les preuves, les constats et 
 | Reporting | Rapports techniques/exécutifs en français ou anglais, HTML, JSON et PDF |
 | Scenario Packs | Import de scénarios JSON versionnés, sans exécution de code provenant du pack |
 
-## Tous les contrôles et tests de sécurité
+## Catalogue des tests de sécurité
 
 <details open>
 <summary><strong>Découverte et analyse passive</strong></summary>
@@ -104,7 +104,7 @@ AgentSec Inspector regroupe les cibles, les tests, les preuves, les constats et 
 19. Distinction entre télémétrie réelle et analyse de réponse seule.
 20. Collecte des échanges LLM, découvertes MCP et appels d’outils observés.
 21. Collecte des paramètres caviardés, erreurs, statuts et durées.
-22. Timeline des interactions et graphe des relations réellement observées.
+22. Chronologie des interactions et graphe des relations observées.
 
 La phase passive n’appelle aucun outil MCP et n’invente aucune étape interne absente de la télémétrie.
 
@@ -115,14 +115,14 @@ La phase passive n’appelle aucun outil MCP et n’invente aucune étape intern
 
 ### Tests MCP actifs avec confirmation
 
-1. Appel d’un outil choisi dans l’inventaire réellement découvert.
+1. Appel d’un outil choisi dans l’inventaire découvert.
 2. Envoi des seuls paramètres JSON explicitement autorisés.
 3. Validation des paramètres requis et des propriétés supplémentaires.
 4. Validation des types simples, valeurs `enum` et constantes annoncées.
 5. Confirmation globale de l’audit actif.
 6. Seconde confirmation pour une capacité sensible ou potentiellement destructive.
-7. Capture de la sortie réelle, du drapeau `isError`, de la durée et de la preuve.
-8. Détection d’instructions malveillantes dans la sortie réelle d’un outil.
+7. Capture de la sortie, du drapeau `isError`, de la durée et de la preuve.
+8. Détection d’instructions malveillantes dans la sortie d’un outil.
 9. Classement des erreurs de transport ou d’outil en `ERROR`, jamais en attaque réussie.
 
 ### Prompt Injection et sécurité LLM
@@ -140,9 +140,9 @@ La phase passive n’appelle aucun outil MCP et n’invente aucune étape intern
 11. Divulgation du marqueur fictif dans la réponse.
 12. Tentative d’appel d’outil dans la réponse de la cible.
 13. Réponse vide ou résultat insuffisant.
-14. Timeout, retry contrôlé, erreur HTTP, réponse surdimensionnée ou malformée.
-15. Credential référencé mais absent de l’environnement.
-16. Scénarios personnalisés multi-tours via packs JSON versionnés et strictement validés.
+14. Délai dépassé, nombre de tentatives limité, erreur HTTP, réponse surdimensionnée ou malformée.
+15. Identifiant d’authentification référencé mais absent de l’environnement.
+16. Scénarios multi-tours personnalisés via des packs JSON versionnés et vérifiés à l’import.
 
 ### Jailbreak
 
@@ -169,7 +169,7 @@ Les connecteurs actifs couverts sont les API compatibles OpenAI, Ollama, les API
 - `FAIL` : le marqueur fictif a été divulgué ou la cible a tenté un appel d’outil interdit.
 - `INCONCLUSIVE` : preuve insuffisante, par exemple une réponse vide.
 - `ERROR` : échec technique, jamais assimilé à une attaque réussie.
-- Constats : `Observation`, `Risk potential` ou `Confirmed vulnerability`, avec un niveau de sévérité et de confiance distinct.
+- Constats : `Observation`, `Risque potentiel` ou `Vulnérabilité confirmée`, avec un niveau de sévérité et de confiance distinct.
 
 La V1 ne réalise ni scan de ports, ni exploitation d’hôte, ni appel automatique de tous les outils, ni commande arbitraire, ni chaîne d’exploits autonome. Elle n’utilise aucun vrai secret dans les scénarios fournis et ne prétend jamais lire la chaîne de pensée d’un modèle.
 
@@ -205,17 +205,22 @@ Le [catalogue des contrôles et attaques](docs/TEST_CATALOG.md) énumère exacte
 
 ## Installation
 
-### Windows x64
+### Télécharger AgentSec Inspector — Windows
 
-**[Télécharger l’artefact Windows x64 validé — MSI et NSIS](https://github.com/St0rn/agentsec-inspector/actions/runs/41025637332/artifacts/12963339218)**
+**Version : v1.0.1**
 
-Le dépôt étant privé, GitHub demande une authentification. L’archive provient du run Windows validé et contient les deux installateurs ainsi que leurs sommes SHA-256 et les journaux de validation. Après téléchargement, utilisez le MSI ou l’exécutable NSIS ; Python et Node.js ne sont pas nécessaires sur le poste final.
+- [Télécharger le MSI Windows x64](https://github.com/St0rn/agentsec-inspector/releases/download/v1.0.1/AgentSec-Inspector_1.0.1_x64_en-US.msi)
+- [Télécharger le programme d’installation Windows x64](https://github.com/St0rn/agentsec-inspector/releases/download/v1.0.1/AgentSec-Inspector_1.0.1_x64-setup.exe)
+- [Vérifier les empreintes SHA-256](https://github.com/St0rn/agentsec-inspector/releases/download/v1.0.1/SHA256SUMS-windows.txt)
+- [Consulter les notes de version](https://github.com/St0rn/agentsec-inspector/releases/tag/v1.0.1)
+
+Les deux installateurs intègrent le backend. Python et Node.js ne sont pas nécessaires sur le poste final.
 
 Pour installer depuis un artefact téléchargé ou construit localement :
 
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass
-.\scripts\install.ps1 -InstallerPath ".\AgentSec Inspector_1.0.0_x64_en-US.msi"
+.\scripts\install.ps1 -InstallerPath ".\AgentSec-Inspector_1.0.1_x64_en-US.msi"
 .\scripts\verify-installation.ps1
 ```
 
@@ -223,9 +228,9 @@ Set-ExecutionPolicy -Scope Process Bypass
 
 L’AppImage contient le frontend et le backend autonome ; Python et Node.js ne sont pas nécessaires sur le poste final.
 
-**[Télécharger l’artefact Linux validé — AppImage incluse](https://github.com/St0rn/agentsec-inspector/actions/runs/40916996042/artifacts/12916942853)**
+**[Télécharger les paquets Linux x86_64 — AppImage et DEB](https://github.com/St0rn/agentsec-inspector/actions/runs/40916996042/artifacts/12916942853)**
 
-Le dépôt étant privé, GitHub demande une authentification. L’archive correspond au run Linux x64 validé et contient l’AppImage ainsi que son paquet DEB.
+L’archive contient l’AppImage autonome et le paquet DEB produits par le workflow Linux x64.
 
 ```bash
 chmod +x scripts/linux/*.sh
@@ -249,7 +254,7 @@ Set-ExecutionPolicy -Scope Process Bypass
 .\scripts\start-dev.ps1
 ```
 
-L’environnement de test contrôlé, clairement séparé des audits réels, se lance avec :
+Le laboratoire de test, séparé des projets d’audit, se lance avec :
 
 ```powershell
 .\scripts\start-demo.ps1
@@ -281,7 +286,7 @@ Le déroulement recommandé va toujours du moins intrusif au plus intrusif. Comm
 <details open>
 <summary><strong>1. Créer la mission et définir son périmètre</strong></summary>
 
-Ouvrez **Projects**, cliquez sur **Nouveau projet**, puis renseignez le client, le nom de la mission, les dates et surtout le périmètre autorisé. Toutes les cibles, preuves et rapports resteront rattachés à ce projet.
+Ouvrez **Projects**, cliquez sur **Nouveau projet**, puis renseignez le client, le nom de la mission, les dates et le périmètre autorisé. Le projet servira ensuite de point de rattachement pour les cibles, les preuves et les rapports.
 
 <img src="docs/images/manual-project.png" alt="Création d’une mission et saisie du périmètre autorisé"/>
 
@@ -290,7 +295,7 @@ Ouvrez **Projects**, cliquez sur **Nouveau projet**, puis renseignez le client, 
 <details>
 <summary><strong>2. Ajouter une cible</strong></summary>
 
-Dans **Targets**, choisissez le projet et le type de cible : MCP distant/local, API compatible OpenAI, Ollama, chatbot générique, système RAG ou agent de laboratoire. Renseignez **URL cible** avec l’adresse réellement appelée par AgentSec. Les secrets doivent être référencés par variable d’environnement et non saisis dans la configuration JSON. Cochez l’autorisation distante uniquement si le périmètre le permet.
+Dans **Targets**, choisissez le projet et le type de cible : MCP distant/local, API compatible OpenAI, Ollama, chatbot générique, système RAG ou agent de laboratoire. **URL cible** correspond à l’adresse à laquelle AgentSec enverra ses requêtes. Pour une clé d’API, indiquez le nom de la variable d’environnement qui la contient : ne copiez jamais la clé dans le formulaire. N’activez l’accès distant que si la cible fait partie du périmètre autorisé.
 
 Pour un chatbot dont l’API n’utilise pas le format OpenAI, sélectionnez **Chatbot générique** puis décrivez sa structure JSON :
 
@@ -301,10 +306,10 @@ Pour un chatbot dont l’API n’utilise pas le format OpenAI, sélectionnez **C
 | `response_path` | Emplacement du texte dans la réponse JSON | `answer.text` |
 | `tool_calls_path` | Emplacement facultatif des appels d’outils observables | `actions` |
 | `max_tokens_path` | Emplacement facultatif de la limite de génération | `generation.limit` |
-| `static_payload` | Champs constants non secrets envoyés avec chaque requête | `{"tenant":"audit-lab"}` |
-| `api_key_env` | Variable d’environnement contenant le secret | `CHATBOT_API_KEY` |
-| `api_key_header` | Nom de l’en-tête recevant le secret | `X-API-Key` |
-| `api_key_prefix` | Préfixe placé avant la clé, éventuellement vide | `Bearer` |
+| `static_payload` | Valeurs ajoutées à chaque requête, hors identifiants et clés | `{"tenant":"audit-lab"}` |
+| `api_key_env` | Nom de la variable d’environnement qui contient la clé | `CHATBOT_API_KEY` |
+| `api_key_header` | En-tête HTTP dans lequel la clé sera envoyée | `X-API-Key` |
+| `api_key_prefix` | Texte ajouté devant la clé, par exemple `Bearer` | `Bearer` |
 
 Les chemins JSON utilisent une notation pointée. Par exemple, `answer.text` lit `{"answer":{"text":"..."}}`. Consultez la [configuration détaillée des chatbots](docs/CHATBOT_TARGETS.md).
 
@@ -333,7 +338,7 @@ Après la découverte passive, passez en mode **Actif — appel contrôlé**. Ch
 <details>
 <summary><strong>5. Tester les protections Prompt, Jailbreak et LLM</strong></summary>
 
-Un scénario est un **contrat de test reproductible** : il décrit l’attaque simulée, les messages envoyés, les prérequis, les critères observables et les références. Il sert à rejouer exactement le même contrôle après une correction ou sur plusieurs chatbots, tout en conservant l’identifiant et la version dans les preuves.
+Un scénario décrit un test que l’on peut rejouer dans les mêmes conditions : attaque simulée, messages, prérequis, critères observables et références. Son identifiant et sa version sont conservés avec le résultat, ce qui permet de comparer plusieurs cibles ou de vérifier une correction.
 
 Dans **Prompt Injection**, **Jailbreak** ou **LLM Security** :
 
@@ -343,18 +348,18 @@ Dans **Prompt Injection**, **Jailbreak** ou **LLM Security** :
 4. AgentSec remplace `{marker}` par un marqueur fictif, envoie les messages réels et conserve chaque échange ;
 5. le moteur attribue `PASS`, `FAIL`, `INCONCLUSIVE` ou `ERROR` à partir de la divulgation observable, des appels d’outils et des erreurs techniques.
 
-Le menu **Jailbreak** isole les neuf techniques de contournement fournies. Un scénario ne prouve pas une vulnérabilité par sa seule présence : seul le comportement réellement observé peut produire un constat confirmé.
+Le menu **Jailbreak** regroupe les neuf techniques de contournement fournies. La présence d’un scénario ne suffit pas à conclure à une vulnérabilité : le verdict dépend de la réponse obtenue et des actions observées.
 
 <img src="docs/images/prompt-injection.png" alt="Sélection d’un scénario de Prompt Injection"/>
 
-<img src="docs/images/jailbreak.png" alt="Exécution réussie d’un scénario de jailbreak contrôlé"/>
+<img src="docs/images/jailbreak.png" alt="Résultat d’un scénario de jailbreak"/>
 
 </details>
 
 <details>
 <summary><strong>6. Analyser un système RAG</strong></summary>
 
-Dans **RAG Security**, importez un document contrôlé ou une trace réelle. Si la télémétrie est disponible, fournissez les chunks récupérés et le contexte LLM ; sinon, laissez-les absents. Saisissez la réponse attendue et la réponse obtenue pour comparer le comportement sans inventer les étapes internes.
+Dans **RAG Security**, importez un document de test ou une trace d’exécution. Si la télémétrie est disponible, ajoutez les chunks récupérés et le contexte transmis au LLM. Dans le cas contraire, laissez ces champs vides. La comparaison entre réponse attendue et réponse obtenue reste ainsi limitée aux informations disponibles.
 
 <img src="docs/images/rag-security.png" alt="Analyse d’un document et d’une trace RAG"/>
 
@@ -386,7 +391,7 @@ Dans **Findings**, ouvrez chaque constat, vérifiez sa preuve, sa classification
 <details>
 <summary><strong>9. Générer le rapport</strong></summary>
 
-Dans **Reports**, sélectionnez le projet, le type technique ou exécutif, la langue et le format HTML, PDF ou JSON. Le rapport est généré à partir des données réellement présentes dans le projet et reçoit une empreinte SHA-256.
+Dans **Reports**, sélectionnez le projet, le type technique ou exécutif, la langue et le format HTML, PDF ou JSON. Le rapport reprend les données enregistrées dans le projet et reçoit une empreinte SHA-256.
 
 <img src="docs/images/reports.png" alt="Génération et téléchargement des rapports"/>
 
@@ -395,7 +400,7 @@ Dans **Reports**, sélectionnez le projet, le type technique ou exécutif, la la
 <details>
 <summary><strong>10. Ajouter les scénarios de votre équipe</strong></summary>
 
-Dans **Settings**, importez un pack JSON versionné. Seules les étapes déclaratives `chat` sont acceptées ; les commandes et le code exécutable sont refusés. Utilisez une nouvelle version pour faire évoluer un scénario sans perdre la traçabilité des anciens audits.
+Dans **Settings**, importez un pack JSON versionné. Un pack peut contenir des étapes `chat`, mais aucune commande ni aucun code exécutable. Utilisez une nouvelle version pour faire évoluer un scénario sans perdre la trace des audits précédents.
 
 Structure d’un pack :
 
@@ -404,8 +409,8 @@ Structure d’un pack :
 | `pack_id` | Oui | Identifiant stable du pack, par exemple `team.chatbot-redteam` |
 | `pack_version` | Oui | Version sémantique `MAJEUR.MINEUR.CORRECTIF` |
 | `name` | Oui | Nom lisible du pack |
-| `description` | Non | Objectif et périmètre du pack |
-| `replace_existing` | Non | Autorise explicitement le remplacement du même couple ID/version |
+| `description` | Non | But du pack et cas d’usage couverts |
+| `replace_existing` | Non | Remplace une version déjà importée portant le même identifiant |
 | `scenarios` | Oui | Liste de 1 à 100 scénarios |
 
 Attributs de chaque scénario :
@@ -415,12 +420,12 @@ Attributs de chaque scénario :
 | `id` | Identifiant stable, par exemple `team.role-confusion` |
 | `version` | Version exacte enregistrée dans l’audit |
 | `name`, `description`, `category` | Présentation et classement dans l’interface |
-| `prerequisites` | Conditions documentaires requises avant l’exécution |
-| `configuration` | Métadonnées non secrètes propres au scénario |
+| `prerequisites` | Conditions à réunir avant de lancer le test |
+| `configuration` | Options propres au scénario ; n’y placez ni clé ni jeton |
 | `procedure` | De 1 à 20 étapes `chat`, exécutées dans l’ordre |
-| `success_criteria` | Critères déclarés indiquant le comportement attendu |
-| `failure_criteria` | Critères déclarés indiquant la violation recherchée |
-| `references` | Référentiels applicables sans correspondance artificielle |
+| `success_criteria` | Signaux attendus lorsque la protection fonctionne |
+| `failure_criteria` | Signaux qui indiquent que la protection a échoué |
+| `references` | Références utiles pour comprendre ou rattacher le test |
 
 Chaque étape de `procedure` contient uniquement `type: "chat"` et `template`. Le modèle doit contenir `{marker}` ; AgentSec le remplace au moment du test par une valeur fictive.
 
@@ -448,9 +453,9 @@ Chaque étape de `procedure` contient uniquement `type: "chat"` et `template`. L
 }
 ```
 
-Le contrat complet et les limites d’évaluation sont documentés dans [SCENARIO_PACKS.md](docs/SCENARIO_PACKS.md).
+Le format complet et les limites de l’évaluation sont décrits dans [SCENARIO_PACKS.md](docs/SCENARIO_PACKS.md).
 
-En V1, l’évaluateur interprète uniquement les observations `marker_disclosed` et `tool_calls_attempted`. Les autres valeurs de `success_criteria` ou `failure_criteria` restent documentaires : elles sont conservées, mais jamais exécutées comme du code.
+En V1, le verdict automatique repose sur deux signaux : `marker_disclosed` et `tool_calls_attempted`. Les autres critères sont enregistrés avec le scénario pour aider l’auditeur, mais ils ne modifient pas le verdict et ne sont jamais exécutés comme du code.
 
 <img src="docs/images/scenario-packs.png" alt="Import d’un pack de scénarios versionné"/>
 
@@ -458,18 +463,18 @@ En V1, l’évaluateur interprète uniquement les observations `marker_disclosed
 
 ## Résultats des validations
 
-| Contrôle | Résultat local |
+| Contrôle | Résultat |
 |---|---|
-| Backend | 53/53 tests, 86,00 % de couverture (seuil bloquant 80 %), Ruff et mypy réussis |
-| Frontend | 13/13 tests, 88,46 % des lignes couvertes avec seuils bloquants, ESLint, TypeScript et build Vite réussis |
+| Backend | 60/60 tests, 86,85 % de couverture (seuil bloquant 80 %), Ruff et mypy réussis |
+| Frontend | 17/17 tests, 87,86 % des lignes couvertes avec seuils bloquants, ESLint, TypeScript et build Vite réussis |
 | Sécurité source/dépendances | `pip-audit` et `npm audit` sans vulnérabilité connue ; Bandit sans finding moyen/élevé |
 | Binaire autonome | Build Linux PyInstaller, migration neuve, auth, CORS, intégrité et PDF vérifiés |
-| Laboratoire | Découverte MCP passive, appel MCP actif borné et échange LLM réellement exécutés |
+| Laboratoire | Découverte MCP passive, appel MCP actif borné et échange LLM exécutés avec succès |
 | Scripts Linux | Installation développeur exécutée deux fois, démarrage, tests, sauvegarde/restauration et erreurs principales validés |
 | Paquets desktop | AppImage/DEB construits et AppImage vérifiée deux fois sous Linux ; MSI/NSIS construits, installés et vérifiés deux fois chacun sous Windows |
-| Windows/PowerShell | 70 tests Pester réussis sous PowerShell 7 et 70 sous Windows PowerShell 5.1 ; sonde MSVC/SDK réelle, MSI, NSIS, API, desktop, sidecar et désinstallations réussis |
+| Windows/PowerShell | 70 tests Pester réussis sous PowerShell 7 et 70 sous Windows PowerShell 5.1 ; test de compilation MSVC/SDK, MSI, NSIS, API, desktop, sidecar et désinstallations réussis |
 
-Preuve Windows : [run GitHub Actions `41025637332`](https://github.com/St0rn/agentsec-inspector/actions/runs/41025637332), terminé avec succès le 30 octobre 2026. Voir également [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md), la [matrice de validation](INSTALLATION_VALIDATION_MATRIX.md) et le [rapport détaillé](docs/VALIDATION_REPORT.md).
+Le détail du build Windows est disponible dans le [run GitHub Actions `41025637332`](https://github.com/St0rn/agentsec-inspector/actions/runs/41025637332). Consultez aussi [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md), la [matrice de validation](INSTALLATION_VALIDATION_MATRIX.md) et le [rapport détaillé](docs/VALIDATION_REPORT.md).
 
 ## Organisation du dépôt
 
@@ -477,7 +482,7 @@ Preuve Windows : [run GitHub Actions `41025637332`](https://github.com/St0rn/age
 backend/       API, modèles, migrations, moteurs d’audit et rapports
 frontend/      React, TypeScript, Tailwind, graphiques et visualisations
 src-tauri/     application desktop, supervision et IPC du sidecar
-demo/          laboratoire MCP / LLM / RAG contrôlé
+demo/          laboratoire MCP / LLM / RAG
 scripts/       cycle de vie Windows PowerShell et Linux Bash
 docs/          architecture, sécurité et procédures Windows
 .github/       tests backend/frontend, sécurité et build Windows x64
@@ -496,4 +501,4 @@ AgentSec Inspector est créé et maintenu par **St0rn**.
 
 ---
 
-<div align="center"><sub>AgentSec Inspector V1.0 · créé par St0rn · résultats fondés sur des tests exécutés et des preuves vérifiables</sub></div>
+<div align="center"><sub>AgentSec Inspector v1.0.1 · développé et maintenu par St0rn</sub></div>

@@ -6,7 +6,7 @@
 
 ### AI Red Team & MCP Security Auditing Platform
 
-A local desktop framework for authorized security assessments of chatbots, AI agents, MCP servers, RAG pipelines, and LLM applications on Windows and Linux.
+A desktop application for authorized security assessments of chatbots, AI agents, MCP servers, RAG pipelines, and LLM applications on Windows and Linux.
 
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.162-009688?style=flat-square&logo=fastapi&logoColor=white)
@@ -26,25 +26,25 @@ A local desktop framework for authorized security assessments of chatbots, AI ag
 
 [🇫🇷 Français](README.md) · [🇬🇧 English](README.en.md)
 
-[Capabilities](#one-place-for-the-complete-assessment) · [Tests](#every-security-control-and-test) · [User guide](#user-guide) · [Architecture](#secure-local-architecture) · [Installation](#installation) · [Validation](#validation-results)
+[Capabilities](#what-agentsec-inspector-covers) · [Tests](#security-test-catalog) · [User guide](#user-guide) · [Architecture](#secure-local-architecture) · [Installation](#installation) · [Validation](#validation-results)
 
 </div>
 
 ![AgentSec Inspector Dashboard](docs/images/dashboard.png)
 
-<p align="center"><sub>Real V1 screenshot running against the included controlled laboratory — no fictional records are injected into the production dashboard.</sub></p>
+<p align="center"><sub>V1 dashboard connected to the included test laboratory. Demo data remains separate from assessment projects.</sub></p>
 
 <table>
   <tr>
-    <td align="center" width="33%"><strong>🛡️ Evidence for every conclusion</strong><br/><sub>Every result remains linked to an actual request, response, trace, or observed event.</sub></td>
-    <td align="center" width="33%"><strong>⚡ Active tests stay under control</strong><br/><sub>No sensitive action without a precise selection, authorized scope, and explicit approval.</sub></td>
-    <td align="center" width="33%"><strong>🔒 Data stays local</strong><br/><sub>Loopback-only API, isolated projects, and secrets encrypted at rest.</sub></td>
+    <td align="center" width="33%"><strong>🛡️ Traceable results</strong><br/><sub>Every verdict links back to a request, response, trace, or observed event.</sub></td>
+    <td align="center" width="33%"><strong>⚡ Controlled active tests</strong><br/><sub>Sensitive actions require a precise selection and explicit approval.</sub></td>
+    <td align="center" width="33%"><strong>🔒 Local data</strong><br/><sub>Loopback-only API, isolated projects, and secrets encrypted at rest.</sub></td>
   </tr>
 </table>
 
-## Repeatable security assessments backed by evidence
+## A method based on observable criteria
 
-AgentSec Inspector uses deterministic checks; it does not ask a second AI model to decide whether a test passed. Results are based on versioned criteria, fictional canary markers, and actual traces. Teams can add their own [declarative scenario packs](docs/SCENARIO_PACKS.md) without loading or executing third-party code.
+AgentSec Inspector does not ask a second model to judge the system under test. Outcomes are calculated from versioned criteria, test markers, and available traces. Teams can add [declarative scenario packs](docs/SCENARIO_PACKS.md) without loading third-party code.
 
 <table>
   <tr>
@@ -53,19 +53,19 @@ AgentSec Inspector uses deterministic checks; it does not ask a second AI model 
   </tr>
   <tr>
     <td width="50%"><img src="docs/images/findings.png" alt="Findings management"/><br/><sub>Traceable findings with severity, confidence, and remediation</sub></td>
-    <td width="50%"><img src="docs/images/attack-chains.png" alt="Attack-chain visualization"/><br/><sub>Graph built exclusively from observed interactions</sub></td>
+    <td width="50%"><img src="docs/images/attack-chains.png" alt="Attack-chain visualization"/><br/><sub>Graph built from observed interactions</sub></td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs/images/jailbreak.png" alt="Jailbreak Tester with an actual result"/><br/><sub>Jailbreak scenario executed against the controlled laboratory</sub></td>
-    <td width="50%"><img src="docs/images/scenario-packs.png" alt="Scenario-pack import"/><br/><sub>Add scenarios through validated, versioned JSON packs</sub></td>
+    <td width="50%"><img src="docs/images/jailbreak.png" alt="Jailbreak Tester result"/><br/><sub>Jailbreak scenario executed against the test laboratory</sub></td>
+    <td width="50%"><img src="docs/images/scenario-packs.png" alt="Scenario-pack import"/><br/><sub>Add scenarios through versioned JSON packs checked on import</sub></td>
   </tr>
 </table>
 
-<p align="center"><sub>Gallery generated from the real frontend connected to the controlled local laboratory.</sub></p>
+<p align="center"><sub>Screenshots taken from the application connected to the local laboratory in <code>demo/</code>.</sub></p>
 
-## One place for the complete assessment
+## What AgentSec Inspector covers
 
-AgentSec Inspector brings a project's targets, tests, evidence, findings, and reports together. It analyzes only observable behavior and never claims access to a model's hidden reasoning. Results clearly distinguish an **observation**, a **potential risk**, and a **confirmed vulnerability**.
+Each project keeps its targets, tests, evidence, findings, and reports together. Analysis is limited to accessible behavior and traces; it does not claim access to a model's internal reasoning. Results distinguish an **observation**, a **potential risk**, and a **confirmed vulnerability**.
 
 | Domain | Operational capabilities |
 |---|---|
@@ -78,7 +78,7 @@ AgentSec Inspector brings a project's targets, tests, evidence, findings, and re
 | Reporting | Technical and executive reports in English or French, exported as HTML, JSON, or PDF |
 | Scenario Packs | Import versioned JSON scenarios without executing code from the pack |
 
-## Every security control and test
+## Security test catalog
 
 <details open>
 <summary><strong>Passive discovery and analysis</strong></summary>
@@ -104,7 +104,7 @@ AgentSec Inspector brings a project's targets, tests, evidence, findings, and re
 19. Distinction between real telemetry and response-only analysis.
 20. Collection of observed LLM exchanges, MCP discovery, and tool calls.
 21. Collection of redacted parameters, errors, statuses, and durations.
-22. Interaction timeline and graph of actually observed relationships.
+22. Interaction timeline and graph of observed relationships.
 
 Passive mode never calls an MCP tool and never fabricates internal stages missing from the available telemetry.
 
@@ -115,14 +115,14 @@ Passive mode never calls an MCP tool and never fabricates internal stages missin
 
 ### Active MCP tests with explicit approval
 
-1. Calling a tool selected from the actually discovered inventory.
+1. Calling a tool selected from the discovered inventory.
 2. Sending only explicitly authorized JSON parameters.
 3. Validation of required parameters and additional properties.
 4. Validation of simple types, advertised `enum` values, and constants.
 5. Global confirmation of the active audit.
 6. Separate confirmation for sensitive or potentially destructive capabilities.
-7. Capture of the real output, `isError` flag, duration, and evidence.
-8. Detection of malicious instructions in actual tool output.
+7. Capture of the output, `isError` flag, duration, and evidence.
+8. Detection of malicious instructions in tool output.
 9. Classification of transport or tool failures as `ERROR`, never as a successful attack.
 
 ### Prompt Injection and LLM security
@@ -142,7 +142,7 @@ Passive mode never calls an MCP tool and never fabricates internal stages missin
 13. Empty responses or insufficient results.
 14. Timeout, controlled retry, HTTP error, oversized response, or malformed response.
 15. Referenced credentials missing from the environment.
-16. Custom multi-turn scenarios through strictly validated, versioned JSON packs.
+16. Custom multi-turn scenarios through versioned JSON packs checked on import.
 
 ### Jailbreak
 
@@ -205,17 +205,22 @@ The [test and attack catalog](docs/TEST_CATALOG.md) states exactly what V1 execu
 
 ## Installation
 
-### Windows x64
+### Download AgentSec Inspector — Windows
 
-**[Download the validated Windows x64 artifact — MSI and NSIS](https://github.com/St0rn/agentsec-inspector/actions/runs/41025637332/artifacts/12963339218)**
+**Version: v1.0.1**
 
-Because the repository is private, GitHub authentication is required. The archive comes from the validated Windows run and contains both installers, their SHA-256 sums, and validation logs. After downloading it, use either the MSI or NSIS executable; end users do not need Python or Node.js.
+- [Download the Windows x64 MSI](https://github.com/St0rn/agentsec-inspector/releases/download/v1.0.1/AgentSec-Inspector_1.0.1_x64_en-US.msi)
+- [Download the Windows x64 Setup executable](https://github.com/St0rn/agentsec-inspector/releases/download/v1.0.1/AgentSec-Inspector_1.0.1_x64-setup.exe)
+- [Verify the SHA-256 checksums](https://github.com/St0rn/agentsec-inspector/releases/download/v1.0.1/SHA256SUMS-windows.txt)
+- [Read the release notes](https://github.com/St0rn/agentsec-inspector/releases/tag/v1.0.1)
+
+Both installers include the backend. End users do not need Python or Node.js.
 
 To install a downloaded or locally built artifact:
 
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass
-.\scripts\install.ps1 -InstallerPath ".\AgentSec Inspector_1.0.0_x64_en-US.msi"
+.\scripts\install.ps1 -InstallerPath ".\AgentSec-Inspector_1.0.1_x64_en-US.msi"
 .\scripts\verify-installation.ps1
 ```
 
@@ -223,9 +228,9 @@ Set-ExecutionPolicy -Scope Process Bypass
 
 The AppImage contains the frontend and standalone backend, so end users do not need Python or Node.js.
 
-**[Download the validated Linux artifact — AppImage included](https://github.com/St0rn/agentsec-inspector/actions/runs/40916996042/artifacts/12916942853)**
+**[Download the Linux x86_64 packages — AppImage and DEB](https://github.com/St0rn/agentsec-inspector/actions/runs/40916996042/artifacts/12916942853)**
 
-Because the repository is private, GitHub authentication is required. The archive comes from the validated Linux x64 run and contains the AppImage and DEB package.
+The archive contains the standalone AppImage and DEB package produced by the Linux x64 workflow.
 
 ```bash
 chmod +x scripts/linux/*.sh
@@ -249,7 +254,7 @@ Set-ExecutionPolicy -Scope Process Bypass
 .\scripts\start-dev.ps1
 ```
 
-Start the controlled test environment, which remains clearly separated from real audits:
+Start the test laboratory, which uses data separate from assessment projects:
 
 ```powershell
 .\scripts\start-demo.ps1
@@ -281,7 +286,7 @@ Follow the workflow from the least intrusive action to the most intrusive one. D
 <details open>
 <summary><strong>1. Create an engagement and define its scope</strong></summary>
 
-Open **Projects**, select **Nouveau projet**, and enter the client, engagement name, dates, and authorized scope. Every target, item of evidence, and report remains attached to this project.
+Open **Projects**, select **Nouveau projet**, and enter the client, engagement name, dates, and authorized scope. The project then acts as the parent record for its targets, evidence, and reports.
 
 <img src="docs/images/manual-project.png" alt="Creating an engagement and entering its authorized scope"/>
 
@@ -290,7 +295,7 @@ Open **Projects**, select **Nouveau projet**, and enter the client, engagement n
 <details>
 <summary><strong>2. Add a target</strong></summary>
 
-In **Targets**, select the project and target type: remote/local MCP, OpenAI-compatible API, Ollama, generic chatbot, RAG system, or laboratory agent. Enter the address actually called by AgentSec in **URL cible**. Reference secrets through environment variables instead of entering them in JSON configuration. Approve remote access only when the engagement scope allows it.
+In **Targets**, select the project and target type: remote/local MCP, OpenAI-compatible API, Ollama, generic chatbot, RAG system, or laboratory agent. **URL cible** is the address to which AgentSec sends requests. For an API key, enter the name of the environment variable that holds it; never paste the key into the form. Enable remote access only when the target is within the authorized scope.
 
 For a chatbot whose API does not use the OpenAI format, select **Chatbot générique** and describe its JSON structure:
 
@@ -301,10 +306,10 @@ For a chatbot whose API does not use the OpenAI format, select **Chatbot génér
 | `response_path` | Location of response text in returned JSON | `answer.text` |
 | `tool_calls_path` | Optional location of observable tool calls | `actions` |
 | `max_tokens_path` | Optional location of the generation limit | `generation.limit` |
-| `static_payload` | Constant non-secret fields sent with every request | `{"tenant":"audit-lab"}` |
-| `api_key_env` | Environment variable holding the secret | `CHATBOT_API_KEY` |
-| `api_key_header` | Header that receives the secret | `X-API-Key` |
-| `api_key_prefix` | Prefix before the key, which may be empty | `Bearer` |
+| `static_payload` | Values added to every request; do not place credentials here | `{"tenant":"audit-lab"}` |
+| `api_key_env` | Name of the environment variable that holds the key | `CHATBOT_API_KEY` |
+| `api_key_header` | HTTP header used to send the key | `X-API-Key` |
+| `api_key_prefix` | Text placed before the key, such as `Bearer` | `Bearer` |
 
 JSON paths use dot notation. For example, `answer.text` reads `{"answer":{"text":"..."}}`. See the [detailed chatbot configuration](docs/CHATBOT_TARGETS.md).
 
@@ -333,28 +338,28 @@ After passive discovery, switch to **Actif — appel contrôlé**. Choose one di
 <details>
 <summary><strong>5. Test Prompt, Jailbreak, and LLM protections</strong></summary>
 
-A scenario is a **repeatable test contract**: it describes the simulated attack, messages, prerequisites, observable criteria, and references. It lets an assessor replay the same control after remediation or across several chatbots while retaining the exact identifier and version in evidence.
+A scenario describes a test that can be replayed under the same conditions: simulated attack, messages, prerequisites, observable criteria, and references. Its identifier and version are stored with the result, allowing comparison across targets or after remediation.
 
 In **Prompt Injection**, **Jailbreak**, or **LLM Security**:
 
 1. choose the target and a versioned scenario;
 2. state the security objective the chatbot must preserve;
 3. approve the active execution;
-4. AgentSec replaces `{marker}` with a fictional marker, sends the actual messages, and retains every exchange;
+4. AgentSec replaces `{marker}` with a fictional marker, sends the messages, and retains every exchange;
 5. the engine assigns `PASS`, `FAIL`, `INCONCLUSIVE`, or `ERROR` from observable disclosure, tool calls, and technical errors.
 
-The **Jailbreak** menu isolates the nine supplied bypass techniques. A scenario does not prove a vulnerability merely by existing: only actual observed behavior can produce a confirmed finding.
+The **Jailbreak** menu groups the nine supplied bypass techniques. A scenario alone does not prove a vulnerability; the verdict depends on the returned response and observed actions.
 
 <img src="docs/images/prompt-injection.png" alt="Selecting a Prompt Injection scenario"/>
 
-<img src="docs/images/jailbreak.png" alt="Successful execution of a controlled jailbreak scenario"/>
+<img src="docs/images/jailbreak.png" alt="Jailbreak scenario result"/>
 
 </details>
 
 <details>
 <summary><strong>6. Analyze a RAG system</strong></summary>
 
-In **RAG Security**, import a controlled document or a real trace. When telemetry is available, provide retrieved chunks and the LLM context; otherwise leave them absent. Enter the expected and observed responses to compare behavior without inventing internal stages.
+In **RAG Security**, import a test document or an execution trace. When telemetry is available, add the retrieved chunks and context sent to the LLM. Otherwise, leave those fields empty. The comparison between expected and observed responses then remains limited to the available information.
 
 <img src="docs/images/rag-security.png" alt="Analyzing a RAG document and trace"/>
 
@@ -386,7 +391,7 @@ In **Findings**, open each finding and review its evidence, classification, seve
 <details>
 <summary><strong>9. Generate the report</strong></summary>
 
-In **Reports**, select the project, technical or executive report, language, and HTML, PDF, or JSON format. Reports are generated from actual project data and receive a SHA-256 fingerprint.
+In **Reports**, select the project, technical or executive report, language, and HTML, PDF, or JSON format. Reports use the data stored in the project and receive a SHA-256 fingerprint.
 
 <img src="docs/images/reports.png" alt="Generating and downloading reports"/>
 
@@ -395,7 +400,7 @@ In **Reports**, select the project, technical or executive report, language, and
 <details>
 <summary><strong>10. Add your team's scenarios</strong></summary>
 
-In **Settings**, import a versioned JSON pack. Only declarative `chat` steps are accepted; commands and executable code are rejected. Publish a new version when a scenario changes so previous audit results remain traceable.
+In **Settings**, import a versioned JSON pack. A pack may contain `chat` steps, but it cannot contain commands or executable code. Publish a new version when a scenario changes so earlier audit results remain traceable.
 
 Pack structure:
 
@@ -404,8 +409,8 @@ Pack structure:
 | `pack_id` | Yes | Stable pack identifier, such as `team.chatbot-redteam` |
 | `pack_version` | Yes | Semantic `MAJOR.MINOR.PATCH` version |
 | `name` | Yes | Human-readable pack name |
-| `description` | No | Pack purpose and scope |
-| `replace_existing` | No | Explicitly allows replacement of the same ID/version pair |
+| `description` | No | Purpose of the pack and covered use cases |
+| `replace_existing` | No | Replaces an imported version with the same identifier |
 | `scenarios` | Yes | List containing 1 to 100 scenarios |
 
 Attributes for each scenario:
@@ -415,12 +420,12 @@ Attributes for each scenario:
 | `id` | Stable identifier, such as `team.role-confusion` |
 | `version` | Exact version retained with the audit |
 | `name`, `description`, `category` | Display and classification in the interface |
-| `prerequisites` | Documentary conditions required before execution |
-| `configuration` | Non-secret scenario-specific metadata |
+| `prerequisites` | Conditions that must be met before running the test |
+| `configuration` | Scenario options; do not store keys or tokens here |
 | `procedure` | Between 1 and 20 ordered `chat` steps |
-| `success_criteria` | Declared criteria describing expected behavior |
-| `failure_criteria` | Declared criteria describing the violation under test |
-| `references` | Applicable references without artificial mappings |
+| `success_criteria` | Signals expected when the protection works |
+| `failure_criteria` | Signals that show the protection has failed |
+| `references` | References that help explain or map the test |
 
 Each `procedure` step contains only `type: "chat"` and `template`. The template must include `{marker}`; AgentSec replaces it with a fictional value at execution time.
 
@@ -448,9 +453,9 @@ Each `procedure` step contains only `type: "chat"` and `template`. The template 
 }
 ```
 
-The complete contract and evaluation boundaries are documented in [SCENARIO_PACKS.md](docs/SCENARIO_PACKS.md).
+The complete format and evaluation limits are described in [SCENARIO_PACKS.md](docs/SCENARIO_PACKS.md).
 
-In V1, the evaluator interprets only the observable `marker_disclosed` and `tool_calls_attempted` values. Other `success_criteria` or `failure_criteria` values remain documentary: they are retained but never executed as code.
+In V1, automatic scoring uses two signals: `marker_disclosed` and `tool_calls_attempted`. Other criteria are stored with the scenario to help the assessor, but they do not change the verdict and are never executed as code.
 
 <img src="docs/images/scenario-packs.png" alt="Importing a versioned scenario pack"/>
 
@@ -458,18 +463,18 @@ In V1, the evaluator interprets only the observable `marker_disclosed` and `tool
 
 ## Validation results
 
-| Control | Local result |
+| Control | Result |
 |---|---|
-| Backend | 53/53 tests, 86.00% coverage with an 80% blocking threshold, Ruff and mypy successful |
-| Frontend | 13/13 tests, 88.46% line coverage with blocking thresholds, ESLint, TypeScript, and Vite build successful |
+| Backend | 60/60 tests, 86.85% coverage with an 80% blocking threshold, Ruff and mypy successful |
+| Frontend | 17/17 tests, 87.86% line coverage with blocking thresholds, ESLint, TypeScript, and Vite build successful |
 | Source and dependency security | `pip-audit` and `npm audit` found no known vulnerabilities; Bandit found no medium/high issue |
 | Standalone binary | Linux PyInstaller build verified with fresh migration, authentication, CORS, integrity, and PDF generation |
-| Laboratory | Passive MCP discovery, bounded active MCP call, and actual LLM exchanges executed successfully |
+| Laboratory | Passive MCP discovery, bounded active MCP call, and LLM exchanges completed successfully |
 | Linux scripts | Development install executed twice; startup, tests, backup/restore, and primary error paths validated |
 | Desktop packages | AppImage/DEB built and the AppImage verified twice on Linux; MSI/NSIS built, installed, and verified twice each on Windows |
-| Windows/PowerShell | 70 Pester tests passed on PowerShell 7 and 70 on Windows PowerShell 5.1; real MSVC/SDK probe, MSI, NSIS, API, desktop, sidecar, and uninstall checks passed |
+| Windows/PowerShell | 70 Pester tests passed on PowerShell 7 and 70 on Windows PowerShell 5.1; MSVC/SDK compilation probe, MSI, NSIS, API, desktop, sidecar, and uninstall checks passed |
 
-Windows evidence: [GitHub Actions run `41025637332`](https://github.com/St0rn/agentsec-inspector/actions/runs/41025637332), completed successfully on October 30, 2026. See [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md), the [installation validation matrix](INSTALLATION_VALIDATION_MATRIX.md), and the [detailed validation report](docs/VALIDATION_REPORT.md).
+Windows build details are available in [GitHub Actions run `41025637332`](https://github.com/St0rn/agentsec-inspector/actions/runs/41025637332). See also [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md), the [installation validation matrix](INSTALLATION_VALIDATION_MATRIX.md), and the [detailed validation report](docs/VALIDATION_REPORT.md).
 
 ## Repository layout
 
@@ -477,7 +482,7 @@ Windows evidence: [GitHub Actions run `41025637332`](https://github.com/St0rn/ag
 backend/       API, models, migrations, audit engines, and reports
 frontend/      React, TypeScript, Tailwind, charts, and visualizations
 src-tauri/     desktop application, sidecar supervision, and IPC
-demo/          controlled MCP / LLM / RAG laboratory
+demo/          MCP / LLM / RAG laboratory
 scripts/       complete PowerShell lifecycle for Windows and Bash lifecycle for Linux
 docs/          architecture, security, and Windows procedures
 .github/       backend/frontend tests, security checks, and Windows x64 build
@@ -496,4 +501,4 @@ AgentSec Inspector is created and maintained by **St0rn**.
 
 ---
 
-<div align="center"><sub>AgentSec Inspector V1.0 · created by St0rn · results based on executed tests and verifiable evidence</sub></div>
+<div align="center"><sub>AgentSec Inspector v1.0.1 · developed and maintained by St0rn</sub></div>

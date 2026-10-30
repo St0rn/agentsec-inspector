@@ -9,7 +9,7 @@ describe("navigation", () => {
   beforeEach(() => {
     localStorage.setItem("agentsec-api-token", "test-token");
     vi.stubGlobal("fetch", vi.fn(async (url: string) => {
-      const value = url.includes("/dashboard") ? emptyDashboard : [];
+      const value = url.endsWith("/health") ? { status: "ok", service: "agentsec-backend", version: "1.0.1" } : url.includes("/dashboard") ? emptyDashboard : [];
       return new Response(JSON.stringify(value), { status: 200, headers: { "Content-Type": "application/json" } });
     }));
   });

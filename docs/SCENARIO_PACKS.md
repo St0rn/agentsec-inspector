@@ -35,12 +35,12 @@ Un scénario est un contrat de test reproductible : il décrit l’objectif et l
 | `name` | chaîne | Nom court présenté à l’auditeur |
 | `description` | chaîne | Ce que le scénario cherche à vérifier, sans conclure avant l’exécution |
 | `category` | chaîne | Classement libre borné, par exemple `prompt-injection`, `jailbreak` ou `rag` |
-| `prerequisites` | objet | Conditions documentaires : type de cible, télémétrie attendue, préparation de laboratoire |
-| `configuration` | objet | Métadonnées non secrètes propres au scénario |
+| `prerequisites` | objet | Conditions à réunir : type de cible, télémétrie attendue ou préparation du laboratoire |
+| `configuration` | objet | Options propres au scénario ; ne pas y stocker de clé ni de jeton |
 | `procedure` | tableau | De 1 à 20 étapes `chat` exécutées dans l’ordre |
 | `success_criteria` | objet | Résultat de sécurité attendu, documenté et conservé |
 | `failure_criteria` | objet | Violation recherchée, documentée et conservée |
-| `references` | tableau | Références réellement pertinentes, 30 maximum |
+| `references` | tableau | Références utiles au scénario, 30 maximum |
 
 Chaque étape de `procedure` accepte exactement deux attributs :
 

@@ -123,6 +123,32 @@ try {
     $checks.desktop_backend_spawned=($desktopBackend.Count -gt 0)
     if(-not $checks.desktop_backend_spawned){throw 'Desktop application did not spawn its bundled backend sidecar.'}
 
+    $desktopPort=$null
+    for($i=0;$i -lt 30 -and -not $desktopPort;$i++){
+        $desktopBackend=@(Get-Process -ErrorAction SilentlyContinue|Where-Object{$_.ProcessName -like 'agentsec-backend*' -and $backendIdsBefore -notcontains $_.Id})
+        foreach($backendProcess in $desktopBackend){
+            $listener=Get-NetTCPConnection -OwningProcess $backendProcess.Id -State Listen -ErrorAction SilentlyContinue |
+                Where-Object{$_.LocalAddress -in @('127.0.0.1','::1')} |
+                Select-Object -First 1
+            if($listener){$desktopPort=[int]$listener.LocalPort;break}
+        }
+        if(-not $desktopPort){Start-Sleep -Milliseconds 500}
+    }
+    $checks.desktop_dynamic_port=[bool]$desktopPort
+    if(-not $desktopPort){throw 'The desktop sidecar did not expose a loopback listener on its dynamic port.'}
+
+    $desktopHealth=Invoke-RestMethod "http://127.0.0.1:$desktopPort/health" -TimeoutSec 3
+    $checks.desktop_backend_health=($desktopHealth.status -eq 'ok' -and $desktopHealth.service -eq 'agentsec-backend')
+    if(-not $checks.desktop_backend_health){throw 'The desktop sidecar health endpoint did not return the expected service identity.'}
+
+    $preflight=Invoke-WebRequest "http://127.0.0.1:$desktopPort/api/v1/projects" -UseBasicParsing -Method Options -Headers @{
+        Origin='http://tauri.localhost'
+        'Access-Control-Request-Method'='POST'
+        'Access-Control-Request-Headers'='authorization,content-type'
+    } -TimeoutSec 3
+    $checks.desktop_tauri_cors=($preflight.StatusCode -eq 200 -and $preflight.Headers['Access-Control-Allow-Origin'] -eq 'http://tauri.localhost')
+    if(-not $checks.desktop_tauri_cors){throw 'The packaged backend did not authorize the Windows Tauri origin.'}
+
     $success=@($checks.Values|Where-Object{$_ -is [bool] -and -not $_}).Count -eq 0
     $report=[ordered]@{
         timestamp=(Get-Date -Format o)
@@ -131,7 +157,7 @@ try {
         backend_path=$BackendPath
         checks=$checks
         success=$success
-        limitations=@('The smoke test verifies process startup and the packaged local API; it does not automate every WebView UI interaction.')
+        limitations=@('The smoke test verifies the desktop sidecar dynamic port and Windows Tauri CORS path. It does not drive every visual WebView interaction.')
     }
     $reportPath=Join-Path $script:RepoRoot 'logs\tests\installation-verification.json'
     $report|ConvertTo-Json -Depth 6|Set-Content -Encoding UTF8 -LiteralPath $reportPath
