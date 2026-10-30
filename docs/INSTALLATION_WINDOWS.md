@@ -9,18 +9,18 @@
 
 ## Installation par paquet
 
-1. Télécharger le `.msi` ou le programme NSIS `-setup.exe` depuis une release approuvée ou l’artefact `agentsec-windows-x64` d’un workflow Windows réussi.
+1. Télécharger le `.msi` ou le programme NSIS `-setup.exe` depuis une release approuvée ou l’[artefact Windows x64 validé](https://github.com/St0rn/agentsec-inspector/actions/runs/41025637332/artifacts/12963339218).
 2. Vérifier son empreinte publiée :
 
 ```powershell
-Get-FileHash .\AgentSec-Inspector_1.0.0_x64_en-US.msi -Algorithm SHA256
+Get-FileHash '.\AgentSec Inspector_1.0.0_x64_en-US.msi' -Algorithm SHA256
 ```
 
 3. Depuis la racine du dépôt de livraison :
 
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass
-.\scripts\install.ps1 -InstallerPath .\AgentSec-Inspector_1.0.0_x64_en-US.msi
+.\scripts\install.ps1 -InstallerPath '.\AgentSec Inspector_1.0.0_x64_en-US.msi'
 ```
 
 Le script demande une confirmation, installe le paquet puis exécute un contrôle fonctionnel. Il ne désactive aucune protection Windows et n’installe aucun logiciel tiers silencieusement.
@@ -70,7 +70,7 @@ La suppression des données nécessite deux options et la confirmation PowerShel
 
 ## Récupérer les installateurs de la CI
 
-Ouvrir **Actions → Windows x64 build and installer validation**, sélectionner un run réussi, puis télécharger `agentsec-windows-x64`. L’archive contient :
+Le run de référence est [`41025637332`](https://github.com/St0rn/agentsec-inspector/actions/runs/41025637332), terminé avec succès le 30 octobre 2026. Télécharger son artefact `agentsec-windows-x64`. L’archive contient :
 
 - le MSI sous `bundle\msi` ;
 - le setup NSIS sous `bundle\nsis` ;

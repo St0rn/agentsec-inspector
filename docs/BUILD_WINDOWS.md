@@ -40,3 +40,5 @@ Start-Process msiexec -ArgumentList @('/i', $msi.FullName) -Wait
 Une compilation réussie ne vaut pas validation d’installation. Seul le rapport de `verify-installation.ps1` avec `success: true` constitue le smoke test Windows.
 
 Le workflow `.github\workflows\windows-build.yml` effectue en plus l’analyse PowerShell, les tests Pester sous PowerShell 5.1 et 7, deux installations successives du MSI, sa désinstallation, deux installations successives du NSIS, sa désinstallation et la génération des SHA-256.
+
+Preuve de référence : [run Windows x64 `41025637332`](https://github.com/St0rn/agentsec-inspector/actions/runs/41025637332), succès complet sur `windows-2022`, avec [artefact MSI/NSIS et journaux](https://github.com/St0rn/agentsec-inspector/actions/runs/41025637332/artifacts/12963339218).

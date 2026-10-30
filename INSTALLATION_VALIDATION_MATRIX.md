@@ -1,25 +1,25 @@
 # Installation Validation Matrix
 
-État au 2026-10-29. « Syntaxe PS7 » signifie que le fichier a été chargé sans erreur par le parseur PowerShell 7 dans un conteneur Linux; cela ne constitue pas une exécution Windows. Les résultats Linux CI cités proviennent du run GitHub Actions `40916996042`; PowerShell 5.1, MSVC et les installateurs Windows restent non validés tant qu’un run Windows réussi n’est pas disponible.
+État au 2026-10-30. Preuve Windows : [run GitHub Actions `41025637332`](https://github.com/St0rn/agentsec-inspector/actions/runs/41025637332), runner `windows-2022`, succès. « Statique uniquement » signifie que le script a été analysé sous PowerShell 5.1/7 et PSScriptAnalyzer, mais que son chemin nominal complet n’a pas été exécuté dans ce job. Les résultats Linux CI proviennent du run `40916996042`.
 
 | Script | Syntaxe | Exécution | Tests d’erreur | Résultat | Statut |
 |---|---|---|---|---|---|
-| install.ps1 | Syntaxe PS7 réussie | Non exécutée | Cas prévus par Pester, non exécutés localement | Environnement sans Windows | Non validé Windows |
-| install-dev.ps1 | Syntaxe PS7 réussie | Non exécutée | Venv incomplet traité dans le code | Environnement sans Windows | Non validé Windows |
-| check-prerequisites.ps1 | Syntaxe PS7 réussie | Non exécutée | Tests Pester fournis | Sonde MSVC/SDK non exécutable sous Linux | Non validé Windows |
-| setup-backend.ps1 | Syntaxe PS7 réussie | Non exécutée | Venv absent/incomplet couvert | Équivalent Python exécuté | Non validé Windows |
-| setup-frontend.ps1 | Syntaxe PS7 réussie | Non exécutée | `stderr` natif couvert par Pester fourni | Équivalent npm exécuté | Non validé Windows |
-| setup-database.ps1 | Syntaxe PS7 réussie | Non exécutée | Idempotence Pester fournie | Initialisation Python exécutée directement | Non validé Windows |
-| start-dev.ps1 | Syntaxe PS7 réussie | Non exécutée | Non exécutés | — | Non validé Windows |
-| start-production.ps1 | Syntaxe PS7 réussie | Non exécutée | Installation absente couverte dans le code | — | Non validé Windows |
-| build-windows.ps1 | Syntaxe PS7 réussie | Non exécutée | MSI/NSIS manquants bloquants | Rust/MSVC Windows absents | Non validé Windows |
-| test-all.ps1 | Syntaxe PS7 réussie | Non exécutée | Seuils bloquants | Tests appelés directement, réussis | Non validé Windows |
-| verify-installation.ps1 | Syntaxe PS7 réussie | Non exécutée | Rapport d’échec prévu | — | Non validé Windows |
-| update.ps1 | Syntaxe PS7 réussie | Non exécutée | Backup/rollback prévus | — | Non validé Windows |
-| backup.ps1 | Syntaxe PS7 réussie | Non exécutée | Données absentes couvertes | API backup testée | Non validé Windows |
-| restore.ps1 | Syntaxe PS7 réussie | Non exécutée | Confirmation obligatoire fournie | Opération destructive non lancée | Non validé Windows |
-| uninstall.ps1 | Syntaxe PS7 réussie | Non exécutée | Suppression des données doublement confirmée | Opération destructive non lancée | Non validé Windows |
-| clean.ps1 | Syntaxe PS7 réussie | Non exécutée | Cibles bornées au dépôt | — | Non validé Windows |
+| install.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | MSI ×2 et NSIS ×2 | Réexécution/idempotence vérifiée | Quatre installations avec vérification réussies | Validé CI Windows |
+| install-dev.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | Non exécutée dans ce job | Venv incomplet couvert par Pester | — | Statique + régression ciblée |
+| check-prerequisites.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | Exécutée avec `-ForBuild` | Détections strictes couvertes par Pester | WebView2, MSVC x64, SDK, headers et probe C++ réussis | Validé CI Windows |
+| setup-backend.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | Non exécutée séparément | Venv absent/incomplet couvert | Backend verrouillé construit par PyInstaller | Statique + intégration build |
+| setup-frontend.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | Non exécutée séparément | `stderr`/codes natifs couverts | Frontend construit dans `build-windows.ps1` | Statique + intégration build |
+| setup-database.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | Exécutée deux fois sous PS7 et deux fois sous PS5.1 | Idempotence et intégrité SQLite | Migration idempotente réussie | Validé CI Windows |
+| start-dev.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | Non exécutée dans ce job | Contrôle statique | — | Statique uniquement |
+| start-production.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | Non exécutée directement | Découverte du vrai binaire packagé couverte | Desktop lancé par `verify-installation.ps1` | Statique + intégration install |
+| build-windows.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | Exécutée | Absence MSI/NSIS bloquante | Backend, MSI et NSIS produits avec SHA-256 | Validé CI Windows |
+| test-all.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | Exécutée par le build | Seuils qualité bloquants | Backend/frontend/lint/typage réussis | Validé CI Windows |
+| verify-installation.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | MSI ×2 et NSIS ×2 | Auth 401, processus et nettoyage contrôlés | Fichiers, API, SQLite, CRUD, logs, desktop et sidecar réussis | Validé CI Windows |
+| update.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | Non exécutée dans ce job | Backup/migration/rollback analysés | — | Statique uniquement |
+| backup.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | Non exécutée dans ce job | Données absentes analysées | API backup couverte séparément | Statique uniquement Windows |
+| restore.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | Chemin de refus exécuté | Confirmation obligatoire vérifiée | Restauration nominale non lancée sur Windows | Partiel |
+| uninstall.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | Exécutée après MSI et NSIS | Données utilisateur préservées par défaut | Deux désinstallations réussies | Validé CI Windows |
+| clean.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | Non exécutée dans ce job | Cibles bornées au dépôt | — | Statique uniquement |
 
 ## Scripts Linux
 
@@ -35,8 +35,8 @@
 | restore.sh | Bash `-n` réussi | Exécutée | Confirmation obligatoire | SQLite intègre, ancienne donnée préservée | Validé localement |
 | install.sh | Bash `-n` et ShellCheck réussis | AppImage réelle installée deux fois en CI | Artefact manquant/invalide | Copie atomique, checksum et idempotence vérifiés | Validé Linux CI |
 | verify-installation.sh | Bash `-n` et ShellCheck réussis | AppImage réelle vérifiée deux fois en CI | Rejet d’artefact invalide | Backend embarqué, auth, DB, CRUD et JSONL vérifiés | Validé Linux CI |
-| update.sh | Bash `-n` réussi | Chemins sans changement/downgrade testés | Downgrade refusé | Contrôles de version réussis | Partiel — AppImage CI attendue |
+| update.sh | Bash `-n` réussi | Chemins sans changement/downgrade testés | Downgrade refusé | Contrôles de version réussis | Partiel |
 | uninstall.sh | Bash `-n` réussi | Exécutée en environnement isolé | Confirmation suppression testée | Conservation/suppression explicite réussies | Validé localement |
 | build-linux.sh | Bash `-n` et ShellCheck réussis | AppImage et DEB construits en CI | Dépendances locales absentes | Artefacts `agentsec-linux-x64` publiés | Validé Linux CI |
-| start-production.sh | Bash `-n` réussi | Non exécutée avec AppImage réelle | Installation absente couverte | — | Non validé jusqu’à la CI |
+| start-production.sh | Bash `-n` réussi | AppImage lancée par la vérification CI | Installation absente couverte | Backend embarqué observé | Validé par intégration CI |
 | clean.sh | Bash `-n` réussi | Non exécutée | Cibles bornées au dépôt | — | Statique uniquement |

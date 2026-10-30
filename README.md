@@ -207,11 +207,15 @@ Le [catalogue des contrôles et attaques](docs/TEST_CATALOG.md) énumère exacte
 
 ### Windows x64
 
-Utilisez l’installateur MSI/NSIS publié ou, depuis les sources, exécutez :
+**[Télécharger l’artefact Windows x64 validé — MSI et NSIS](https://github.com/St0rn/agentsec-inspector/actions/runs/41025637332/artifacts/12963339218)**
+
+Le dépôt étant privé, GitHub demande une authentification. L’archive provient du run Windows validé et contient les deux installateurs ainsi que leurs sommes SHA-256 et les journaux de validation. Après téléchargement, utilisez le MSI ou l’exécutable NSIS ; Python et Node.js ne sont pas nécessaires sur le poste final.
+
+Pour installer depuis un artefact téléchargé ou construit localement :
 
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass
-.\scripts\install.ps1
+.\scripts\install.ps1 -InstallerPath ".\AgentSec Inspector_1.0.0_x64_en-US.msi"
 .\scripts\verify-installation.ps1
 ```
 
@@ -462,10 +466,10 @@ En V1, l’évaluateur interprète uniquement les observations `marker_disclosed
 | Binaire autonome | Build Linux PyInstaller, migration neuve, auth, CORS, intégrité et PDF vérifiés |
 | Laboratoire | Découverte MCP passive, appel MCP actif borné et échange LLM réellement exécutés |
 | Scripts Linux | Installation développeur exécutée deux fois, démarrage, tests, sauvegarde/restauration et erreurs principales validés |
-| Paquets desktop | AppImage/DEB construits puis AppImage installée et vérifiée deux fois en CI Linux ; Windows reste indiqué séparément |
-| Windows/PowerShell | Syntaxe des 20 scripts et gestion `stderr`/code natif validées sous PowerShell 7 conteneurisé ; PowerShell 5.1, MSI et NSIS réservés au workflow Windows |
+| Paquets desktop | AppImage/DEB construits et AppImage vérifiée deux fois sous Linux ; MSI/NSIS construits, installés et vérifiés deux fois chacun sous Windows |
+| Windows/PowerShell | 70 tests Pester réussis sous PowerShell 7 et 70 sous Windows PowerShell 5.1 ; sonde MSVC/SDK réelle, MSI, NSIS, API, desktop, sidecar et désinstallations réussis |
 
-La compilation Windows n’est **pas** déclarée validée sans preuve d’un run Windows. Voir [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md), la [matrice de validation](INSTALLATION_VALIDATION_MATRIX.md) et le [rapport détaillé](docs/VALIDATION_REPORT.md).
+Preuve Windows : [run GitHub Actions `41025637332`](https://github.com/St0rn/agentsec-inspector/actions/runs/41025637332), terminé avec succès le 30 octobre 2026. Voir également [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md), la [matrice de validation](INSTALLATION_VALIDATION_MATRIX.md) et le [rapport détaillé](docs/VALIDATION_REPORT.md).
 
 ## Organisation du dépôt
 

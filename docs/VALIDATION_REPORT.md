@@ -1,4 +1,4 @@
-# Rapport de validation — 2026-10-29
+# Rapport de validation — 2026-10-30
 
 ## Environnement observé
 
@@ -90,7 +90,7 @@ Scripts PowerShell :
 ```text
 Parseur PowerShell 7 conteneurisé : 20 fichiers .ps1 chargés sans erreur de syntaxe
 Invoke-Checked sous PowerShell 7 : avertissement stderr + code 0 accepté; stderr + code 23 bloqué
-PowerShell 5.1, MSVC et installateurs : non disponibles sur l’hôte Linux
+PowerShell 5.1, MSVC et installateurs : non disponibles sur l’hôte Linux, validés séparément par le runner Windows ci-dessous
 ```
 
 Scripts Linux :
@@ -118,9 +118,39 @@ création/lecture d’un projet et événement backend_started JSON valide
 Artefact publié : agentsec-linux-x64 (archive CI 206 041 396 octets)
 ```
 
+Packaging et installation Windows sur GitHub Actions Windows Server 2022 x64 :
+
+```text
+Run : https://github.com/St0rn/agentsec-inspector/actions/runs/41025637332
+Commit : eaf024c1a10739bb5c1bf5bdae7b18e66e3fccf0
+PowerShell 7 : 70 tests Pester réussis, 0 échec
+Windows PowerShell 5.1 : 70 tests Pester réussis, 0 échec
+PSScriptAnalyzer et parsing des 20 scripts : réussis
+WebView2 : runtime 131.0.2903.86 détecté via la clé Microsoft officielle
+MSVC/Windows SDK : cl.exe, link.exe, rc.exe, mt.exe et headers vérifiés
+Probe compilateur : programme C++ compilé et lié dans un chemin contenant des espaces
+Build : backend PyInstaller, application Tauri, MSI et NSIS x64 réussis
+MSI : installation + smoke test effectués deux fois, puis désinstallation réussie
+NSIS : installation + smoke test effectués deux fois, puis désinstallation réussie
+Smoke test : fichiers packagés, /health, rejet 401, CRUD projet, SQLite, logs,
+lancement du desktop et création du sidecar vérifiés
+Préservation des données utilisateur : réussie pour les deux désinstallations
+Artefact : agentsec-windows-x64, ID 12963339218, 81 205 821 octets
+```
+
+Sommes observées dans le run :
+
+```text
+MSI  BF2C81234FAC1EFCA64F109288636056ADF873553361A67193BC23B429AA021C
+NSIS 14C6A19CE0C3174C170711C7F1953F2717B6E594020FB4E88D10D72E83DCB842
+ZIP  b025ef01ee39c4bdfebbbd5f96d3894b0e3dfd1ca2bbd0aac75f31f0b0124a28
+```
+
+Téléchargement privé : [artefact Windows MSI/NSIS](https://github.com/St0rn/agentsec-inspector/actions/runs/41025637332/artifacts/12963339218).
+
 Les captures du manuel utilisateur (`manual-project`, `manual-target`, `mcp-passive`, `jailbreak`, `rag-security`, `agent-behavior`, `reports`) ont été générées depuis le frontend réel connecté au laboratoire contrôlé. La capture `jailbreak.png` montre un scénario `jb.authority-impersonation` réellement exécuté avec un verdict `PASS` fondé sur la réponse observée.
 
-## Non exécuté dans cet environnement
+## Non exécuté sur l’hôte Linux local
 
 - Analyse et exécution sous Windows PowerShell 5.1
 - Exécution nominale ou erreur des scripts `.ps1`
@@ -131,7 +161,7 @@ Les captures du manuel utilisateur (`manual-project`, `manual-target`, `mcp-pass
 - Lancement WebView2 sur Windows propre
 - Build Tauri AppImage/DEB local, bloqué avant compilation par les bibliothèques système absentes; build et installation validés séparément sur le runner Ubuntu du run `40916996042`
 
-Les éléments Windows sont donc **non validés Windows**, même si leurs scripts et workflows sont présents. `.github/workflows/windows-build.yml` exécute les validations manquantes sur `windows-2022`, génère les artefacts et publie les journaux. La réussite Linux ne constitue pas une preuve de fonctionnement Windows.
+Ces limites décrivent uniquement l’hôte Linux local. Les éléments Windows listés dans la section précédente sont validés par le runner `windows-2022` du run `41025637332`. Les scripts `install-dev.ps1`, `start-dev.ps1`, `update.ps1`, `backup.ps1` et `clean.ps1` n’ont toutefois pas été exécutés nominalement par ce run et conservent le statut indiqué dans `INSTALLATION_VALIDATION_MATRIX.md`.
 
 ## Limites constatées
 

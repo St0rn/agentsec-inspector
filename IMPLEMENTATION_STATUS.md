@@ -1,6 +1,6 @@
 # AgentSec Inspector — état d’implémentation V1.0
 
-Date : 2026-10-29. Ce document distingue livraison de code, exécution locale Linux et validation Windows.
+Date : 2026-10-30. Ce document distingue livraison de code, exécution locale Linux et validation Windows CI.
 
 ## Terminé et exécuté sous Linux
 
@@ -39,14 +39,21 @@ Date : 2026-10-29. Ce document distingue livraison de code, exécution locale Li
 - Sauvegarde et restauration réelles exécutées sur une base SQLite; empreinte et intégrité vérifiées, ancienne arborescence préservée.
 - Workflow `linux-build.yml` exécuté avec succès sur Ubuntu x64 : AppImage et DEB construits, AppImage installée et vérifiée deux fois, artefact CI `agentsec-linux-x64` publié (run `40916996042`).
 
-## Fourni et contrôlé statiquement, mais non validé sur Windows
+## Validé sur Windows x64 par CI
 
-- Sidecar PyInstaller et cycle de vie Tauri 2.
-- Build MSI/NSIS Windows x64.
-- Scripts PowerShell d’installation, développement, configuration, base, lancement, build, tests, vérification, update, backup, restore, uninstall et nettoyage; les 20 fichiers sont syntaxiquement valides selon le parseur PowerShell 7 exécuté en conteneur.
-- Workflow Windows avec analyse PowerShell 5.1/7, Pester, sonde MSVC/Windows SDK par compilation C++, build, installation répétée MSI/NSIS, smoke test et désinstallation.
+Preuve : [GitHub Actions run `41025637332`](https://github.com/St0rn/agentsec-inspector/actions/runs/41025637332), runner `windows-2022`, commit `eaf024c1a10739bb5c1bf5bdae7b18e66e3fccf0`, succès le 30 octobre 2026.
 
-Raison : l’environnement courant ne contient ni Windows ni PowerShell. Rust/Cargo a été installé pour les contrôles statiques, mais la vérification de la cible MSVC est bloquée sous Linux par l’absence de `llvm-rc`. Ces éléments ne portent donc pas le statut « validé Windows ».
+- Analyse syntaxique des 20 scripts et PSScriptAnalyzer réussis.
+- 70 tests Pester réussis sous PowerShell 7 et les mêmes 70 sous Windows PowerShell 5.1.
+- Détection WebView2 sur les clés officielles et installation contrôlée du runtime sur le runner.
+- Environnement MSVC x64 et Windows SDK chargé via `vswhere`/`vcvars64.bat`; compilation et édition de liens d’un programme C++ minimal dans un chemin contenant des espaces.
+- Backend autonome PyInstaller Windows, application Tauri 2, MSI et NSIS x64 construits avec sommes SHA-256.
+- MSI installé et smoke-testé deux fois, puis désinstallé en préservant les données utilisateur.
+- NSIS installé et smoke-testé deux fois, puis désinstallé en préservant les données utilisateur.
+- Chaque smoke test a vérifié les fichiers packagés, le backend loopback, le rejet 401 sans jeton, CRUD projet, SQLite, journalisation, lancement desktop et création du sidecar.
+- Artefact `agentsec-windows-x64` publié : [MSI, NSIS, sommes et journaux](https://github.com/St0rn/agentsec-inspector/actions/runs/41025637332/artifacts/12963339218).
+
+Cette preuve CI ne signifie pas que tous les scripts de maintenance ont été exécutés nominalement : la matrice indique séparément les scripts validés dynamiquement, partiellement ou seulement statiquement.
 
 ## Construit en CI Linux, non construit sur l’hôte local
 
@@ -78,7 +85,7 @@ Tous les scripts PowerShell obligatoires sont présents dans `scripts/`, plus `s
 
 ## Scripts réellement exécutés
 
-Aucun script métier `.ps1` n’a été exécuté sur Windows. Le parseur PowerShell 7 a néanmoins chargé les 20 scripts sans erreur dans un conteneur Linux isolé; `Invoke-Checked` y a également accepté un avertissement `stderr` avec code 0 et bloqué un code 23. Les scripts Bash Linux de prérequis, installation développeur, base, démarrage, tests, build, installation, vérification, sauvegarde, restauration et tests de cycle de vie ont été exécutés localement ou sur le runner Ubuntu documenté. Voir `docs/VALIDATION_REPORT.md` et `INSTALLATION_VALIDATION_MATRIX.md`.
+Sur Windows CI, `check-prerequisites.ps1 -ForBuild`, `setup-database.ps1` (deux fois par moteur PowerShell), `build-windows.ps1`, `test-all.ps1`, `install.ps1`, `verify-installation.ps1` et `uninstall.ps1` ont été exécutés. Les installations et vérifications ont été répétées deux fois pour le MSI puis deux fois pour NSIS. Le chemin de refus de `restore.ps1` a été exécuté par Pester. Les autres scripts PowerShell restent contrôlés statiquement ou par régression ciblée, sans prétention d’exécution nominale. Les scripts Bash Linux de prérequis, installation développeur, base, démarrage, tests, build, installation, vérification, sauvegarde, restauration et cycle de vie ont été exécutés localement ou sur le runner Ubuntu documenté. Voir `docs/VALIDATION_REPORT.md` et `INSTALLATION_VALIDATION_MATRIX.md`.
 
 ## Résultats de tests
 
@@ -87,6 +94,6 @@ Aucun script métier `.ps1` n’a été exécuté sur Windows. Le parseur PowerS
 - Intégration laboratoire : MCP passif, MCP actif contrôlé et LLM réussis.
 - Dépendances : `pip-audit` et `npm audit` sans vulnérabilité connue.
 - PyInstaller Linux : binaire autonome construit et smoke-testé, rapports PDF inclus.
-- Tauri : `cargo fmt --check` et `cargo metadata --locked --no-deps` réussis; compilation Windows non réalisée.
-- Windows/PowerShell : syntaxe PowerShell 7 validée en conteneur; PowerShell 5.1, MSVC, MSI/NSIS et installation restent non exécutés localement, donc non validés Windows.
+- Tauri : `cargo fmt --check` et `cargo metadata --locked --no-deps` réussis sous Linux; compilation Tauri Windows x64, MSI et NSIS réussis dans le run Windows.
+- Windows/PowerShell : 70/70 tests réussis sous PowerShell 7 et 70/70 sous Windows PowerShell 5.1; MSVC/SDK, MSI/NSIS, installations répétées, smoke tests et désinstallations validés dans le run `41025637332`.
 - Linux/Bash : scripts principaux exécutés; AppImage/DEB construits et AppImage installée/vérifiée deux fois dans le run CI `40916996042`.

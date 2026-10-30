@@ -207,11 +207,15 @@ The [test and attack catalog](docs/TEST_CATALOG.md) states exactly what V1 execu
 
 ### Windows x64
 
-Use the published MSI/NSIS installer or run the following from source:
+**[Download the validated Windows x64 artifact — MSI and NSIS](https://github.com/St0rn/agentsec-inspector/actions/runs/41025637332/artifacts/12963339218)**
+
+Because the repository is private, GitHub authentication is required. The archive comes from the validated Windows run and contains both installers, their SHA-256 sums, and validation logs. After downloading it, use either the MSI or NSIS executable; end users do not need Python or Node.js.
+
+To install a downloaded or locally built artifact:
 
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass
-.\scripts\install.ps1
+.\scripts\install.ps1 -InstallerPath ".\AgentSec Inspector_1.0.0_x64_en-US.msi"
 .\scripts\verify-installation.ps1
 ```
 
@@ -462,10 +466,10 @@ In V1, the evaluator interprets only the observable `marker_disclosed` and `tool
 | Standalone binary | Linux PyInstaller build verified with fresh migration, authentication, CORS, integrity, and PDF generation |
 | Laboratory | Passive MCP discovery, bounded active MCP call, and actual LLM exchanges executed successfully |
 | Linux scripts | Development install executed twice; startup, tests, backup/restore, and primary error paths validated |
-| Desktop packages | AppImage/DEB built, then AppImage installed and verified twice in Linux CI; Windows remains reported separately |
-| Windows/PowerShell | All 20 scripts parsed successfully and native `stderr`/exit-code handling probed in containerized PowerShell 7; PowerShell 5.1, MSI, and NSIS remain assigned to the Windows workflow |
+| Desktop packages | AppImage/DEB built and the AppImage verified twice on Linux; MSI/NSIS built, installed, and verified twice each on Windows |
+| Windows/PowerShell | 70 Pester tests passed on PowerShell 7 and 70 on Windows PowerShell 5.1; real MSVC/SDK probe, MSI, NSIS, API, desktop, sidecar, and uninstall checks passed |
 
-The Windows build is **not** reported as validated without evidence from a Windows run. See [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md), the [installation validation matrix](INSTALLATION_VALIDATION_MATRIX.md), and the [detailed validation report](docs/VALIDATION_REPORT.md).
+Windows evidence: [GitHub Actions run `41025637332`](https://github.com/St0rn/agentsec-inspector/actions/runs/41025637332), completed successfully on October 30, 2026. See [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md), the [installation validation matrix](INSTALLATION_VALIDATION_MATRIX.md), and the [detailed validation report](docs/VALIDATION_REPORT.md).
 
 ## Repository layout
 
