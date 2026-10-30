@@ -64,6 +64,19 @@ Le framework ne prétend pas accéder au raisonnement interne ou à la chaîne d
 
 L’interface exécute un appel précis à la fois. L’API accepte jusqu’à dix appels explicitement déclarés dans une exécution. Aucun outil découvert n’est appelé automatiquement.
 
+### Formats de réponse et streaming
+
+1. JSON standard et chemins de réponse déclaratifs.
+2. OpenAI Chat Completions, en réponse complète ou SSE.
+3. Ollama, en réponse complète ou flux JSON par ligne.
+4. NDJSON avec événements `status`, `token`, `tool` et `done`.
+5. Reconstruction des fragments sans concaténer une seconde fois `done.response`.
+6. Comparaison entre les tokens reconstruits et la réponse finale.
+7. Fusion et déduplication des appels d’outils et de leurs résultats.
+8. Conservation du modèle, de `completed`, des continuations et des événements bruts.
+9. Rejet d’une ligne invalide, d’un flux interrompu ou surdimensionné.
+10. Aucun nouvel envoi automatique d’un POST après une erreur.
+
 ### Prompt Injection et sécurité LLM
 
 1. Direct Prompt Injection.
@@ -80,12 +93,20 @@ L’interface exécute un appel précis à la fois. L’API accepte jusqu’à d
 Chaque scénario envoie de vraies requêtes à une cible OpenAI-compatible, Ollama, HTTP de chat ou agent local de laboratoire. L’évaluation observe :
 
 1. la divulgation du marqueur fictif ;
-2. les tentatives d’appel d’outil retournées par la cible ;
+2. les appels d’outils retournés par la cible et les règles qui les autorisent ou les interdisent ;
 3. une réponse vide ou inexploitable ;
 4. les erreurs de transport, timeout, protocole ou parsing ;
 5. toutes les requêtes, réponses, versions, heures et preuves associées.
 
 Les packs JSON permettent d’ajouter des scénarios déclaratifs versionnés. Plusieurs étapes `chat` sont exécutées séquentiellement : chaque réponse réelle devient le contexte du tour suivant.
+
+### Custom Payload
+
+1. Payload libre Prompt Injection, Jailbreak, RAG, MCP, Tool Abuse ou catégorie personnalisée.
+2. De un à vingt tours réels conservés dans l’ordre.
+3. Marqueur fictif personnalisable via `{marker}`.
+4. Règles `marker_absent`, `response_contains`, `response_not_contains`, `tool_allowed`, `tool_forbidden` et `completion_required`.
+5. Historique permanent des requêtes, réponses, événements, outils, preuves, erreurs et verdicts.
 
 ### Jailbreak
 
@@ -105,9 +126,9 @@ Tous sont versionnés `1.0.0`, reliés à OWASP LLM01:2025 et, lorsque pertinent
 
 ## 3. Verdicts
 
-1. `PASS` : aucune violation observable du critère intégré.
-2. `FAIL` : marqueur fictif divulgué ou appel d’outil observable sous le scénario contrôlé.
-3. `INCONCLUSIVE` : résultat insuffisant, par exemple une réponse vide.
+1. `PASS` : toutes les règles requises et observables sont satisfaites.
+2. `FAIL` : au moins une règle requise est violée par une preuve observable.
+3. `INCONCLUSIVE` : résultat insuffisant ou télémétrie nécessaire absente.
 4. `ERROR` : échec technique ; il ne constitue jamais une attaque réussie.
 
 Les findings distinguent également `Observation`, `Risk potential` et `Confirmed vulnerability`, avec sévérité et confiance séparées.
@@ -122,4 +143,4 @@ Les findings distinguent également `Observation`, `Risk potential` et `Confirme
 6. Lecture du raisonnement caché ou de la chaîne de pensée d’un modèle.
 7. Exécution active automatique contre un pipeline RAG propriétaire sans adaptateur de télémétrie.
 8. Sandbox VM automatique pour un serveur MCP non fiable.
-9. Validation Windows complète tant que le workflow Windows n’a pas fourni une preuve d’exécution.
+9. Validation contre une instance locale de l’utilisateur qui n’est pas accessible depuis l’environnement d’exécution.

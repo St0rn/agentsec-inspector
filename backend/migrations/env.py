@@ -10,7 +10,8 @@ from agentsec.config import get_settings
 from agentsec.database import Base
 
 config = context.config
-config.set_main_option("sqlalchemy.url", get_settings().db_url)
+if not config.get_main_option("sqlalchemy.url"):
+    config.set_main_option("sqlalchemy.url", get_settings().db_url)
 if config.config_file_name:
     fileConfig(config.config_file_name)
 target_metadata = Base.metadata

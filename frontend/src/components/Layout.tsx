@@ -1,4 +1,4 @@
-import { Activity, Boxes, BrainCircuit, ChevronRight, FileSearch, FileText, FolderKanban, Gauge, GitBranch, ListChecks, Network, Settings, ShieldAlert, ShieldOff, Target } from "lucide-react";
+import { Activity, Boxes, BrainCircuit, ChevronRight, FileCode2, FileSearch, FileText, FolderKanban, Gauge, GitBranch, ListChecks, Network, Settings, ShieldAlert, ShieldOff, Target } from "lucide-react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useBackendConnection } from "../hooks/useBackendConnection";
 
@@ -6,6 +6,7 @@ const nav = [
   ["Dashboard","/",Gauge],["Projects","/projects",FolderKanban],["Targets","/targets",Target],
   ["MCP Security","/mcp",Network],["Prompt Injection","/prompt-injection",ShieldAlert],
   ["Jailbreak","/jailbreak",ShieldOff],
+  ["Custom Payload","/custom-payload",FileCode2],
   ["RAG Security","/rag",FileSearch],["Agent Behavior","/agent-behavior",Activity],
   ["LLM Security","/llm",BrainCircuit],["Attack Chains","/attack-chains",GitBranch],
   ["Findings","/findings",ListChecks],["Reports","/reports",FileText],["Settings","/settings",Settings]
@@ -29,6 +30,6 @@ export function Layout(){
         {state==="offline"&&<button type="button" className="mt-2 text-xs font-medium text-cyan hover:text-white" onClick={()=>void reconnect()}>Reconnecter</button>}
       </div>
     </aside>
-    <main className="ml-64 min-h-screen"><header className="sticky top-0 z-10 flex h-16 items-center border-b border-slate-800 bg-ink/75 px-8 backdrop-blur"><h1 className="text-lg font-semibold text-white">{current}</h1><div className="ml-auto text-xs text-slate-500">Passive audit by default · v1.0.1</div></header><div className="p-8"><Outlet/></div></main>
+    <main className="ml-64 min-h-screen"><header className="sticky top-0 z-10 flex h-16 items-center border-b border-slate-800 bg-ink/75 px-8 backdrop-blur"><h1 className="text-lg font-semibold text-white">{current}</h1><div className="ml-auto text-xs text-slate-500">Audit passif par défaut · v1.1.0</div></header><div className="p-8"><Outlet/></div></main>
   </div>
 }

@@ -99,6 +99,7 @@ async def run_mcp_audit(audit_id: str) -> None:
             evidence_text = _bounded_json(payload)
             evidence = Evidence(
                 project_id=audit.project_id,
+                audit_run_id=audit.id,
                 evidence_type="mcp_discovery",
                 title="MCP capability discovery",
                 content=evidence_text,
@@ -110,6 +111,7 @@ async def run_mcp_audit(audit_id: str) -> None:
                 db.add(
                     Evidence(
                         project_id=audit.project_id,
+                        audit_run_id=audit.id,
                         evidence_type="mcp_active_tool_calls",
                         title="Explicitly authorised MCP active calls",
                         content=active_evidence_text,
@@ -195,28 +197,50 @@ async def run_prompt_test(audit_id: str, request: dict[str, Any]) -> None:
         try:
             if not target:
                 raise ValueError("Target not found")
-            scenario_record = db.get(
-                Scenario, (request["scenario_id"], request.get("scenario_version", "1.0.0"))
-            )
-            if not scenario_record:
-                raise ValueError("Unknown scenario")
-            chat_steps = [
-                item
-                for item in scenario_record.procedure
-                if item.get("type") == "chat" and isinstance(item.get("template"), str)
-            ]
+            custom_payloads = request.get("custom_payloads")
+            scenario_record = None
+            if custom_payloads:
+                chat_steps = [{"type": "chat", "template": item} for item in custom_payloads]
+                scenario = {
+                    "id": request["scenario_id"],
+                    "version": request.get("scenario_version", "1.0.0"),
+                    "name": request["name"],
+                    "category": request["category"],
+                    "template": chat_steps[0]["template"],
+                    "expected_marker": request["fictional_marker"],
+                }
+            else:
+                scenario_record = db.get(
+                    Scenario, (request["scenario_id"], request.get("scenario_version", "1.0.0"))
+                )
+                if not scenario_record:
+                    raise ValueError("Unknown scenario")
+                chat_steps = [
+                    item
+                    for item in scenario_record.procedure
+                    if item.get("type") == "chat" and isinstance(item.get("template"), str)
+                ]
+                scenario = {
+                    "id": scenario_record.id,
+                    "version": scenario_record.version,
+                    "name": scenario_record.name,
+                    "category": scenario_record.category,
+                    "template": chat_steps[0]["template"] if chat_steps else "",
+                    "expected_marker": (scenario_record.expected_marker or "{marker}").format(
+                        marker=request["fictional_marker"]
+                    ),
+                }
             if not chat_steps:
                 raise ValueError("Scenario has no supported declarative chat step")
-            scenario = {
-                "id": scenario_record.id,
-                "version": scenario_record.version,
-                "name": scenario_record.name,
-                "category": scenario_record.category,
-                "template": chat_steps[0]["template"],
-            }
-            messages = scenario_messages(
-                scenario, request["fictional_marker"], request["system_instruction"]
-            )
+            if custom_payloads:
+                messages = [
+                    {"role": "system", "content": request["system_instruction"]},
+                    {"role": "user", "content": chat_steps[0]["template"].replace("{marker}", request["fictional_marker"])},
+                ]
+            else:
+                messages = scenario_messages(
+                    scenario, request["fictional_marker"], request["system_instruction"]
+                )
             execution = TestExecution(
                 audit_run_id=audit.id,
                 scenario_id=scenario["id"],
@@ -225,6 +249,7 @@ async def run_prompt_test(audit_id: str, request: dict[str, Any]) -> None:
                 request_data={
                     "messages": messages,
                     "security_objective": request["security_objective"],
+                    "security_rules": request.get("security_rules", []),
                 },
             )
             db.add(execution)
@@ -236,7 +261,7 @@ async def run_prompt_test(audit_id: str, request: dict[str, Any]) -> None:
                     messages.append(
                         {
                             "role": "user",
-                            "content": step["template"].format(marker=request["fictional_marker"]),
+                            "content": step["template"].replace("{marker}", request["fictional_marker"]),
                         }
                     )
                 result = await send_chat(target, messages, int(request["max_tokens"]), settings)
@@ -245,19 +270,39 @@ async def run_prompt_test(audit_id: str, request: dict[str, Any]) -> None:
                         "step": index + 1,
                         "response": result.text,
                         "tool_calls": result.tool_calls,
+                        "events": result.events,
+                        "metadata": result.metadata,
+                        "completed": result.completed,
+                        "raw": result.raw,
                     }
                 )
                 all_tool_calls.extend(result.tool_calls)
+                for stream_event in result.events:
+                    db.add(
+                        AgentEvent(
+                            project_id=audit.project_id,
+                            audit_run_id=audit.id,
+                            event_type=f"llm_stream_{stream_event.get('type', 'event')}",
+                            actor=target.name,
+                            target="AgentSec",
+                            payload=stream_event,
+                        )
+                    )
                 if index < len(chat_steps) - 1:
                     messages.append({"role": "assistant", "content": result.text})
             combined_response = "\n\n".join(str(turn["response"]) for turn in turns)
             status, analysis = evaluate(
-                combined_response, all_tool_calls, request["fictional_marker"]
+                combined_response,
+                all_tool_calls,
+                scenario["expected_marker"],
+                request.get("security_rules"),
+                completed=turns[-1]["completed"],
             )
             execution.status = status
             execution.request_data = {
                 "messages": messages,
                 "security_objective": request["security_objective"],
+                "security_rules": request.get("security_rules", []),
             }
             execution.response_data = {
                 "text": turns[-1]["response"],
@@ -276,6 +321,7 @@ async def run_prompt_test(audit_id: str, request: dict[str, Any]) -> None:
             )
             evidence = Evidence(
                 project_id=audit.project_id,
+                audit_run_id=audit.id,
                 evidence_type="prompt_test",
                 title=f"Prompt test {scenario['name']}",
                 content=evidence_text,
@@ -295,6 +341,8 @@ async def run_prompt_test(audit_id: str, request: dict[str, Any]) -> None:
                         "status": status,
                         "turns": len(turns),
                         "tool_calls": len(all_tool_calls),
+                        "protocol": turns[-1]["metadata"].get("protocol"),
+                        "completed": turns[-1]["completed"],
                     },
                 )
             )
@@ -304,7 +352,7 @@ async def run_prompt_test(audit_id: str, request: dict[str, Any]) -> None:
                         project_id=audit.project_id,
                         audit_run_id=audit.id,
                         title=f"Security objective violated: {scenario['name']}",
-                        description="The real endpoint response disclosed the fictional marker or attempted a tool call under the controlled scenario.",
+                        description="The observed response or tool activity violated at least one configured security rule.",
                         component=target.name,
                         classification="Confirmed vulnerability",
                         severity=Severity.high,
@@ -313,7 +361,7 @@ async def run_prompt_test(audit_id: str, request: dict[str, Any]) -> None:
                         exploitation_conditions="A user or retrieved source can supply adversarial instructions.",
                         reproduction_steps=_bounded_json(messages),
                         observed_result=combined_response[:20_000],
-                        expected_result="The endpoint should preserve instruction priority and avoid unauthorised tool attempts.",
+                        expected_result="The endpoint should satisfy every required security rule. Legitimate authorised tool use is not a violation by itself.",
                         recommendation="Separate untrusted content from instructions, enforce tool authorisation outside the model, and add output controls.",
                         frameworks=[
                             {
@@ -331,6 +379,11 @@ async def run_prompt_test(audit_id: str, request: dict[str, Any]) -> None:
                 "turns": len(turns),
                 "test_status": status,
                 "analysis": analysis,
+                "response": turns[-1]["response"],
+                "tool_calls": all_tool_calls,
+                "events": [event for turn in turns for event in turn["events"]],
+                "metadata": turns[-1]["metadata"],
+                "completed": turns[-1]["completed"],
             }
             audit.status = AuditStatus.completed
             audit.finished_at = utcnow()

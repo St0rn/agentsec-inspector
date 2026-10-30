@@ -1,4 +1,4 @@
-# AgentSec Inspector — état d’implémentation v1.0.1
+# AgentSec Inspector — état d’implémentation v1.1.0
 
 Date : 2026-10-30. Ce document distingue livraison de code, exécution locale Linux et validation Windows CI.
 
@@ -11,11 +11,16 @@ Date : 2026-10-30. Ce document distingue livraison de code, exécution locale Li
 - MCP Streamable HTTP et stdio : découverte passive sans invocation, plus appels actifs explicitement sélectionnés et confirmés.
 - Mode actif MCP borné : validation des arguments contre le schéma annoncé, seconde confirmation des capacités sensibles, redaction des secrets, preuves et événements observables.
 - Analyse MCP conservatrice avec Observation / Risk potential / Confirmed vulnerability.
-- Connecteurs LLM OpenAI-compatible, Ollama, HTTP Chat Completions et chatbot JSON générique; mapping déclaratif requête/réponse, timeout, limite de réponse, redirections désactivées et identifiants via variable d’environnement.
+- Connecteurs LLM OpenAI-compatible, Ollama et chatbot générique avec normalisation JSON, NDJSON et SSE; mapping déclaratif, événements de streaming, outils observés, timeout, limite de réponse, redirections désactivées et identifiants via variable d’environnement.
+- AI Red Team Range NDJSON pris en charge : événements `status`, `token`, `tool`, `done`, réponse consolidée sans doublon, résultats d’outils, métadonnées et état `completed`.
+- Aucun POST LLM n’est rejoué automatiquement après un échec : une cible peut avoir exécuté une action avant la rupture de transport.
 - Dix scénarios de prompt injection et neuf scénarios de jailbreak versionnés, marqueur fictif, statuts PASS/FAIL/INCONCLUSIVE/ERROR et preuves.
+- Custom Payload multi-tours avec règles `marker_absent`, texte requis/interdit, outils autorisés/interdits et fin d’exécution requise.
+- Les appels d’outils légitimes ne provoquent plus de `FAIL`; chaque verdict liste les règles satisfaites, violées ou non observables.
 - API de packs de scénarios JSON déclaratifs, versionnés et strictement validés; aucun code plugin n’est exécuté.
 - RAG : import de document, inspection d’instructions, import de trace, respect du drapeau de télémétrie, comparaison obtenu/attendu.
-- Événements observables d’agent, timeline et graphe d’interactions observées.
+- Événements observables d’agent, timeline et graphe d’interactions observées; déplacement, zoom, recentrage, organisation automatique et disposition persistante des nœuds.
+- Historique complet cliquable avec recherche, filtres, tri, requêtes, réponses, événements, preuves, findings et exports JSON/PDF.
 - Findings complets et modifiables.
 - Rapports HTML, JSON et PDF, français/anglais, technique/exécutif.
 - Sauvegarde SQLite en ligne via API; scripts archive/restauration hors ligne.
@@ -23,7 +28,7 @@ Date : 2026-10-30. Ce document distingue livraison de code, exécution locale Li
 - Communication desktop corrigée pour l’origine WebView2 Windows, avec attente du backend, délais bornés, reconnexion et état de connexion dynamique.
 - CRUD projets complet dans l’interface : création, affichage, modification et suppression, sans données de remplacement en cas d’erreur.
 - Laboratoire distinct : endpoint chat déterministe, MCP et corpus RAG contrôlé.
-- 60 tests backend réussis (86,85 %, seuil bloquant 80 %); 17 tests frontend réussis (87,86 % des lignes et seuils bloquants); Ruff, mypy, ESLint et build web réussis.
+- 69 tests backend réussis (85,79 %, seuil bloquant 80 %); 20 tests frontend réussis (86,87 % des lignes et seuils bloquants); Ruff, mypy, ESLint et build web réussis.
 - Intégration loopback réelle : découverte MCP passive, appel actif autorisé et test LLM réussis contre le laboratoire.
 - Backend autonome Linux PyInstaller vérifié sur base neuve : migration, santé, rejet sans jeton, CORS authentifié, CRUD, intégrité et génération/téléchargement PDF.
 - Audits de dépendances `pip-audit` et `npm audit` réussis sans vulnérabilité connue; Bandit sans finding moyen ou élevé.
@@ -36,7 +41,7 @@ Date : 2026-10-30. Ce document distingue livraison de code, exécution locale Li
 - Vérification des prérequis standard réussie; erreur de build contrôlée et dépendances système manquantes correctement détaillées sans installation automatique.
 - `install-dev.sh` exécuté deux fois sur le même environnement; base SQLite restée intègre.
 - `start-dev.sh` vérifié avec backend sain, API protégée (401 sans jeton) et frontend disponible.
-- `test-all.sh` exécuté ; la validation directe actuelle couvre 60 tests backend, 17 tests frontend, lint, typage et build.
+- `test-all.sh` exécuté ; la validation directe actuelle couvre 69 tests backend, 20 tests frontend, lint, typage et build.
 - Tests isolés des scripts réussis : syntaxe Bash, sauvegarde, restauration avec confirmation, idempotence, refus de downgrade, rejet d’un artefact invalide, préservation et suppression confirmée des données.
 - Sauvegarde et restauration réelles exécutées sur une base SQLite; empreinte et intégrité vérifiées, ancienne arborescence préservée.
 - Workflow `linux-build.yml` exécuté avec succès sur Ubuntu x64 : AppImage et DEB construits, AppImage installée et vérifiée deux fois, artefact CI `agentsec-linux-x64` publié (run `40916996042`).
@@ -67,7 +72,7 @@ L’hôte local ne contient pas WebKitGTK/GTK/libsoup ni Rust dans le `PATH` sys
 
 - Isolation MCP stdio : allowlist, absence de shell, environnement réduit, limites et timeout sont implémentés; pas de sandbox OS intégrée.
 - Agent Behavior : collecte et visualisation des événements produits par AgentSec; import de formats de trace tiers non fourni.
-- Attack Chains : graphe des relations observées; création manuelle de chemins théoriques non fournie.
+- Attack Chains : graphe déplaçable et persistant des relations observées; création manuelle de chemins théoriques non fournie.
 - RAG : import et analyse de télémétrie réelle fournie; adaptateurs automatiques propres à chaque fournisseur RAG non fournis.
 - Frameworks : modèle de correspondance et OWASP LLM01 basé sur preuve; pas de catalogue automatique complet, afin d’éviter les correspondances artificielles.
 - Modèles de rapports : modèle livré et champ `template_name`; édition visuelle, logo client et chargement de modèles personnalisés non fournis.
@@ -81,6 +86,10 @@ L’hôte local ne contient pas WebKitGTK/GTK/libsoup ni Rust dans le `PATH` sys
 - Automatisation UI end-to-end WebView2.
 - Import de logo client et éditeur de template.
 
+## Validation externe non réalisée
+
+Le service AI Red Team Range de l’utilisateur sur `127.0.0.1:8789` n’est pas accessible depuis cet environnement distant. Le contrat NDJSON a été validé avec un serveur HTTP contrôlé reproduisant ses événements réels, mais aucun succès contre l’instance locale de l’utilisateur n’est revendiqué.
+
 ## Scripts fournis
 
 Tous les scripts PowerShell obligatoires sont présents dans `scripts/`, plus `start-demo.ps1`, les tests Pester et la génération CI de matrice. Le cycle Linux équivalent est présent dans `scripts/linux/` avec ses tests isolés.
@@ -91,8 +100,8 @@ Sur Windows CI, `check-prerequisites.ps1 -ForBuild`, `setup-database.ps1` (deux 
 
 ## Résultats de tests
 
-- Backend : 60/60 réussis; couverture 86,85 % (minimum imposé 80 %); Ruff et mypy réussis.
-- Frontend : 17/17 réussis; 87,86 % des lignes avec seuils minimums; lint et build réussis.
+- Backend : 69/69 réussis; couverture 85,79 % (minimum imposé 80 %); Ruff et mypy réussis.
+- Frontend : 20/20 réussis; 86,87 % des lignes avec seuils minimums; lint et build réussis.
 - Intégration laboratoire : MCP passif, MCP actif contrôlé et LLM réussis.
 - Dépendances : `pip-audit` et `npm audit` sans vulnérabilité connue.
 - PyInstaller Linux : binaire autonome construit et smoke-testé, rapports PDF inclus.

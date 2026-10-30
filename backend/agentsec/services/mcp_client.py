@@ -92,7 +92,7 @@ class HTTPMCPClient:
             {
                 "protocolVersion": "2025-03-26",
                 "capabilities": {},
-                "clientInfo": {"name": "AgentSec Inspector", "version": "1.0.1"},
+                "clientInfo": {"name": "AgentSec Inspector", "version": "1.1.0"},
             },
         )
         await self.call("notifications/initialized", notification=True)
@@ -187,7 +187,7 @@ class StdioMCPClient:
             {
                 "protocolVersion": "2025-03-26",
                 "capabilities": {},
-                "clientInfo": {"name": "AgentSec Inspector", "version": "1.0.1"},
+                "clientInfo": {"name": "AgentSec Inspector", "version": "1.1.0"},
             },
         )
         await self.call("notifications/initialized", notification=True)

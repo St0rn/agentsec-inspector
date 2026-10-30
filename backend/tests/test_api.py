@@ -4,7 +4,12 @@ import pytest
 from conftest import APIClient
 from fastapi.testclient import TestClient
 
+from agentsec.database import SessionLocal
 from agentsec.main import app
+from agentsec.models import AgentEvent, AuditRun, AuditStatus, Evidence, Target
+from agentsec.models import TestExecution as ExecutionRecord
+from agentsec.routers import projects as project_router
+from agentsec.services.llm_client import LLMResult
 
 
 def test_health_is_minimal_and_public(client: APIClient) -> None:
@@ -103,6 +108,62 @@ def test_project_full_crud_roundtrip(client: APIClient, headers: dict[str, str])
     deleted = client.delete(f"/api/v1/projects/{project_id}", headers=headers)
     assert deleted.status_code == 204
     assert client.get(f"/api/v1/projects/{project_id}", headers=headers).status_code == 404
+
+
+def test_target_edit_and_real_connection_test_contract(
+    client: APIClient, headers: dict[str, str], project: dict[str, object], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    created = client.post(
+        "/api/v1/targets",
+        headers=headers,
+        json={"project_id": project["id"], "name": "Range", "target_type": "chatbot", "endpoint": "http://127.0.0.1:8789/target/api/chat/stream", "configuration": {"response_format": "ndjson"}, "remote_authorized": False},
+    )
+    assert created.status_code == 201
+    target_id = created.json()["id"]
+    payload = created.json()
+    payload.update({"name": "Range edited", "configuration": {"message_path": "message", "response_format": "ndjson"}})
+    payload = {key: payload[key] for key in ("project_id", "name", "target_type", "endpoint", "configuration", "remote_authorized")}
+    updated = client.put(f"/api/v1/targets/{target_id}", headers=headers, json=payload)
+    assert updated.status_code == 200
+    assert updated.json()["name"] == "Range edited"
+    assert client.post(f"/api/v1/targets/{target_id}/test", headers=headers, json={"confirm_active_request": False}).status_code == 409
+
+    async def fixture(*_args: object, **_kwargs: object) -> LLMResult:
+        return LLMResult("CONNECTED", {"type": "done"}, [{"name": "search"}], [{"type": "done", "response": "CONNECTED"}], {"protocol": "ndjson", "model": "fixture"}, True)
+
+    monkeypatch.setattr(project_router, "send_chat", fixture)
+    tested = client.post(f"/api/v1/targets/{target_id}/test", headers=headers, json={"confirm_active_request": True})
+    assert tested.status_code == 200
+    assert tested.json()["protocol"] == "ndjson"
+    assert tested.json()["completed"] is True
+
+
+def test_audit_detail_exports_and_attack_chain_layout_persist(
+    client: APIClient, headers: dict[str, str], project: dict[str, object]
+) -> None:
+    with SessionLocal() as db:
+        target = Target(project_id=str(project["id"]), name="History target", target_type="agent_lab", endpoint="http://127.0.0.1:9999", configuration={})
+        db.add(target)
+        db.flush()
+        audit = AuditRun(project_id=str(project["id"]), target_id=target.id, audit_type="custom_payload", status=AuditStatus.completed, passive=False, configuration={"security_objective": "Protect marker"}, summary={"test_status": "PASS"})
+        db.add(audit)
+        db.flush()
+        db.add(ExecutionRecord(audit_run_id=audit.id, scenario_id="custom.fixture", scenario_version="1.0.0", status="PASS", request_data={"messages": [{"role": "user", "content": "test"}]}, response_data={"text": "safe"}, analysis={"rules": []}))
+        db.add(Evidence(project_id=str(project["id"]), audit_run_id=audit.id, evidence_type="prompt_test", title="Fixture", content="observable", sha256="0" * 64))
+        db.add(AgentEvent(project_id=str(project["id"]), audit_run_id=audit.id, event_type="llm_exchange", actor="AgentSec", target="History target", payload={"status": "PASS"}))
+        audit_id = audit.id
+        db.commit()
+    detail=client.get(f"/api/v1/audits/{audit_id}/detail",headers=headers)
+    assert detail.status_code==200
+    assert detail.json()["executions"][0]["response_data"]["text"]=="safe"
+    assert detail.json()["evidence"][0]["content"]=="observable"
+    assert client.get(f"/api/v1/audits/{audit_id}/export?format=json",headers=headers).status_code==200
+    pdf=client.get(f"/api/v1/audits/{audit_id}/export?format=pdf",headers=headers)
+    assert pdf.status_code==200 and pdf.content.startswith(b"%PDF")
+    layout={"nodes":{"AgentSec":{"x":120,"y":240},"History target":{"x":500,"y":240}}}
+    saved=client.put(f"/api/v1/attack-chain-layout/{project['id']}",headers=headers,json=layout)
+    assert saved.status_code==200
+    assert client.get(f"/api/v1/attack-chain-layout/{project['id']}",headers=headers).json()==layout
 
 
 def test_project_crud_and_isolation(

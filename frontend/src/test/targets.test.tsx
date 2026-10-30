@@ -15,7 +15,7 @@ it("configures a generic chatbot through a target URL",async()=>{
   const url=screen.getByLabelText(/URL cible/);
   expect(url).toBeRequired();
   expect(url).toHaveAttribute("type","url");
-  expect(screen.getByText("Adaptation à une API de chatbot")).toBeInTheDocument();
+  expect(screen.getByText("Formats et détection")).toBeInTheDocument();
   expect(screen.getAllByText(/response_path/).length).toBeGreaterThan(0);
 });
 
@@ -47,7 +47,7 @@ it("creates and deletes a target with the declared URL",async()=>{
   const post=fetchMock.mock.calls.find(([,options])=>options?.method==="POST");
   expect(JSON.parse(String(post?.[1]?.body))).toMatchObject({target_type:"chatbot",endpoint:"https://chat.example.test/audit",remote_authorized:true});
 
-  fireEvent.click(screen.getByRole("button",{name:""}));
+  fireEvent.click(screen.getByRole("button",{name:"Supprimer"}));
   await waitFor(()=>expect(fetchMock.mock.calls.some(([,options])=>options?.method==="DELETE")).toBe(true));
 });
 
@@ -57,4 +57,19 @@ it("shows malformed target configuration as a form error",async()=>{
   fireEvent.change(screen.getByLabelText(/^Configuration de la requête/),{target:{value:"{"}});
   fireEvent.submit(screen.getByRole("button",{name:"Enregistrer"}).closest("form")!);
   expect(await screen.findByRole("alert")).toHaveTextContent(/JSON|Unexpected|position/i);
+});
+
+it("edits an existing target and displays the detected streaming protocol",async()=>{
+  const target={id:"t1",project_id:"p1",name:"Range",target_type:"chatbot",endpoint:"http://127.0.0.1:8789/target/api/chat/stream",configuration:{response_format:"ndjson"},remote_authorized:false};
+  const fetchMock=vi.fn(async(input:RequestInfo|URL,options?:RequestInit)=>{const url=String(input);let value:unknown=[];if(url.endsWith("/health"))value={status:"ok",service:"agentsec-backend",version:"1.1.0"};else if(url.includes("/projects"))value=[{id:"p1",client_name:"Lab",engagement_name:"Range"}];else if(url.endsWith("/test"))value={connected:true,protocol:"ndjson",model:"qwen2.5:3b",response:"CONNECTED",tool_calls:[],events:[{type:"done"}],completed:true,suggested_configuration:{response_format:"ndjson"}};else if(options?.method==="PUT")value={...target,name:"Range updated"};else if(url.includes("/targets"))value=[target];return new Response(JSON.stringify(value),{status:200,headers:{"Content-Type":"application/json"}})});
+  vi.stubGlobal("fetch",fetchMock);
+  render(<MemoryRouter initialEntries={["/targets"]}><App/></MemoryRouter>);
+  expect(await screen.findByText("Range")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button",{name:"Modifier"}));
+  fireEvent.change(screen.getByLabelText("Nom"),{target:{value:"Range updated"}});
+  fireEvent.click(screen.getByRole("button",{name:"Enregistrer les modifications"}));
+  await waitFor(()=>expect(fetchMock.mock.calls.some(([,options])=>options?.method==="PUT")).toBe(true));
+  fireEvent.click(screen.getByRole("button",{name:"Tester la connexion"}));
+  expect(await screen.findByText(/Test de connexion réussi · ndjson/)).toBeInTheDocument();
+  expect(screen.getByText(/qwen2.5:3b/)).toBeInTheDocument();
 });

@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="AGENTSEC_", env_file=".env", extra="ignore")
 
     app_name: str = "AgentSec Inspector"
-    version: str = "1.0.1"
+    version: str = "1.1.0"
     host: str = "127.0.0.1"
     port: int = Field(default=8765, ge=1024, le=65535)
     data_dir: Path = Field(

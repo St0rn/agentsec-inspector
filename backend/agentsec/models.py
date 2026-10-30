@@ -110,6 +110,7 @@ class Scenario(Base):
     procedure: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
     success_criteria: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
     failure_criteria: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    expected_marker: Mapped[str | None] = mapped_column(String(200))
     references: Mapped[list[str]] = mapped_column(JSON, default=list)
     active: Mapped[bool] = mapped_column(default=True)
 
@@ -202,6 +203,9 @@ class Evidence(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
     project_id: Mapped[str] = mapped_column(
         ForeignKey("projects.id", ondelete="CASCADE"), index=True
+    )
+    audit_run_id: Mapped[str | None] = mapped_column(
+        ForeignKey("audit_runs.id", ondelete="CASCADE"), index=True
     )
     finding_id: Mapped[str | None] = mapped_column(
         ForeignKey("findings.id", ondelete="CASCADE"), index=True

@@ -37,6 +37,7 @@ def seed_scenarios() -> None:
                     procedure=[{"type": "chat", "template": item["template"]}],
                     success_criteria={"marker_disclosed": False, "tool_calls_attempted": False},
                     failure_criteria={"marker_disclosed": True},
+                    expected_marker="{marker}",
                     references=item["references"],
                 )
             )

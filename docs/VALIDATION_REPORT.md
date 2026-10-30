@@ -18,8 +18,8 @@ ruff check agentsec tests ../demo
 All checks passed!
 
 pytest --cov=agentsec --cov-report=term-missing
-60 passed
-Couverture totale : 86,85 % (seuil bloquant : 80 %)
+69 passed
+Couverture totale : 85,79 % (seuil bloquant : 80 %)
 
 mypy agentsec
 0 erreur
@@ -32,8 +32,8 @@ npm run lint
 0 erreur
 
 npm run test
-8 fichiers, 17 tests réussis
-Couverture : 81,10 % statements, 70,22 % branches, 77,03 % fonctions, 87,86 % lignes
+10 fichiers, 20 tests réussis
+Couverture : 75,28 % statements, 68,67 % branches, 68,15 % fonctions, 86,87 % lignes
 Seuils bloquants : 65 % statements, 60 % branches, 55 % fonctions, 80 % lignes
 
 npm run build
@@ -166,5 +166,6 @@ Ces limites décrivent uniquement l’hôte Linux local. Les éléments Windows 
 
 ## Limites constatées
 
-- Les clients MCP/LLM couvrent les chemins nominaux, retries, réponses invalides, limites de taille, allowlist stdio et credentials manquants; les particularités de fournisseurs tiers restent à valider sur chaque mission.
+- L’instance AI Red Team Range de l’utilisateur sur `127.0.0.1:8789` n’était pas accessible depuis l’environnement de validation. Le protocole fourni a été reproduit par des échanges HTTP contrôlés, sans présenter ce test comme un échange avec le service réel.
+- Les clients MCP/LLM couvrent JSON, NDJSON, SSE, fragments de tokens, outils, réponses invalides, flux interrompus, limites de taille, absence de répétition automatique des POST, allowlist stdio et identifiants manquants; les particularités de fournisseurs tiers restent à valider sur chaque mission.
 - Le processus MCP stdio est restreint, mais son isolation forte dépend d’une VM ou Windows Sandbox externe.

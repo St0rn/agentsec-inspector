@@ -12,6 +12,8 @@ from agentsec.security import TargetSecurityError
 from agentsec.services import llm_client, mcp_client
 from agentsec.services.mcp_client import HTTPMCPClient, MCPProtocolError, StdioMCPClient
 
+REAL_ASYNC_CLIENT = httpx.AsyncClient
+
 
 class AsyncHTTPFixture:
     responder: Callable[[str, dict[str, str], dict[str, Any]], httpx.Response]
@@ -238,7 +240,7 @@ async def test_generic_chatbot_rejects_transport_header_overrides(tmp_path) -> N
 
 
 @pytest.mark.asyncio
-async def test_llm_client_retries_transient_status_and_rejects_bad_payload(
+async def test_llm_client_does_not_retry_post_after_transient_status(
     monkeypatch: pytest.MonkeyPatch, tmp_path
 ) -> None:
     attempts = 0
@@ -246,22 +248,16 @@ async def test_llm_client_retries_transient_status_and_rejects_bad_payload(
     def responder(_url: str, _headers: dict[str, str], _body: dict[str, Any]) -> httpx.Response:
         nonlocal attempts
         attempts += 1
-        if attempts == 1:
-            return response(503, {"detail": "retry"})
-        return response(200, {"choices": []})
-
-    async def no_delay(_seconds: float) -> None:
-        return None
+        return response(503, {"detail": "retry"})
 
     AsyncHTTPFixture.responder = staticmethod(responder)
     monkeypatch.setattr(llm_client.httpx, "AsyncClient", AsyncHTTPFixture)
-    monkeypatch.setattr(llm_client.asyncio, "sleep", no_delay)
     target = llm_target(configuration={"model": "fixture", "retries": 1})
-    with pytest.raises(RuntimeError, match="no choices"):
+    with pytest.raises(httpx.HTTPStatusError):
         await llm_client.send_chat(
             target, [{"role": "user", "content": "test"}], 20, Settings(data_dir=tmp_path)
         )
-    assert attempts == 2
+    assert attempts == 1
 
 
 @pytest.mark.asyncio
@@ -276,3 +272,89 @@ async def test_llm_client_never_reads_missing_credential_as_success(
         await llm_client.send_chat(
             target, [{"role": "user", "content": "test"}], 20, Settings(data_dir=tmp_path)
         )
+
+
+def ndjson_client(monkeypatch: pytest.MonkeyPatch, handler: Callable[[httpx.Request], httpx.Response]) -> None:
+    def factory(*_args: object, **kwargs: object) -> httpx.AsyncClient:
+        return REAL_ASYNC_CLIENT(transport=httpx.MockTransport(handler), timeout=kwargs.get("timeout"))
+
+    monkeypatch.setattr(llm_client.httpx, "AsyncClient", factory)
+
+
+@pytest.mark.asyncio
+async def test_ndjson_stream_reconstructs_response_events_tools_and_completion(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    body = "\n".join(
+        [
+            '{"type":"status","message":"Connexion"}',
+            '{"type":"tool","name":"list_accounts","status":"read","detail":""}',
+            '{"type":"token","text":"Votre"}',
+            '{"type":"token","text":" compte"}',
+            '{"type":"done","response":"Votre compte","tools":[{"tool":"list_accounts","detail":"","result":{"objects":[]}}],"model":"qwen2.5:3b","completed":false,"continuations":0}',
+        ]
+    )
+    ndjson_client(monkeypatch, lambda request: httpx.Response(200, content=body, headers={"content-type": "application/x-ndjson"}, request=request))
+    target = llm_target("chatbot", {"message_path": "message", "response_format": "ndjson"})
+    result = await llm_client.send_chat(target, [{"role": "user", "content": "test"}], 50, Settings(data_dir=tmp_path))
+    assert result.text == "Votre compte"
+    assert result.completed is False
+    assert result.metadata["model"] == "qwen2.5:3b"
+    assert result.metadata["token_response_comparison"] == "match"  # noqa: S105
+    assert len(result.events) == 5
+    assert len(result.tool_calls) == 1
+    assert result.tool_calls[0]["result"] == {"objects": []}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("body", "expected"),
+    [
+        ('{"type":"token","text":"ok"}\nnot-json', "Invalid NDJSON at line 2"),
+        ("", "ended without an event"),
+    ],
+)
+async def test_ndjson_rejects_malformed_or_empty_stream(
+    monkeypatch: pytest.MonkeyPatch, tmp_path, body: str, expected: str
+) -> None:
+    ndjson_client(monkeypatch, lambda request: httpx.Response(200, content=body, headers={"content-type": "application/x-ndjson"}, request=request))
+    target = llm_target("chatbot", {"response_format": "ndjson"})
+    with pytest.raises(llm_client.LLMProtocolError, match=expected):
+        await llm_client.send_chat(target, [{"role": "user", "content": "test"}], 20, Settings(data_dir=tmp_path))
+
+
+@pytest.mark.asyncio
+async def test_ndjson_enforces_size_limit_and_propagates_timeout(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    large = '{"type":"token","text":"' + ("x" * 500) + '"}'
+    ndjson_client(monkeypatch, lambda request: httpx.Response(200, content=large, headers={"content-type": "application/x-ndjson"}, request=request))
+    target = llm_target("chatbot", {"response_format": "ndjson"})
+    with pytest.raises(llm_client.LLMProtocolError, match="size limit"):
+        await llm_client.send_chat(target, [{"role": "user", "content": "test"}], 20, Settings(data_dir=tmp_path, max_response_bytes=100))
+
+    def timeout(request: httpx.Request) -> httpx.Response:
+        raise httpx.ReadTimeout("interrupted", request=request)
+
+    ndjson_client(monkeypatch, timeout)
+    with pytest.raises(httpx.ReadTimeout):
+        await llm_client.send_chat(target, [{"role": "user", "content": "test"}], 20, Settings(data_dir=tmp_path))
+
+
+@pytest.mark.asyncio
+async def test_sse_reconstructs_openai_tokens_and_fragmented_tool_call(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    body = "\n\n".join(
+        [
+            'data: {"choices":[{"delta":{"content":"Safe "}}]}',
+            'data: {"choices":[{"delta":{"content":"answer","tool_calls":[{"index":0,"id":"call-1","type":"function","function":{"name":"search","arguments":"{\\"q\\":"}}]}}]}',
+            'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"function":{"arguments":"\\"docs\\"}"}}]}}]}',
+            "data: [DONE]",
+        ]
+    )
+    ndjson_client(monkeypatch, lambda request: httpx.Response(200, content=body, headers={"content-type": "text/event-stream"}, request=request))
+    target = llm_target("openai", {"model": "fixture", "response_format": "sse", "stream": True})
+    result = await llm_client.send_chat(target, [{"role": "user", "content": "test"}], 20, Settings(data_dir=tmp_path))
+    assert result.text == "Safe answer"
+    assert result.tool_calls[0]["function"] == {"name": "search", "arguments": '{"q":"docs"}'}

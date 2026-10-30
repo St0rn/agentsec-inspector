@@ -19,7 +19,7 @@ Le type **Chatbot générique** permet d’auditer une API de conversation qui n
 |---|---|---|---|
 | `message_path` | chaîne | `message` | Emplacement du dernier message utilisateur dans le JSON envoyé |
 | `history_path` | chaîne | absent | Emplacement facultatif de l’historique complet `[{role, content}]` |
-| `response_path` | chaîne | `response` | Emplacement du texte dans la réponse JSON |
+| `response_path` | chaîne | détection courante | Emplacement du texte dans une réponse JSON |
 | `tool_calls_path` | chaîne | absent | Emplacement facultatif de la liste des appels/actions exposés |
 | `max_tokens_path` | chaîne | absent | Emplacement facultatif de la limite de génération |
 | `static_payload` | objet | `{}` | Valeurs ajoutées à chaque requête ; ne pas y placer d’identifiant ni de clé |
@@ -27,7 +27,8 @@ Le type **Chatbot générique** permet d’auditer une API de conversation qui n
 | `api_key_env` | chaîne | absent | Nom de la variable d’environnement contenant l’identifiant |
 | `api_key_header` | chaîne | `Authorization` | En-tête recevant l’identifiant lu dans l’environnement |
 | `api_key_prefix` | chaîne | `Bearer` | Préfixe placé avant l’identifiant ; utiliser `""` pour aucun préfixe |
-| `retries` | entier | valeur applicative | Nombre borné de nouvelles tentatives sur une erreur transitoire |
+| `response_format` | chaîne | `json` | `auto`, `json`, `ndjson`, `sse`, `openai` ou `ollama` |
+| `stream` | booléen | `false` | Active le streaming OpenAI ou Ollama lorsque le protocole l’exige |
 
 Les chemins utilisent une notation pointée, comme `request.input.message` ou `result.items.0.text`. Les chemins de requête créent des objets imbriqués. Les chemins de réponse peuvent également lire un index de tableau.
 
@@ -51,6 +52,21 @@ Configuration enregistrée dans la cible :
   "api_key_prefix": ""
 }
 ```
+
+### AI Red Team Range et NDJSON
+
+Pour un endpoint qui accepte `{"message":"test"}` et retourne des événements NDJSON, la configuration minimale est :
+
+```json
+{
+  "message_path": "message",
+  "response_format": "ndjson"
+}
+```
+
+AgentSec traite chaque ligne dans l’ordre. Les événements `token` reconstruisent le texte ; `done.response` devient la réponse consolidée lorsqu’il est présent, sans être concaténé une seconde fois aux tokens. Les deux formes sont comparées et le résultat de cette comparaison reste dans les métadonnées. Les événements `tool` et `done.tools` sont fusionnés sans dupliquer le même appel. `model`, `completed` et `continuations` sont conservés lorsqu’ils sont fournis.
+
+Une ligne invalide, un flux interrompu, un timeout ou une réponse trop volumineuse produit une erreur technique. AgentSec ne rejoue jamais automatiquement ce POST : la cible peut avoir exécuté un outil avant la rupture de la connexion.
 
 Pour un message `Bonjour`, AgentSec envoie notamment :
 
@@ -92,7 +108,7 @@ $env:CHATBOT_API_KEY = 'valeur-fournie-pour-la-mission'
 
 Ne placez jamais une clé dans l’URL, `static_payload` ou `headers`. Les en-têtes de transport sensibles (`Host`, `Content-Length`, `Authorization`, cookies, etc.) sont refusés dans `headers`; l’authentification doit utiliser `api_key_env`. Les redirections sont désactivées, la taille de réponse est bornée et une cible distante doit être explicitement autorisée dans le périmètre.
 
-La V1 prend en charge les API JSON accessibles par requête POST. Un widget web nécessitant un navigateur, des cookies de session interactifs, WebSocket ou un protocole propriétaire nécessite un adaptateur futur ; AgentSec ne simule pas ces échanges.
+La V1.1 prend en charge JSON, NDJSON, SSE, OpenAI-compatible et Ollama par requête POST. Un widget web nécessitant un navigateur, des cookies de session interactifs, WebSocket ou un protocole propriétaire nécessite un adaptateur futur ; AgentSec ne simule pas ces échanges.
 
 ---
 
@@ -102,6 +118,6 @@ The **Generic chatbot** target audits conversational JSON APIs that do not imple
 
 Use `message_path`, optional `history_path`, `response_path`, optional `tool_calls_path`, `max_tokens_path`, and `static_payload` as documented in the table above. Reference credentials through `api_key_env`; `api_key_header` and `api_key_prefix` control how that environment value is sent.
 
-Dot paths such as `request.input.message` create nested request objects. Response paths such as `result.items.0.text` may read array indexes. The V1 connector supports JSON POST APIs. Browser widgets, interactive session cookies, WebSocket transports, and proprietary protocols require a future adapter and are not simulated.
+Dot paths such as `request.input.message` create nested request objects. Response paths such as `result.items.0.text` may read array indexes. Set `response_format` to `json`, `ndjson`, `sse`, `openai`, `ollama`, or `auto`. NDJSON events are retained in order, tokens are rebuilt, `done.response` is used without duplication, tool events are deduplicated, and completion metadata is preserved. POST requests are never retried automatically. Browser widgets, interactive session cookies, WebSocket transports, and proprietary protocols are not simulated.
 
 Remote access still requires explicit authorization. Redirects are disabled, response size is bounded, embedded URL credentials and sensitive static headers are rejected, and transport errors remain `ERROR` rather than successful attacks.

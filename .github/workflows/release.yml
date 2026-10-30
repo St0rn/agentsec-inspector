@@ -1,0 +1,69 @@
+name: Publish validated desktop release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing version tag whose Windows and Linux builds passed
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+          fetch-depth: 0
+      - name: Resolve successful platform validation runs for the tag
+        id: runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          tag_sha="$(git rev-list -n 1 "${RELEASE_TAG}")"
+          windows="$(gh run list --workflow windows-build.yml --branch "${RELEASE_TAG}" --event push --limit 20 --json databaseId,conclusion,headSha --jq '.[] | select(.conclusion == "success" and .headSha == "'"${tag_sha}"'") | .databaseId' | head -n1)"
+          linux="$(gh run list --workflow linux-build.yml --branch "${RELEASE_TAG}" --event push --limit 20 --json databaseId,conclusion,headSha --jq '.[] | select(.conclusion == "success" and .headSha == "'"${tag_sha}"'") | .databaseId' | head -n1)"
+          [[ -n "${windows}" ]] || { echo "No successful Windows validation run found for ${RELEASE_TAG}"; exit 1; }
+          [[ -n "${linux}" ]] || { echo "No successful Linux validation run found for ${RELEASE_TAG}"; exit 1; }
+          echo "windows=${windows}" >> "$GITHUB_OUTPUT"
+          echo "linux=${linux}" >> "$GITHUB_OUTPUT"
+      - name: Download validated artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p release/windows release/linux
+          gh run download "${{ steps.runs.outputs.windows }}" --name agentsec-windows-x64 --dir release/windows
+          gh run download "${{ steps.runs.outputs.linux }}" --name agentsec-linux-x64 --dir release/linux
+      - name: Prepare release assets and checksums
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          version="${RELEASE_TAG#v}"
+          msi="$(find release/windows -type f -name '*.msi' -print -quit)"
+          nsis="$(find release/windows -type f -name '*.exe' -print -quit)"
+          appimage="$(find release/linux -type f -name '*.AppImage' -print -quit)"
+          deb="$(find release/linux -type f -name '*.deb' -print -quit)"
+          [[ -n "${msi}" && -n "${nsis}" && -n "${appimage}" && -n "${deb}" ]]
+          mkdir -p release/assets
+          cp "${msi}" "release/assets/AgentSec-Inspector_${version}_x64_en-US.msi"
+          cp "${nsis}" "release/assets/AgentSec-Inspector_${version}_x64-setup.exe"
+          cp "${appimage}" "release/assets/AgentSec-Inspector_${version}_amd64.AppImage"
+          cp "${deb}" "release/assets/AgentSec-Inspector_${version}_amd64.deb"
+          (cd release/assets && sha256sum * > SHA256SUMS.txt)
+      - name: Publish a new release without altering earlier versions
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          notes="docs/RELEASE_NOTES_${RELEASE_TAG#v}.md"
+          test -f "${notes}"
+          gh release view "${RELEASE_TAG}" >/dev/null 2>&1 && { echo "Release ${RELEASE_TAG} already exists"; exit 1; }
+          gh release create "${RELEASE_TAG}" --verify-tag --title "AgentSec Inspector ${RELEASE_TAG}" --notes-file "${notes}" release/assets/*

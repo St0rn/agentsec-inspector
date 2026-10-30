@@ -201,6 +201,22 @@ class MCPAuditRequest(BaseModel):
         return self
 
 
+class SecurityRule(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str = Field(pattern=r"^[a-zA-Z0-9._-]{1,80}$")
+    rule_type: Literal[
+        "marker_absent",
+        "response_contains",
+        "response_not_contains",
+        "tool_allowed",
+        "tool_forbidden",
+        "completion_required",
+    ]
+    value: str | None = Field(default=None, max_length=500)
+    required: bool = True
+
+
 class PromptTestRequest(BaseModel):
     project_id: str
     target_id: str
@@ -212,7 +228,56 @@ class PromptTestRequest(BaseModel):
     )
     fictional_marker: str = Field(default="AGENTSEC_CANARY_7F3A", pattern=r"^[A-Z0-9_\-]{8,80}$")
     max_tokens: int = Field(default=500, ge=1, le=4000)
+    security_rules: list[SecurityRule] = Field(default_factory=list, max_length=30)
     confirm_active_test: bool = False
+
+
+class CustomPayloadRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    project_id: str
+    target_id: str
+    name: str = Field(min_length=3, max_length=200)
+    category: Literal["prompt-injection", "jailbreak", "rag", "mcp", "tool-abuse", "other"]
+    payloads: list[str] = Field(min_length=1, max_length=20)
+    security_objective: str = Field(min_length=3, max_length=2000)
+    security_rules: list[SecurityRule] = Field(min_length=1, max_length=30)
+    system_instruction: str = Field(default="Follow the configured security policy.", max_length=10_000)
+    fictional_marker: str = Field(default="AGENTSEC_CANARY_7F3A", pattern=r"^[A-Z0-9_\-]{8,80}$")
+    max_tokens: int = Field(default=500, ge=1, le=4000)
+    confirm_active_test: bool = False
+
+    @field_validator("payloads")
+    @classmethod
+    def bounded_payloads(cls, value: list[str]) -> list[str]:
+        if any(not item.strip() or len(item) > 30_000 for item in value):
+            raise ValueError("Each payload must contain between 1 and 30000 characters")
+        return value
+
+
+class TargetConnectionTest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    confirm_active_request: bool = False
+    test_message: str = Field(default="Reply with the word CONNECTED.", min_length=1, max_length=500)
+
+
+class GraphPosition(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    x: float = Field(ge=-100_000, le=100_000)
+    y: float = Field(ge=-100_000, le=100_000)
+
+
+class GraphLayoutUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    nodes: dict[str, GraphPosition]
+
+    @field_validator("nodes")
+    @classmethod
+    def bounded_layout(cls, value: dict[str, GraphPosition]) -> dict[str, GraphPosition]:
+        if len(value) > 500 or any(not key or len(key) > 300 for key in value):
+            raise ValueError("Graph layout exceeds the supported size")
+        return value
 
 
 class ScenarioDefinition(BaseModel):
@@ -228,6 +293,7 @@ class ScenarioDefinition(BaseModel):
     procedure: list[dict[str, Any]] = Field(min_length=1, max_length=20)
     success_criteria: dict[str, Any]
     failure_criteria: dict[str, Any]
+    expected_marker: str | None = Field(default="{marker}", max_length=200)
     references: list[str] = Field(default_factory=list, max_length=30)
 
     @field_validator("procedure")
