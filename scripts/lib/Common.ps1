@@ -234,6 +234,16 @@ function Get-AgentSecDataDir {
     return (Join-Path $env:LOCALAPPDATA 'AgentSec')
 }
 
+function Find-AgentSecUninstallEntry {
+    param([AllowEmptyCollection()][object[]]$Entries = @())
+    return $Entries |
+        Where-Object {
+            $displayName = $_.PSObject.Properties['DisplayName']
+            $displayName -and [string]$displayName.Value -eq 'AgentSec Inspector'
+        } |
+        Select-Object -First 1
+}
+
 function Get-CommandVersion {
     param([string]$Name, [string[]]$Arguments = @('--version'))
     try {

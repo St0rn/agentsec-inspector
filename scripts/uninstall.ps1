@@ -6,7 +6,7 @@ try {
     Assert-Windows
     Stop-AgentSecProcesses
     $roots=@('HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*','HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*','HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*')
-    $entry=Get-ItemProperty $roots -ErrorAction SilentlyContinue|Where-Object{$_.DisplayName -eq 'AgentSec Inspector'}|Select-Object -First 1
+    $entry=Find-AgentSecUninstallEntry @(Get-ItemProperty $roots -ErrorAction SilentlyContinue)
     if($entry){
         $uninstall=if($Quiet -and $entry.PSObject.Properties['QuietUninstallString']){[string]$entry.QuietUninstallString}else{[string]$entry.UninstallString}
         if($uninstall -match 'MsiExec(?:\.exe)?\s+/[IX]\s*({[^}]+})'){

@@ -52,6 +52,17 @@ Describe 'PowerShell delivery scripts' {
         $check.ok | Should -BeTrue
     }
 
+    It 'ignores unrelated uninstall registry entries under strict mode' {
+        $entries = @(
+            [pscustomobject]@{ PSPath = 'entry-without-display-name' },
+            [pscustomobject]@{ DisplayName = 'Unrelated application' },
+            [pscustomobject]@{ DisplayName = 'AgentSec Inspector'; UninstallString = 'controlled' }
+        )
+        $entry = Find-AgentSecUninstallEntry $entries
+        $entry.DisplayName | Should -Be 'AgentSec Inspector'
+        $entry.UninstallString | Should -Be 'controlled'
+    }
+
     It 'returns a WebView2 result with stable properties' {
         $runtime = Get-WebView2Runtime
         @($runtime.PSObject.Properties.Name) | Should -Contain 'installed'

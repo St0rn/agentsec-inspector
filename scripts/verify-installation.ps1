@@ -18,7 +18,7 @@ try {
         'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*',
         'HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*'
     )
-    $installedEntry=Get-ItemProperty $registryRoots -ErrorAction SilentlyContinue|Where-Object{$_.DisplayName -eq 'AgentSec Inspector'}|Select-Object -First 1
+    $installedEntry=Find-AgentSecUninstallEntry @(Get-ItemProperty $registryRoots -ErrorAction SilentlyContinue)
     if($installedEntry -and $installedEntry.PSObject.Properties['InstallLocation'] -and $installedEntry.InstallLocation){
         $installRoots=@([string]$installedEntry.InstallLocation)+$installRoots
     }
