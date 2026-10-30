@@ -92,12 +92,28 @@ try {
     $checks.log_created=Test-Path -LiteralPath (Join-Path $testDir 'logs\agentsec.jsonl')
     $checks.directory_permissions=[bool]$integrity.data_directory_writable
 
-    $backendIdsBefore=@(Get-Process 'agentsec-backend*' -ErrorAction SilentlyContinue|ForEach-Object{$_.Id})
+    # Complete the standalone API phase before starting the desktop sidecar.
+    # This prevents inherited AGENTSEC_* values and the fixed smoke-test port
+    # from conflicting with the random port selected by the Tauri process.
+    if($process -and -not $process.HasExited){
+        Stop-Process -Id $process.Id -Force
+        Wait-Process -Id $process.Id -Timeout 10 -ErrorAction SilentlyContinue
+    }
+    $process=$null
+    Remove-Item Env:AGENTSEC_API_TOKEN -ErrorAction SilentlyContinue
+    Remove-Item Env:AGENTSEC_DATA_DIR -ErrorAction SilentlyContinue
+    Remove-Item Env:AGENTSEC_PORT -ErrorAction SilentlyContinue
+
+    $backendIdsBefore=@(Get-Process -ErrorAction SilentlyContinue|Where-Object{$_.ProcessName -like 'agentsec-backend*'}|ForEach-Object{$_.Id})
     $desktop=Start-Process -FilePath $ApplicationPath -PassThru
-    Start-Sleep -Seconds 8
+    for($i=0;$i -lt 30;$i++){
+        Start-Sleep -Milliseconds 500
+        if($desktop.HasExited){break}
+        $desktopBackend=@(Get-Process -ErrorAction SilentlyContinue|Where-Object{$_.ProcessName -like 'agentsec-backend*' -and $backendIdsBefore -notcontains $_.Id})
+        if($desktopBackend.Count){break}
+    }
     $checks.desktop_launch=(-not $desktop.HasExited)
     if(-not $checks.desktop_launch){throw "Desktop application exited during smoke test with code $($desktop.ExitCode)."}
-    $desktopBackend=@(Get-Process 'agentsec-backend*' -ErrorAction SilentlyContinue|Where-Object{$backendIdsBefore -notcontains $_.Id})
     $checks.desktop_backend_spawned=($desktopBackend.Count -gt 0)
     if(-not $checks.desktop_backend_spawned){throw 'Desktop application did not spawn its bundled backend sidecar.'}
 
@@ -124,8 +140,8 @@ try {
     Complete-AgentSecLog 1
     exit 1
 }finally{
-    if($desktop -and -not $desktop.HasExited){Stop-Process -Id $desktop.Id -Force}
-    foreach($child in $desktopBackend){if(-not $child.HasExited){Stop-Process -Id $child.Id -Force}}
-    if($process -and -not $process.HasExited){Stop-Process -Id $process.Id -Force}
+    if($desktop -and -not $desktop.HasExited){Stop-Process -Id $desktop.Id -Force;Wait-Process -Id $desktop.Id -Timeout 10 -ErrorAction SilentlyContinue}
+    foreach($child in $desktopBackend){if(-not $child.HasExited){Stop-Process -Id $child.Id -Force;Wait-Process -Id $child.Id -Timeout 10 -ErrorAction SilentlyContinue}}
+    if($process -and -not $process.HasExited){Stop-Process -Id $process.Id -Force;Wait-Process -Id $process.Id -Timeout 10 -ErrorAction SilentlyContinue}
     if($testDir -and(Test-Path -LiteralPath $testDir)){Remove-Item -LiteralPath $testDir -Recurse -Force}
 }

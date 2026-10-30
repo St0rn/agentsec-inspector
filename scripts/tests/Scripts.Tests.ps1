@@ -70,6 +70,15 @@ Describe 'PowerShell delivery scripts' {
         Find-AgentSecDesktopExecutable @($installRoot) | Should -Be (Join-Path $installRoot 'agentsec-inspector.exe')
     }
 
+    It 'stops the standalone backend before launching the desktop sidecar' {
+        $source = Get-Content -Raw (Join-Path $script:RepoRoot 'scripts\verify-installation.ps1')
+        $stopIndex = $source.IndexOf('Remove-Item Env:AGENTSEC_PORT')
+        $desktopIndex = $source.IndexOf('$desktop=Start-Process')
+        $stopIndex | Should -BeGreaterThan -1
+        $desktopIndex | Should -BeGreaterThan $stopIndex
+        $source | Should -Match 'Wait-Process'
+    }
+
     It 'returns a WebView2 result with stable properties' {
         $runtime = Get-WebView2Runtime
         @($runtime.PSObject.Properties.Name) | Should -Contain 'installed'
