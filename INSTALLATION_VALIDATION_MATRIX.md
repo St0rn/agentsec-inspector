@@ -1,6 +1,6 @@
 # Installation Validation Matrix
 
-État au 2026-10-30. Preuve Windows : [run GitHub Actions `41025637332`](https://github.com/St0rn/agentsec-inspector/actions/runs/41025637332), runner `windows-2022`, succès. « Statique uniquement » signifie que le script a été analysé sous PowerShell 5.1/7 et PSScriptAnalyzer, mais que son chemin nominal complet n’a pas été exécuté dans ce job. Les résultats Linux CI proviennent du run `40916996042`.
+État au 2026-10-30. Preuve Windows 1.0.1 : [run GitHub Actions `41059965105`](https://github.com/St0rn/agentsec-inspector/actions/runs/41059965105), runner `windows-2022`, succès. « Statique uniquement » signifie que le script a été analysé sous PowerShell 5.1/7 et PSScriptAnalyzer, mais que son chemin nominal complet n’a pas été exécuté dans ce job. Les résultats Linux CI proviennent du run `40916996042`.
 
 | Script | Syntaxe | Exécution | Tests d’erreur | Résultat | Statut |
 |---|---|---|---|---|---|
@@ -14,7 +14,7 @@
 | start-production.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | Non exécutée directement | Découverte du vrai binaire packagé couverte | Desktop lancé par `verify-installation.ps1` | Statique + intégration install |
 | build-windows.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | Exécutée | Absence MSI/NSIS bloquante | Backend, MSI et NSIS produits avec SHA-256 | Validé CI Windows |
 | test-all.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | Exécutée par le build | Seuils qualité bloquants | Backend/frontend/lint/typage réussis | Validé CI Windows |
-| verify-installation.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | MSI ×2 et NSIS ×2 | Auth 401, processus et nettoyage contrôlés | Fichiers, API, SQLite, CRUD, logs, desktop et sidecar réussis | Validé CI Windows |
+| verify-installation.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | MSI ×2 et NSIS ×2 | Auth 401, processus et nettoyage contrôlés | Fichiers, API, port dynamique, CORS Tauri, SQLite, CRUD, logs, desktop et sidecar réussis | Validé CI Windows |
 | update.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | Non exécutée dans ce job | Backup/migration/rollback analysés | — | Statique uniquement |
 | backup.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | Non exécutée dans ce job | Données absentes analysées | API backup couverte séparément | Statique uniquement Windows |
 | restore.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | Chemin de refus exécuté | Confirmation obligatoire vérifiée | Restauration nominale non lancée sur Windows | Partiel |

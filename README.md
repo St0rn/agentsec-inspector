@@ -472,9 +472,9 @@ En V1, le verdict automatique repose sur deux signaux : `marker_disclosed` et `t
 | Laboratoire | Découverte MCP passive, appel MCP actif borné et échange LLM exécutés avec succès |
 | Scripts Linux | Installation développeur exécutée deux fois, démarrage, tests, sauvegarde/restauration et erreurs principales validés |
 | Paquets desktop | AppImage/DEB construits et AppImage vérifiée deux fois sous Linux ; MSI/NSIS construits, installés et vérifiés deux fois chacun sous Windows |
-| Windows/PowerShell | 70 tests Pester réussis sous PowerShell 7 et 70 sous Windows PowerShell 5.1 ; test de compilation MSVC/SDK, MSI, NSIS, API, desktop, sidecar et désinstallations réussis |
+| Windows/PowerShell | 71 tests Pester réussis sous PowerShell 7 et 71 sous Windows PowerShell 5.1 ; test de compilation MSVC/SDK, MSI, NSIS, API, desktop, sidecar et désinstallations réussis |
 
-Le détail du build Windows est disponible dans le [run GitHub Actions `41025637332`](https://github.com/St0rn/agentsec-inspector/actions/runs/41025637332). Consultez aussi [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md), la [matrice de validation](INSTALLATION_VALIDATION_MATRIX.md) et le [rapport détaillé](docs/VALIDATION_REPORT.md).
+Le détail du build Windows 1.0.1 est disponible dans le [run GitHub Actions `41059965105`](https://github.com/St0rn/agentsec-inspector/actions/runs/41059965105). Consultez aussi [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md), la [matrice de validation](INSTALLATION_VALIDATION_MATRIX.md) et le [rapport détaillé](docs/VALIDATION_REPORT.md).
 
 ## Organisation du dépôt
 

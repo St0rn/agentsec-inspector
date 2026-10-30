@@ -7,7 +7,7 @@ on:
   pull_request:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-and-validate:
@@ -176,3 +176,32 @@ jobs:
             logs/**/*.json
             logs/build/SHA256SUMS-windows.txt
             INSTALLATION_VALIDATION_MATRIX.md
+
+      - name: Publish the validated tagged release
+        if: success() && startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $releaseDirectory = Join-Path $env:RUNNER_TEMP 'agentsec-release'
+          New-Item -ItemType Directory -Force -Path $releaseDirectory | Out-Null
+          $sourceMsi = Get-ChildItem src-tauri\target\x86_64-pc-windows-msvc\release\bundle\msi -File -Filter *.msi | Select-Object -First 1
+          $sourceNsis = Get-ChildItem src-tauri\target\x86_64-pc-windows-msvc\release\bundle\nsis -File -Filter *.exe | Select-Object -First 1
+          $msi = Join-Path $releaseDirectory 'AgentSec-Inspector_1.0.1_x64_en-US.msi'
+          $nsis = Join-Path $releaseDirectory 'AgentSec-Inspector_1.0.1_x64-setup.exe'
+          Copy-Item -LiteralPath $sourceMsi.FullName -Destination $msi
+          Copy-Item -LiteralPath $sourceNsis.FullName -Destination $nsis
+          $checksums = Join-Path $releaseDirectory 'SHA256SUMS-windows.txt'
+          @($msi, $nsis) | ForEach-Object {
+            $hash = (Get-FileHash -LiteralPath $_ -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$hash  $([IO.Path]::GetFileName($_))"
+          } | Set-Content -Encoding ASCII -LiteralPath $checksums
+          $arguments = @(
+            'release', 'create', $env:GITHUB_REF_NAME,
+            '--verify-tag',
+            '--title', 'AgentSec Inspector v1.0.1',
+            '--notes-file', 'docs/RELEASE_NOTES_1.0.1.md',
+            $msi, $nsis, $checksums
+          )
+          & gh @arguments
+          if ($LASTEXITCODE -ne 0) { throw "GitHub release creation failed with code $LASTEXITCODE" }

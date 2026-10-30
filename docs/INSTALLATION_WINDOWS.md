@@ -70,7 +70,7 @@ La suppression des données nécessite deux options et la confirmation PowerShel
 
 ## Récupérer les installateurs de la CI
 
-Le run de référence est [`41025637332`](https://github.com/St0rn/agentsec-inspector/actions/runs/41025637332), terminé avec succès le 30 octobre 2026. Télécharger son artefact `agentsec-windows-x64`. L’archive contient :
+Le run de référence pour la version 1.0.1 est [`41059965105`](https://github.com/St0rn/agentsec-inspector/actions/runs/41059965105), terminé avec succès le 30 octobre 2026. Son artefact `agentsec-windows-x64` contient :
 
 - le MSI sous `bundle\msi` ;
 - le setup NSIS sous `bundle\nsis` ;

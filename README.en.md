@@ -472,9 +472,9 @@ In V1, automatic scoring uses two signals: `marker_disclosed` and `tool_calls_at
 | Laboratory | Passive MCP discovery, bounded active MCP call, and LLM exchanges completed successfully |
 | Linux scripts | Development install executed twice; startup, tests, backup/restore, and primary error paths validated |
 | Desktop packages | AppImage/DEB built and the AppImage verified twice on Linux; MSI/NSIS built, installed, and verified twice each on Windows |
-| Windows/PowerShell | 70 Pester tests passed on PowerShell 7 and 70 on Windows PowerShell 5.1; MSVC/SDK compilation probe, MSI, NSIS, API, desktop, sidecar, and uninstall checks passed |
+| Windows/PowerShell | 71 Pester tests passed on PowerShell 7 and 71 on Windows PowerShell 5.1; MSVC/SDK compilation probe, MSI, NSIS, API, desktop, sidecar, and uninstall checks passed |
 
-Windows build details are available in [GitHub Actions run `41025637332`](https://github.com/St0rn/agentsec-inspector/actions/runs/41025637332). See also [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md), the [installation validation matrix](INSTALLATION_VALIDATION_MATRIX.md), and the [detailed validation report](docs/VALIDATION_REPORT.md).
+Windows 1.0.1 build details are available in [GitHub Actions run `41059965105`](https://github.com/St0rn/agentsec-inspector/actions/runs/41059965105). See also [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md), the [installation validation matrix](INSTALLATION_VALIDATION_MATRIX.md), and the [detailed validation report](docs/VALIDATION_REPORT.md).
 
 ## Repository layout
 

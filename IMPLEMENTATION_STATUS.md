@@ -1,4 +1,4 @@
-# AgentSec Inspector — état d’implémentation V1.0
+# AgentSec Inspector — état d’implémentation v1.0.1
 
 Date : 2026-10-30. Ce document distingue livraison de code, exécution locale Linux et validation Windows CI.
 
@@ -20,8 +20,10 @@ Date : 2026-10-30. Ce document distingue livraison de code, exécution locale Li
 - Rapports HTML, JSON et PDF, français/anglais, technique/exécutif.
 - Sauvegarde SQLite en ligne via API; scripts archive/restauration hors ligne.
 - Frontend React/TypeScript/Tailwind sombre avec les 12 menus demandés, un module Jailbreak dédié supplémentaire et des états vides explicites.
+- Communication desktop corrigée pour l’origine WebView2 Windows, avec attente du backend, délais bornés, reconnexion et état de connexion dynamique.
+- CRUD projets complet dans l’interface : création, affichage, modification et suppression, sans données de remplacement en cas d’erreur.
 - Laboratoire distinct : endpoint chat déterministe, MCP et corpus RAG contrôlé.
-- 53 tests backend réussis (86,00 %, seuil bloquant 80 %); 13 tests frontend réussis (88,46 % des lignes et seuils bloquants); Ruff, mypy, ESLint et build web réussis.
+- 60 tests backend réussis (86,85 %, seuil bloquant 80 %); 17 tests frontend réussis (87,86 % des lignes et seuils bloquants); Ruff, mypy, ESLint et build web réussis.
 - Intégration loopback réelle : découverte MCP passive, appel actif autorisé et test LLM réussis contre le laboratoire.
 - Backend autonome Linux PyInstaller vérifié sur base neuve : migration, santé, rejet sans jeton, CORS authentifié, CRUD, intégrité et génération/téléchargement PDF.
 - Audits de dépendances `pip-audit` et `npm audit` réussis sans vulnérabilité connue; Bandit sans finding moyen ou élevé.
@@ -34,24 +36,24 @@ Date : 2026-10-30. Ce document distingue livraison de code, exécution locale Li
 - Vérification des prérequis standard réussie; erreur de build contrôlée et dépendances système manquantes correctement détaillées sans installation automatique.
 - `install-dev.sh` exécuté deux fois sur le même environnement; base SQLite restée intègre.
 - `start-dev.sh` vérifié avec backend sain, API protégée (401 sans jeton) et frontend disponible.
-- `test-all.sh` exécuté avant cette extension; la validation directe actuelle couvre 53 tests backend, 13 tests frontend, lint, typage et build.
+- `test-all.sh` exécuté ; la validation directe actuelle couvre 60 tests backend, 17 tests frontend, lint, typage et build.
 - Tests isolés des scripts réussis : syntaxe Bash, sauvegarde, restauration avec confirmation, idempotence, refus de downgrade, rejet d’un artefact invalide, préservation et suppression confirmée des données.
 - Sauvegarde et restauration réelles exécutées sur une base SQLite; empreinte et intégrité vérifiées, ancienne arborescence préservée.
 - Workflow `linux-build.yml` exécuté avec succès sur Ubuntu x64 : AppImage et DEB construits, AppImage installée et vérifiée deux fois, artefact CI `agentsec-linux-x64` publié (run `40916996042`).
 
 ## Validé sur Windows x64 par CI
 
-Preuve : [GitHub Actions run `41025637332`](https://github.com/St0rn/agentsec-inspector/actions/runs/41025637332), runner `windows-2022`, commit `eaf024c1a10739bb5c1bf5bdae7b18e66e3fccf0`, succès le 30 octobre 2026.
+Preuve : [GitHub Actions run `41059965105`](https://github.com/St0rn/agentsec-inspector/actions/runs/41059965105), runner `windows-2022`, commit `cd429d769e66862aef731980934b80d8ab854307`, succès le 30 octobre 2026.
 
 - Analyse syntaxique des 20 scripts et PSScriptAnalyzer réussis.
-- 70 tests Pester réussis sous PowerShell 7 et les mêmes 70 sous Windows PowerShell 5.1.
+- 71 tests Pester réussis sous PowerShell 7 et les mêmes 71 sous Windows PowerShell 5.1.
 - Détection WebView2 sur les clés officielles et installation contrôlée du runtime sur le runner.
 - Environnement MSVC x64 et Windows SDK chargé via `vswhere`/`vcvars64.bat`; compilation et édition de liens d’un programme C++ minimal dans un chemin contenant des espaces.
 - Backend autonome PyInstaller Windows, application Tauri 2, MSI et NSIS x64 construits avec sommes SHA-256.
 - MSI installé et smoke-testé deux fois, puis désinstallé en préservant les données utilisateur.
 - NSIS installé et smoke-testé deux fois, puis désinstallé en préservant les données utilisateur.
-- Chaque smoke test a vérifié les fichiers packagés, le backend loopback, le rejet 401 sans jeton, CRUD projet, SQLite, journalisation, lancement desktop et création du sidecar.
-- Artefact `agentsec-windows-x64` publié : [MSI, NSIS, sommes et journaux](https://github.com/St0rn/agentsec-inspector/actions/runs/41025637332/artifacts/12963339218).
+- Chaque smoke test a vérifié les fichiers packagés, le backend loopback, son port dynamique, l’origine CORS de Tauri, le rejet 401 sans jeton, le CRUD projets, SQLite, la journalisation, le lancement desktop et la création du sidecar.
+- Artefact `agentsec-windows-x64` publié : [MSI, NSIS, sommes et journaux](https://github.com/St0rn/agentsec-inspector/actions/runs/41059965105/artifacts/12982170057).
 
 Cette preuve CI ne signifie pas que tous les scripts de maintenance ont été exécutés nominalement : la matrice indique séparément les scripts validés dynamiquement, partiellement ou seulement statiquement.
 
@@ -89,11 +91,11 @@ Sur Windows CI, `check-prerequisites.ps1 -ForBuild`, `setup-database.ps1` (deux 
 
 ## Résultats de tests
 
-- Backend : 53/53 réussis; couverture 86,00 % (minimum imposé 80 %); Ruff et mypy réussis.
-- Frontend : 13/13 réussis; 88,46 % des lignes avec seuils minimums; lint et build réussis.
+- Backend : 60/60 réussis; couverture 86,85 % (minimum imposé 80 %); Ruff et mypy réussis.
+- Frontend : 17/17 réussis; 87,86 % des lignes avec seuils minimums; lint et build réussis.
 - Intégration laboratoire : MCP passif, MCP actif contrôlé et LLM réussis.
 - Dépendances : `pip-audit` et `npm audit` sans vulnérabilité connue.
 - PyInstaller Linux : binaire autonome construit et smoke-testé, rapports PDF inclus.
-- Tauri : `cargo fmt --check` et `cargo metadata --locked --no-deps` réussis sous Linux; compilation Tauri Windows x64, MSI et NSIS réussis dans le run Windows.
-- Windows/PowerShell : 70/70 tests réussis sous PowerShell 7 et 70/70 sous Windows PowerShell 5.1; MSVC/SDK, MSI/NSIS, installations répétées, smoke tests et désinstallations validés dans le run `41025637332`.
+- Tauri : test Rust de la configuration IPC réussi, puis compilation Tauri Windows x64, MSI et NSIS réussis dans le run Windows.
+- Windows/PowerShell : 71/71 tests réussis sous PowerShell 7 et 71/71 sous Windows PowerShell 5.1; MSVC/SDK, MSI/NSIS, installations répétées, smoke tests et désinstallations validés dans le run `41059965105`.
 - Linux/Bash : scripts principaux exécutés; AppImage/DEB construits et AppImage installée/vérifiée deux fois dans le run CI `40916996042`.
