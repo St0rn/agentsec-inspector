@@ -77,6 +77,8 @@ Describe 'PowerShell delivery scripts' {
         $stopIndex | Should -BeGreaterThan -1
         $desktopIndex | Should -BeGreaterThan $stopIndex
         $source | Should -Match 'Wait-Process'
+        $source | Should -Match '\$backendIdsInitial -notcontains \$_\.Id'
+        $source | Should -Match '\$attempt -le 10'
     }
 
     It 'returns a WebView2 result with stable properties' {

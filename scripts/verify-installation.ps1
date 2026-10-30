@@ -6,6 +6,8 @@ $checks=[ordered]@{}
 $process=$null
 $desktop=$null
 $desktopBackend=@()
+$standaloneBackend=@()
+$backendIdsInitial=@()
 $testDir=$null
 try {
     Assert-Windows
@@ -54,6 +56,7 @@ try {
     $env:AGENTSEC_API_TOKEN=$token
     $env:AGENTSEC_DATA_DIR=$testDir
     $env:AGENTSEC_PORT=$Port
+    $backendIdsInitial=@(Get-Process -ErrorAction SilentlyContinue|Where-Object{$_.ProcessName -like 'agentsec-backend*'}|ForEach-Object{$_.Id})
     $process=Start-Process -FilePath $BackendPath -PassThru
 
     $ready=$false
@@ -95,9 +98,12 @@ try {
     # Complete the standalone API phase before starting the desktop sidecar.
     # This prevents inherited AGENTSEC_* values and the fixed smoke-test port
     # from conflicting with the random port selected by the Tauri process.
-    if($process -and -not $process.HasExited){
-        Stop-Process -Id $process.Id -Force
-        Wait-Process -Id $process.Id -Timeout 10 -ErrorAction SilentlyContinue
+    $standaloneBackend=@(Get-Process -ErrorAction SilentlyContinue|Where-Object{$_.ProcessName -like 'agentsec-backend*' -and $backendIdsInitial -notcontains $_.Id})
+    foreach($backendProcess in $standaloneBackend){
+        if(-not $backendProcess.HasExited){
+            Stop-Process -Id $backendProcess.Id -Force
+            Wait-Process -Id $backendProcess.Id -Timeout 10 -ErrorAction SilentlyContinue
+        }
     }
     $process=$null
     Remove-Item Env:AGENTSEC_API_TOKEN -ErrorAction SilentlyContinue
@@ -142,6 +148,12 @@ try {
 }finally{
     if($desktop -and -not $desktop.HasExited){Stop-Process -Id $desktop.Id -Force;Wait-Process -Id $desktop.Id -Timeout 10 -ErrorAction SilentlyContinue}
     foreach($child in $desktopBackend){if(-not $child.HasExited){Stop-Process -Id $child.Id -Force;Wait-Process -Id $child.Id -Timeout 10 -ErrorAction SilentlyContinue}}
+    foreach($backendProcess in $standaloneBackend){if(-not $backendProcess.HasExited){Stop-Process -Id $backendProcess.Id -Force;Wait-Process -Id $backendProcess.Id -Timeout 10 -ErrorAction SilentlyContinue}}
     if($process -and -not $process.HasExited){Stop-Process -Id $process.Id -Force;Wait-Process -Id $process.Id -Timeout 10 -ErrorAction SilentlyContinue}
-    if($testDir -and(Test-Path -LiteralPath $testDir)){Remove-Item -LiteralPath $testDir -Recurse -Force}
+    if($testDir -and(Test-Path -LiteralPath $testDir)){
+        for($attempt=1;$attempt -le 10;$attempt++){
+            try{Remove-Item -LiteralPath $testDir -Recurse -Force -ErrorAction Stop;break}
+            catch{if($attempt -eq 10){throw};Start-Sleep -Milliseconds 500}
+        }
+    }
 }
