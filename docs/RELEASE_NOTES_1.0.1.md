@@ -24,7 +24,7 @@ Le workflow Windows a exécuté :
 - deux installations et vérifications du Setup NSIS ;
 - les contrôles du port dynamique, de la santé du sidecar, de CORS, de l’authentification, de SQLite, du CRUD projets et des journaux.
 
-Preuve : [workflow Windows x64 `41059965105`](https://github.com/St0rn/agentsec-inspector/actions/runs/41059965105).
+Preuve : [workflow Windows x64 `41063236427`](https://github.com/St0rn/agentsec-inspector/actions/runs/41063236427).
 
 ## Fichiers
 

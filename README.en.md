@@ -474,7 +474,7 @@ In V1, automatic scoring uses two signals: `marker_disclosed` and `tool_calls_at
 | Desktop packages | AppImage/DEB built and the AppImage verified twice on Linux; MSI/NSIS built, installed, and verified twice each on Windows |
 | Windows/PowerShell | 71 Pester tests passed on PowerShell 7 and 71 on Windows PowerShell 5.1; MSVC/SDK compilation probe, MSI, NSIS, API, desktop, sidecar, and uninstall checks passed |
 
-Windows 1.0.1 build details are available in [GitHub Actions run `41059965105`](https://github.com/St0rn/agentsec-inspector/actions/runs/41059965105). See also [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md), the [installation validation matrix](INSTALLATION_VALIDATION_MATRIX.md), and the [detailed validation report](docs/VALIDATION_REPORT.md).
+Windows 1.0.1 build and release details are available in [GitHub Actions run `41063236427`](https://github.com/St0rn/agentsec-inspector/actions/runs/41063236427). See also [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md), the [installation validation matrix](INSTALLATION_VALIDATION_MATRIX.md), and the [detailed validation report](docs/VALIDATION_REPORT.md).
 
 ## Repository layout
 

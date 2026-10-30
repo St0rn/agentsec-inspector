@@ -1,6 +1,6 @@
 # Installation Validation Matrix
 
-État au 2026-10-30. Preuve Windows 1.0.1 : [run GitHub Actions `41059965105`](https://github.com/St0rn/agentsec-inspector/actions/runs/41059965105), runner `windows-2022`, succès. « Statique uniquement » signifie que le script a été analysé sous PowerShell 5.1/7 et PSScriptAnalyzer, mais que son chemin nominal complet n’a pas été exécuté dans ce job. Les résultats Linux CI proviennent du run `40916996042`.
+État au 2026-10-30. Preuve Windows 1.0.1 : [run GitHub Actions `41063236427`](https://github.com/St0rn/agentsec-inspector/actions/runs/41063236427), runner `windows-2022`, succès. « Statique uniquement » signifie que le script a été analysé sous PowerShell 5.1/7 et PSScriptAnalyzer, mais que son chemin nominal complet n’a pas été exécuté dans ce job. Les résultats Linux CI proviennent du run `40916996042`.
 
 | Script | Syntaxe | Exécution | Tests d’erreur | Résultat | Statut |
 |---|---|---|---|---|---|

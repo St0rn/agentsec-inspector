@@ -43,7 +43,7 @@ Date : 2026-10-30. Ce document distingue livraison de code, exécution locale Li
 
 ## Validé sur Windows x64 par CI
 
-Preuve : [GitHub Actions run `41059965105`](https://github.com/St0rn/agentsec-inspector/actions/runs/41059965105), runner `windows-2022`, commit `cd429d769e66862aef731980934b80d8ab854307`, succès le 30 octobre 2026.
+Preuve : [GitHub Actions run `41063236427`](https://github.com/St0rn/agentsec-inspector/actions/runs/41063236427), runner `windows-2022`, commit `dcd74018817c23f8af6962dbd646145bf620f292`, succès le 30 octobre 2026.
 
 - Analyse syntaxique des 20 scripts et PSScriptAnalyzer réussis.
 - 71 tests Pester réussis sous PowerShell 7 et les mêmes 71 sous Windows PowerShell 5.1.
@@ -53,7 +53,7 @@ Preuve : [GitHub Actions run `41059965105`](https://github.com/St0rn/agentsec-in
 - MSI installé et smoke-testé deux fois, puis désinstallé en préservant les données utilisateur.
 - NSIS installé et smoke-testé deux fois, puis désinstallé en préservant les données utilisateur.
 - Chaque smoke test a vérifié les fichiers packagés, le backend loopback, son port dynamique, l’origine CORS de Tauri, le rejet 401 sans jeton, le CRUD projets, SQLite, la journalisation, le lancement desktop et la création du sidecar.
-- Artefact `agentsec-windows-x64` publié : [MSI, NSIS, sommes et journaux](https://github.com/St0rn/agentsec-inspector/actions/runs/41059965105/artifacts/12982170057).
+- Artefact `agentsec-windows-x64` publié : [MSI, NSIS, sommes et journaux](https://github.com/St0rn/agentsec-inspector/actions/runs/41063236427/artifacts/12983200265).
 
 Cette preuve CI ne signifie pas que tous les scripts de maintenance ont été exécutés nominalement : la matrice indique séparément les scripts validés dynamiquement, partiellement ou seulement statiquement.
 
@@ -97,5 +97,5 @@ Sur Windows CI, `check-prerequisites.ps1 -ForBuild`, `setup-database.ps1` (deux 
 - Dépendances : `pip-audit` et `npm audit` sans vulnérabilité connue.
 - PyInstaller Linux : binaire autonome construit et smoke-testé, rapports PDF inclus.
 - Tauri : test Rust de la configuration IPC réussi, puis compilation Tauri Windows x64, MSI et NSIS réussis dans le run Windows.
-- Windows/PowerShell : 71/71 tests réussis sous PowerShell 7 et 71/71 sous Windows PowerShell 5.1; MSVC/SDK, MSI/NSIS, installations répétées, smoke tests et désinstallations validés dans le run `41059965105`.
+- Windows/PowerShell : 71/71 tests réussis sous PowerShell 7 et 71/71 sous Windows PowerShell 5.1; MSVC/SDK, MSI/NSIS, installations répétées, smoke tests, désinstallations et publication de la release validés dans le run `41063236427`.
 - Linux/Bash : scripts principaux exécutés; AppImage/DEB construits et AppImage installée/vérifiée deux fois dans le run CI `40916996042`.

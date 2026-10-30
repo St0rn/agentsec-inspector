@@ -474,7 +474,7 @@ En V1, le verdict automatique repose sur deux signaux : `marker_disclosed` et `t
 | Paquets desktop | AppImage/DEB construits et AppImage vérifiée deux fois sous Linux ; MSI/NSIS construits, installés et vérifiés deux fois chacun sous Windows |
 | Windows/PowerShell | 71 tests Pester réussis sous PowerShell 7 et 71 sous Windows PowerShell 5.1 ; test de compilation MSVC/SDK, MSI, NSIS, API, desktop, sidecar et désinstallations réussis |
 
-Le détail du build Windows 1.0.1 est disponible dans le [run GitHub Actions `41059965105`](https://github.com/St0rn/agentsec-inspector/actions/runs/41059965105). Consultez aussi [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md), la [matrice de validation](INSTALLATION_VALIDATION_MATRIX.md) et le [rapport détaillé](docs/VALIDATION_REPORT.md).
+Le détail du build Windows 1.0.1 et de sa publication est disponible dans le [run GitHub Actions `41063236427`](https://github.com/St0rn/agentsec-inspector/actions/runs/41063236427). Consultez aussi [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md), la [matrice de validation](INSTALLATION_VALIDATION_MATRIX.md) et le [rapport détaillé](docs/VALIDATION_REPORT.md).
 
 ## Organisation du dépôt
 
