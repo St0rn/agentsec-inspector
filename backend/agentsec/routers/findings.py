@@ -130,7 +130,11 @@ async def finding_history(
 
 
 @router.delete("/findings/{finding_id}", status_code=204)
-async def delete_finding(finding_id: str, db: Session = Depends(get_db)) -> Response:
+async def delete_finding(
+    finding_id: str, confirm_delete: bool = False, db: Session = Depends(get_db)
+) -> Response:
+    if not confirm_delete:
+        raise HTTPException(409, "Finding deletion requires explicit confirmation")
     finding = db.get(Finding, finding_id)
     if not finding:
         raise HTTPException(404, "Finding not found")
