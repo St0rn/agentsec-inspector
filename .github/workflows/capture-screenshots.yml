@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - .github/workflows/capture-screenshots.yml
+      - scripts/ci/capture-screenshots.py
 
 permissions:
   contents: write
