@@ -9,7 +9,6 @@ from typing import Any
 
 import httpx
 import structlog
-from sqlalchemy import select
 
 from ..config import get_settings
 from ..database import SessionLocal
