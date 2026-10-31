@@ -179,9 +179,9 @@ def main() -> None:
 
         # The first history row represents the active run and opens the actual
         # persisted audit detail, including the new structured result component.
-        page.get_by_text("mcp_security").first.click()
+        page.locator("table tbody tr").filter(has_text="Actif confirmé").first.click()
         page.get_by_text("Détail de l’audit").wait_for(timeout=15_000)
-        page.get_by_text("read_lab_note").first.wait_for()
+        page.get_by_role("dialog").get_by_text("read_lab_note", exact=True).wait_for()
         page.screenshot(path=str(OUTPUT / "mcp-results.png"), full_page=False, animations="disabled")
         goto("/rag")
         page.locator("select").first.select_option(project_id)
