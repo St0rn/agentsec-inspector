@@ -24,7 +24,7 @@ from ..models import (
 from .events import event_hub
 from .finding_dedup import record_finding
 from .llm_client import send_chat
-from .mcp_analysis import analyse_discovery, analyse_tool_result, is_sensitive_tool
+from .mcp_analysis import analyse_discovery, analyse_tool_result, analyse_vulnerabilities, is_sensitive_tool
 from .mcp_client import HTTPMCPClient, StdioMCPClient
 from .scenarios import evaluate, scenario_messages
 
@@ -92,7 +92,10 @@ async def run_mcp_audit(audit_id: str) -> None:
             await event_hub.publish(
                 audit_id, {"stage": "analysing", "progress": 60, "tools": len(discovered.tools)}
             )
+            scan_mode = str(audit.configuration.get("scan_mode", "discovery"))
             issues = analyse_discovery(payload)
+            if scan_mode == "vulnerability":
+                issues.extend(analyse_vulnerabilities(payload))
             for execution in active_results:
                 if execution["status"] == "SUCCESS":
                     issues.extend(analyse_tool_result(execution["tool_name"], execution["result"]))
@@ -168,6 +171,12 @@ async def run_mcp_audit(audit_id: str) -> None:
                 "resources": len(discovered.resources),
                 "prompts": len(discovered.prompts),
                 "observations": len(issues),
+                "findings": issues,
+                "security_counts": {
+                    level: sum(1 for issue in issues if issue["severity"] == level)
+                    for level in ("critical", "high", "medium", "low", "info")
+                },
+                "scan_mode": scan_mode,
                 "discovery": payload,
                 "mode": "passive" if audit.passive else "active",
                 "active_tool_calls": active_results,
