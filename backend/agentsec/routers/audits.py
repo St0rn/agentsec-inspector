@@ -18,6 +18,8 @@ from ..models import (
     AuditStatus,
     Evidence,
     Finding,
+    FindingOccurrence,
+    RAGDocument,
     Project,
     Scenario,
     Target,
@@ -29,10 +31,12 @@ from ..schemas import (
     GraphLayoutUpdate,
     MCPAuditRequest,
     PromptTestRequest,
+    RAGActiveAuditRequest,
     ScenarioPackImport,
 )
 from ..services.audits import run_mcp_audit, run_prompt_test
 from ..services.events import event_hub
+from ..services.rag_active import run_rag_audit
 from ..services.mcp_analysis import is_sensitive_tool
 
 router = APIRouter(tags=["audits"])
@@ -163,6 +167,42 @@ async def start_mcp_audit(body: MCPAuditRequest, db: Session = Depends(get_db)) 
     return audit
 
 
+@router.post("/audits/rag", response_model=AuditRead, status_code=202)
+async def start_rag_audit(
+    body: RAGActiveAuditRequest, db: Session = Depends(get_db)
+) -> AuditRun:
+    target = _validate_target(db, body.project_id, body.target_id)
+    if target.target_type not in {"rag", "chatbot", "agent_lab", "custom_http", "openai", "ollama"}:
+        raise HTTPException(422, "Target is not a compatible RAG or chat endpoint")
+    if not target.endpoint:
+        raise HTTPException(422, "Active RAG testing requires a configured target endpoint")
+    if not body.confirm_active_test:
+        raise HTTPException(409, "RAG active testing requires explicit confirmation")
+    if body.upload_document_id:
+        document = db.get(RAGDocument, body.upload_document_id)
+        if document is None or document.project_id != body.project_id or not document.is_lab_document:
+            raise HTTPException(422, "Only imported controlled laboratory documents can be uploaded")
+        if not body.confirm_document_upload or not target.configuration.get("ingest_endpoint"):
+            raise HTTPException(409, "Document upload requires explicit approval and a configured ingestion endpoint")
+    for case in body.cases:
+        if case.kind != "baseline" and case.marker.casefold() in case.query.casefold():
+            raise HTTPException(422, "Indirect injection markers must be supplied by retrieved material, not the user query")
+    audit = AuditRun(
+        project_id=body.project_id, target_id=body.target_id,
+        audit_type="rag_security", passive=False,
+        configuration={
+            "cases": [item.model_dump() for item in body.cases],
+            "upload_document_id": body.upload_document_id,
+            "confirmed_active": True,
+        },
+    )
+    db.add(audit)
+    db.commit()
+    db.refresh(audit)
+    asyncio.create_task(run_rag_audit(audit.id, body.model_dump()))
+    return audit
+
+
 @router.post("/audits/prompt", response_model=AuditRead, status_code=202)
 async def start_prompt_test(body: PromptTestRequest, db: Session = Depends(get_db)) -> AuditRun:
     target = _validate_target(db, body.project_id, body.target_id)
@@ -278,7 +318,11 @@ async def audit_detail(audit_id: str, db: Session = Depends(get_db)) -> dict[str
     executions = list(db.scalars(select(TestExecution).where(TestExecution.audit_run_id == audit.id).order_by(TestExecution.started_at)))
     evidence = list(db.scalars(select(Evidence).where(Evidence.audit_run_id == audit.id).order_by(Evidence.created_at)))
     events = list(db.scalars(select(AgentEvent).where(AgentEvent.audit_run_id == audit.id).order_by(AgentEvent.occurred_at)))
-    findings = list(db.scalars(select(Finding).where(Finding.audit_run_id == audit.id).order_by(Finding.created_at)))
+    findings = list(db.scalars(select(Finding).outerjoin(
+        FindingOccurrence, FindingOccurrence.finding_id == Finding.id
+    ).where(
+        or_(Finding.audit_run_id == audit.id, FindingOccurrence.audit_run_id == audit.id)
+    ).distinct().order_by(Finding.created_at)))
     return {
         "audit": jsonable_encoder(AuditRead.model_validate(audit)),
         "target": jsonable_encoder(target) if target else None,
