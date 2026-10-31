@@ -194,11 +194,14 @@ class MCPAuditRequest(BaseModel):
     project_id: str
     target_id: str
     passive: bool = True
+    scan_mode: Literal["discovery", "vulnerability"] = "discovery"
     confirm_active_operations: bool = False
     active_tool_calls: list[ActiveMCPToolCall] = Field(default_factory=list, max_length=10)
 
     @model_validator(mode="after")
     def valid_mode(self) -> MCPAuditRequest:
+        if self.scan_mode == "vulnerability" and (not self.passive or self.active_tool_calls):
+            raise ValueError("Vulnerability assessment is discovery-only; no tool calls are executed")
         if self.passive and self.active_tool_calls:
             raise ValueError("Passive audits cannot include MCP tool calls")
         if not self.passive and not self.active_tool_calls:
