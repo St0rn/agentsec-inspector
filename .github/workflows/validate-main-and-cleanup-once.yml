@@ -1,0 +1,51 @@
+name: Validate main build and clean merged feature branches
+
+on:
+  push:
+    paths:
+      - .github/workflows/validate-main-and-cleanup-once.yml
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+  pull-requests: read
+
+jobs:
+  dispatch-builds-and-clean:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Verify that both feature branches were merged
+        shell: bash
+        run: |
+          set -euo pipefail
+          for branch in feat/mcp-rag-security-v1-3 feat/rag-active-findings-dedup; do
+            count="$(gh pr list --repo "$GH_REPO" --state merged --head "$branch" --json number --jq 'length')"
+            [[ "$count" -ge 1 ]] || {
+              echo "Refusing to clean unmerged branch: $branch"
+              exit 1
+            }
+          done
+      - name: Dispatch fresh Windows and Linux builds on main
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh workflow run windows-build.yml --repo "$GH_REPO" --ref main
+          gh workflow run linux-build.yml --repo "$GH_REPO" --ref main
+          echo "Both platform builds were requested for the current main commit."
+      - name: Delete the two merged feature branches
+        shell: bash
+        run: |
+          set -euo pipefail
+          for branch in feat/mcp-rag-security-v1-3 feat/rag-active-findings-dedup; do
+            api_path="repos/$GH_REPO/git/refs/heads/$branch"
+            if gh api "$api_path" >/dev/null 2>&1; then
+              gh api -X DELETE "$api_path"
+              echo "Deleted merged feature branch $branch"
+            else
+              echo "Branch already absent: $branch"
+            fi
+          done
