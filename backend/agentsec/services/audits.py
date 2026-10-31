@@ -363,6 +363,7 @@ async def run_prompt_test(audit_id: str, request: dict[str, Any]) -> None:
                     audit,
                     rule=f"llm:{scenario['id']}:{','.join(sorted(map(str, violated)))}",
                     component=target.name,
+                    identity_component=target.id,
                     title=f"Security objective violated: {scenario['name']}",
                     description="The observed response or tool activity violated at least one configured security rule.",
                     classification="Confirmed vulnerability",
