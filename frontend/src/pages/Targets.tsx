@@ -23,6 +23,7 @@ const urlTypes = new Set([
   "chatbot",
   "custom_http",
   "agent_lab",
+  "rag",
 ]);
 const configurationHelp: Record<string, string> = {
   mcp_http: 'Exemple : {"headers":{"X-Tenant":"lab"}}.',
@@ -35,7 +36,7 @@ const configurationHelp: Record<string, string> = {
     'Exemple AI Red Team Range : {"message_path":"message","response_format":"ndjson"}. Pour une réponse JSON imbriquée, ajoutez response_path et tool_calls_path.',
   custom_http:
     'Exemple : {"model":"model-name","response_format":"openai","api_key_env":"CHAT_API_KEY"}.',
-  rag: "Utilisé pour rattacher les documents et traces RAG à une cible logique.",
+  rag: 'Endpoint RAG actif : {"message_path":"query","response_path":"response","chunks_path":"retrieved_chunks","context_path":"llm_context","response_format":"auto"}. Facultatif : ingest_endpoint pour documents contrôlés, après autorisation.',
   agent_lab:
     "Agent contrôlé de laboratoire ; JSON, NDJSON et SSE sont acceptés.",
 };

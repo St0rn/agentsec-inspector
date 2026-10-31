@@ -5,7 +5,18 @@ import uuid
 from datetime import UTC, date, datetime
 from typing import Any
 
-from sqlalchemy import JSON, Date, DateTime, Enum, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import (
+    JSON,
+    Date,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .database import Base
@@ -162,6 +173,11 @@ class Finding(Base):
     audit_run_id: Mapped[str | None] = mapped_column(
         ForeignKey("audit_runs.id", ondelete="SET NULL"), index=True
     )
+    target_id: Mapped[str | None] = mapped_column(String(36), index=True)
+    fingerprint: Mapped[str | None] = mapped_column(String(64))
+    first_seen: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    last_seen: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    occurrence_count: Mapped[int] = mapped_column(Integer, default=1)
     title: Mapped[str] = mapped_column(String(300))
     description: Mapped[str] = mapped_column(Text)
     component: Mapped[str] = mapped_column(String(300))
@@ -180,11 +196,29 @@ class Finding(Base):
     frameworks: Mapped[list[dict[str, str]]] = mapped_column(JSON, default=list)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
+    __table_args__ = (UniqueConstraint("project_id", "fingerprint", name="uq_findings_project_fingerprint"),)
     project: Mapped[Project] = relationship(back_populates="findings")
+    occurrences: Mapped[list[FindingOccurrence]] = relationship(cascade="all, delete-orphan")
     evidence: Mapped[list[Evidence]] = relationship(
         back_populates="finding", cascade="all, delete-orphan"
     )
     history: Mapped[list[FindingHistory]] = relationship(cascade="all, delete-orphan")
+
+
+class FindingOccurrence(Base):
+    __tablename__ = "finding_occurrences"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
+    finding_id: Mapped[str] = mapped_column(
+        ForeignKey("findings.id", ondelete="CASCADE"), index=True
+    )
+    audit_run_id: Mapped[str | None] = mapped_column(
+        ForeignKey("audit_runs.id", ondelete="SET NULL"), index=True
+    )
+    evidence_sha256: Mapped[str] = mapped_column(String(64), default="")
+    observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    __table_args__ = (
+        UniqueConstraint("finding_id", "audit_run_id", name="uq_finding_occurrence_audit"),
+    )
 
 
 class FindingHistory(Base):
