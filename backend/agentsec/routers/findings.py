@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import AuditRun, Evidence, Finding, FindingHistory, Project, TestExecution
+from ..models import AuditRun, Evidence, Finding, FindingHistory, FindingOccurrence, Project, TestExecution
 from ..schemas import FindingCreate, FindingRead, FindingUpdate
 
 router = APIRouter(tags=["findings"])
@@ -83,7 +83,15 @@ async def finding_detail(finding_id: str, db: Session = Depends(get_db)) -> dict
             .order_by(Evidence.created_at)
         )
     )
+    occurrences = list(
+        db.scalars(
+            select(FindingOccurrence)
+            .where(FindingOccurrence.finding_id == finding.id)
+            .order_by(FindingOccurrence.observed_at.desc())
+        )
+    )
     return {
+        "occurrences": [jsonable_encoder(item) for item in occurrences],
         "finding": jsonable_encoder(FindingRead.model_validate(finding)),
         "audit": jsonable_encoder(audit) if audit else None,
         "executions": [jsonable_encoder(item) for item in executions],
