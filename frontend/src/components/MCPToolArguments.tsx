@@ -27,6 +27,8 @@ function initialValue(schema: Obj): unknown {
   }
   return "";
 }
+// Also reused by the MCP audit runner and its schema-driven test suite.
+// eslint-disable-next-line react-refresh/only-export-components
 export function defaultToolArguments(tool: DiscoveredTool): string {
   const schema = asObject(tool.inputSchema);
   const props = asObject(schema.properties);
