@@ -148,6 +148,11 @@ class FindingUpdate(BaseModel):
 
 
 class FindingRead(FindingCreate, ORMModel):
+    target_id: str | None = None
+    fingerprint: str | None = None
+    occurrence_count: int = 1
+    first_seen: datetime | None = None
+    last_seen: datetime | None = None
     id: str
     created_at: datetime
     updated_at: datetime
@@ -374,6 +379,35 @@ class ConnectorCreate(BaseModel):
         if any(str(key).casefold() in forbidden for key in value):
             raise ValueError("Secret values must use the dedicated encrypted secret field")
         return value
+
+
+class RAGActiveCase(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(min_length=1, max_length=100)
+    query: str = Field(min_length=1, max_length=20_000)
+    kind: Literal["baseline", "indirect_injection", "document_poisoning"] = "baseline"
+    expected_response: str = Field(default="", max_length=20_000)
+    comparison: Literal["contains", "exact"] = "contains"
+    marker: str = Field(default="AGENTSEC_CANARY_RAG", pattern=r"^[A-Za-z0-9_-]{4,100}$")
+
+
+class RAGActiveAuditRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    project_id: str
+    target_id: str
+    cases: list[RAGActiveCase] = Field(min_length=1, max_length=20)
+    max_tokens: int = Field(default=512, ge=16, le=4096)
+    confirm_active_test: bool = False
+    upload_document_id: str | None = None
+    confirm_document_upload: bool = False
+
+    @model_validator(mode="after")
+    def confirm_upload(self) -> RAGActiveAuditRequest:
+        if self.upload_document_id and not self.confirm_document_upload:
+            raise ValueError("Controlled document ingestion requires separate approval")
+        return self
 
 
 class RAGDocumentCreate(BaseModel):
