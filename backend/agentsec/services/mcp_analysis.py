@@ -5,13 +5,13 @@ import re
 from typing import Any
 
 SENSITIVE_TOOL_NAMES = re.compile(
-    r"(?:^|[_\\-\\s])(delete|remove|exec|execute|shell|admin|write|upload|"
+    r"(?:^|[_\-\s])(delete|remove|exec|execute|shell|admin|write|upload|"
     r"credential|secret|token|password|transfer|send|create|update|book|reply)"
-    r"(?:$|[_\\-\\s])", re.I
+    r"(?:$|[_\-\s])", re.I
 )
 SENSITIVE_DESCRIPTION_ACTIONS = re.compile(
-    r"\\b(delete|remove|execute|run commands?|transfer money|"
-    r"write (?:a |the )?(?:file|record)|administrative delete)\\b", re.I
+    r"\b(delete|remove|execute|run commands?|transfer money|"
+    r"write (?:a |the )?(?:file|record)|administrative delete)\b", re.I
 )
 INSTRUCTION_TEXT = re.compile(
     r"(ignore (all|previous)|system prompt|do not tell|override instruction|act as)", re.I
