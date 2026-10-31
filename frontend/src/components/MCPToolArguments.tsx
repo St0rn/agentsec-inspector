@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Obj = Record<string, unknown>;
 export interface DiscoveredTool {
@@ -40,6 +40,25 @@ function convert(value: string, type: unknown): unknown {
   if (type === "number" || type === "integer") return Number(value);
   if (type === "array" || type === "object") return JSON.parse(value);
   return value;
+}
+function JSONFieldEditor({name,type,value,onChange}:{name:string;type:string;value:unknown;onChange:(value:unknown)=>void}) {
+  const text=typeof value==="object"&&value!==null?JSON.stringify(value,null,2):"";
+  const [draft,setDraft]=useState(text);
+  const [error,setError]=useState("");
+  useEffect(()=>{setDraft(text);setError("")},[text]);
+  return <div className="w-full">
+    <textarea aria-label={name} className="input min-h-24 font-mono text-xs" value={draft}
+      placeholder={type==="array"?"[]":"{}"} onChange={event=>setDraft(event.target.value)}
+      onBlur={()=>{
+        try {
+          const parsed:unknown=JSON.parse(draft);
+          if(type==="array"&&!Array.isArray(parsed))throw new Error("Tableau attendu");
+          if(type==="object"&&(parsed===null||Array.isArray(parsed)||typeof parsed!=="object"))throw new Error("Objet attendu");
+          onChange(parsed);setError("");
+        } catch {setError("Le JSON de ce paramètre est invalide.");}
+      }}/>
+    {error&&<p role="alert" className="text-xs text-red-300">{error}</p>}
+  </div>;
 }
 export function MCPToolArguments({
   tool, value, onChange,
@@ -89,9 +108,7 @@ export function MCPToolArguments({
               <option value="true">true</option><option value="false">false</option>
             </select> : <div className="flex gap-2">
               {type === "object" || type === "array" ?
-                <textarea aria-label={name} className="input min-h-24 font-mono text-xs" value={hasValue ? textValue : ""} placeholder={type === "array" ? "[]" : "{}"} onChange={event => {
-                  try {update(name, convert(event.target.value, type));} catch { /* Keep last valid structured value; raw JSON editor below handles drafts. */ }
-                }}/> :
+                <JSONFieldEditor name={name} type={type} value={valueHere} onChange={next=>update(name,next)}/> :
                 <input aria-label={name} className="input" type={type === "integer" || type === "number" ? "number" : "text"}
                   step={type === "integer" ? "1" : "any"}
                   min={typeof definition.minimum === "number" ? definition.minimum : undefined}
