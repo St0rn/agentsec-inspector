@@ -42,6 +42,41 @@ def _decode_response(text: str, content_type: str) -> dict[str, Any]:
     return value
 
 
+
+async def _collect_mcp_pages(
+    call: Any, method: str, field: str, *, max_pages: int | None = None
+) -> list[dict[str, Any]]:
+    """Retrieve every advertised page, with cycle and resource limits.
+
+    The MCP list methods use cursor/nextCursor. Never treat the first response
+    as a complete inventory when the server supplies nextCursor.
+    """
+    if max_pages is None:
+        try:
+            max_pages = int(os.getenv("AGENTSEC_MCP_MAX_PAGES", "50"))
+        except ValueError as exc:
+            raise MCPProtocolError("AGENTSEC_MCP_MAX_PAGES must be an integer") from exc
+    max_pages = max(1, min(max_pages, 200))
+    cursor: str | None = None
+    seen: set[str] = set()
+    collected: list[dict[str, Any]] = []
+    for _ in range(max_pages):
+        result = await call(method, {"cursor": cursor} if cursor is not None else None)
+        page = result.get(field, [])
+        if not isinstance(page, list) or any(not isinstance(item, dict) for item in page):
+            raise MCPProtocolError(f"{method} returned an invalid {field} list")
+        collected.extend(page)
+        next_cursor = result.get("nextCursor")
+        if next_cursor is None or next_cursor == "":
+            return collected
+        if not isinstance(next_cursor, str) or next_cursor in seen:
+            raise MCPProtocolError(f"{method} returned an invalid or repeated nextCursor")
+        seen.add(next_cursor)
+        cursor = next_cursor
+    raise MCPProtocolError(
+        f"{method} exceeded {max_pages} pages; raise AGENTSEC_MCP_MAX_PAGES explicitly"
+    )
+
 class HTTPMCPClient:
     def __init__(
         self, endpoint: str, headers: dict[str, str], settings: Settings, remote_authorized: bool
@@ -97,16 +132,14 @@ class HTTPMCPClient:
         )
         await self.call("notifications/initialized", notification=True)
         capabilities = initialized.get("capabilities", {})
-        tools = (await self.call("tools/list")).get("tools", []) if "tools" in capabilities else []
+        tools = await _collect_mcp_pages(self.call, "tools/list", "tools") if "tools" in capabilities else []
         resources = (
-            (await self.call("resources/list")).get("resources", [])
-            if "resources" in capabilities
-            else []
+            await _collect_mcp_pages(self.call, "resources/list", "resources")
+            if "resources" in capabilities else []
         )
         prompts = (
-            (await self.call("prompts/list")).get("prompts", [])
-            if "prompts" in capabilities
-            else []
+            await _collect_mcp_pages(self.call, "prompts/list", "prompts")
+            if "prompts" in capabilities else []
         )
         return MCPDiscovery(
             initialized.get("serverInfo", {}), capabilities, tools, resources, prompts
@@ -192,16 +225,14 @@ class StdioMCPClient:
         )
         await self.call("notifications/initialized", notification=True)
         capabilities = initialized.get("capabilities", {})
-        tools = (await self.call("tools/list")).get("tools", []) if "tools" in capabilities else []
+        tools = await _collect_mcp_pages(self.call, "tools/list", "tools") if "tools" in capabilities else []
         resources = (
-            (await self.call("resources/list")).get("resources", [])
-            if "resources" in capabilities
-            else []
+            await _collect_mcp_pages(self.call, "resources/list", "resources")
+            if "resources" in capabilities else []
         )
         prompts = (
-            (await self.call("prompts/list")).get("prompts", [])
-            if "prompts" in capabilities
-            else []
+            await _collect_mcp_pages(self.call, "prompts/list", "prompts")
+            if "prompts" in capabilities else []
         )
         return MCPDiscovery(
             initialized.get("serverInfo", {}), capabilities, tools, resources, prompts

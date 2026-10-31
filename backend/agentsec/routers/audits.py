@@ -15,6 +15,7 @@ from ..models import (
     AgentEvent,
     AppSetting,
     AuditRun,
+    AuditStatus,
     Evidence,
     Finding,
     Project,
@@ -224,6 +225,48 @@ async def start_custom_test(body: CustomPayloadRequest, db: Session = Depends(ge
     )
     asyncio.create_task(run_prompt_test(audit.id, request))
     return audit
+
+
+@router.delete("/audits/{audit_id}", status_code=204)
+async def delete_audit(audit_id: str, confirm_delete: bool = False, db: Session = Depends(get_db)) -> Response:
+    """Delete one historical execution and its audit-bound evidence, not shared findings."""
+    if not confirm_delete:
+        raise HTTPException(409, "Audit deletion requires explicit confirmation")
+    audit = db.get(AuditRun, audit_id)
+    if not audit:
+        raise HTTPException(404, "Audit not found")
+    if audit.status in {AuditStatus.queued, AuditStatus.running}:
+        raise HTTPException(409, "Cannot delete an audit while it is running")
+    # A finding may have been observed by multiple runs: keep the finding,
+    # with its original audit association cleared by ON DELETE SET NULL.
+    db.delete(audit)
+    db.commit()
+    return Response(status_code=204)
+
+
+@router.delete("/audits", status_code=200)
+async def delete_audit_history(
+    confirm_delete: bool = False,
+    project_id: str | None = None,
+    audit_type: str | None = None,
+    db: Session = Depends(get_db),
+) -> dict[str, int]:
+    if not confirm_delete:
+        raise HTTPException(409, "Bulk audit deletion requires explicit confirmation")
+    if not project_id:
+        raise HTTPException(422, "A project_id is required for bulk deletion")
+    if not db.get(Project, project_id):
+        raise HTTPException(404, "Project not found")
+    statement = select(AuditRun).where(AuditRun.project_id == project_id)
+    if audit_type:
+        statement = statement.where(AuditRun.audit_type == audit_type)
+    audits = list(db.scalars(statement))
+    if any(item.status in {AuditStatus.queued, AuditStatus.running} for item in audits):
+        raise HTTPException(409, "Cannot clear history while matching audits are running")
+    for audit in audits:
+        db.delete(audit)
+    db.commit()
+    return {"deleted": len(audits)}
 
 
 @router.get("/audits/{audit_id}/detail")
