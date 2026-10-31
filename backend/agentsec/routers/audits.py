@@ -36,8 +36,8 @@ from ..schemas import (
 )
 from ..services.audits import run_mcp_audit, run_prompt_test
 from ..services.events import event_hub
-from ..services.rag_active import run_rag_audit
 from ..services.mcp_analysis import is_sensitive_tool
+from ..services.rag_active import run_rag_audit
 
 router = APIRouter(tags=["audits"])
 
