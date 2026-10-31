@@ -290,15 +290,21 @@ async def delete_audit_history(
     confirm_delete: bool = False,
     project_id: str | None = None,
     audit_type: str | None = None,
+    all_projects: bool = False,
     db: Session = Depends(get_db),
 ) -> dict[str, int]:
     if not confirm_delete:
         raise HTTPException(409, "Bulk audit deletion requires explicit confirmation")
-    if not project_id:
-        raise HTTPException(422, "A project_id is required for bulk deletion")
-    if not db.get(Project, project_id):
-        raise HTTPException(404, "Project not found")
-    statement = select(AuditRun).where(AuditRun.project_id == project_id)
+    if all_projects:
+        if project_id or audit_type != "custom_payload":
+            raise HTTPException(422, "Global clearing is only allowed for custom_payload history")
+        statement = select(AuditRun).where(AuditRun.audit_type == "custom_payload")
+    else:
+        if not project_id:
+            raise HTTPException(422, "A project_id is required for bulk deletion")
+        if not db.get(Project, project_id):
+            raise HTTPException(404, "Project not found")
+        statement = select(AuditRun).where(AuditRun.project_id == project_id)
     if audit_type:
         statement = statement.where(AuditRun.audit_type == audit_type)
     audits = list(db.scalars(statement))
