@@ -47,7 +47,7 @@ export function MCPResultView({ summary }: { summary: Obj }) {
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{stats.map(([label, count]) =>
       <div key={String(label)} className="rounded-lg border border-slate-800 bg-slate-950/60 p-3 text-center">
         <p className="text-2xl font-semibold text-white">{typeof count === "number" ? count : "—"}</p>
-        <p className="mt-1 text-xs text-slate-400">{label}</p>
+        <p className="mt-1 text-xs text-slate-400">{String(label)}</p>
       </div>)}
     </div>
     <p className="text-xs text-slate-400">
