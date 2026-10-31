@@ -157,6 +157,7 @@ async def start_mcp_audit(body: MCPAuditRequest, db: Session = Depends(get_db)) 
         passive=body.passive,
         configuration={
             "confirmed_active": body.confirm_active_operations,
+            "scan_mode": body.scan_mode,
             "active_tool_calls": [item.model_dump() for item in body.active_tool_calls],
         },
     )
