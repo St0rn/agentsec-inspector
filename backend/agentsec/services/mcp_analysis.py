@@ -4,8 +4,14 @@ import json
 import re
 from typing import Any
 
-SENSITIVE_NAMES = re.compile(
-    r"(delete|remove|exec|shell|admin|write|upload|credential|secret|token)", re.I
+SENSITIVE_TOOL_NAMES = re.compile(
+    r"(?:^|[_\\-\\s])(delete|remove|exec|execute|shell|admin|write|upload|"
+    r"credential|secret|token|password|transfer|send|create|update|book|reply)"
+    r"(?:$|[_\\-\\s])", re.I
+)
+SENSITIVE_DESCRIPTION_ACTIONS = re.compile(
+    r"\\b(delete|remove|execute|run commands?|transfer money|"
+    r"write (?:a |the )?(?:file|record)|administrative delete)\\b", re.I
 )
 INSTRUCTION_TEXT = re.compile(
     r"(ignore (all|previous)|system prompt|do not tell|override instruction|act as)", re.I
@@ -14,11 +20,24 @@ PATH_NAMES = re.compile(r"(path|file|directory|folder|filename)", re.I)
 
 
 def is_sensitive_tool(tool: dict[str, Any] | str) -> bool:
+    """Identify potentially mutating tools without keyword-matching incidental prose.
+
+    A description mentioning a session token or progressToken is not evidence of
+    a dangerous capability. MCP annotations are advisory, not trusted security
+    guarantees: explicit risky actions remain sensitive even if readOnlyHint
+    claims otherwise.
+    """
     if isinstance(tool, str):
-        text = tool
-    else:
-        text = f"{tool.get('name', '')} {tool.get('description', '')}"
-    return bool(SENSITIVE_NAMES.search(text))
+        return bool(SENSITIVE_TOOL_NAMES.search(tool))
+    name = str(tool.get("name", ""))
+    description = str(tool.get("description", ""))
+    annotations = tool.get("annotations") or {}
+    return (
+        bool(SENSITIVE_TOOL_NAMES.search(name))
+        or bool(SENSITIVE_DESCRIPTION_ACTIONS.search(description))
+        or (isinstance(annotations, dict) and annotations.get("destructiveHint") is True)
+        or (isinstance(annotations, dict) and annotations.get("readOnlyHint") is False)
+    )
 
 
 def analyse_tool_result(tool_name: str, result: dict[str, Any]) -> list[dict[str, Any]]:
@@ -67,7 +86,7 @@ def analyse_discovery(discovery: dict[str, Any]) -> list[dict[str, Any]]:
                     "Sensitive capability exposed",
                     "The advertised capability may alter data, execute commands, or access sensitive material.",
                     description or name,
-                    "high",
+                    "info",
                     "medium",
                     "Observation",
                     "Apply least privilege, confirmation gates and server-side authorisation.",
