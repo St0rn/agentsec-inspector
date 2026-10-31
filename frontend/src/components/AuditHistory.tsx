@@ -9,9 +9,10 @@ interface Props {
   audits: Audit[];
   title?: string;
   onDelete?: () => Promise<unknown>;
+  allowClearAll?: boolean;
 }
 
-export function AuditHistory({audits,title="Historique des audits",onDelete}:Props){
+export function AuditHistory({audits,title="Historique des audits",onDelete,allowClearAll=false}:Props){
   const [search,setSearch]=useState("");
   const [status,setStatus]=useState("");
   const [sort,setSort]=useState<"newest"|"oldest">("newest");
@@ -49,9 +50,22 @@ export function AuditHistory({audits,title="Historique des audits",onDelete}:Pro
       await onDelete?.();
     } catch(caught) {setError(caught instanceof Error ? caught.message : String(caught));}
   }
+  async function clearAllCustom() {
+    if (!allowClearAll) return;
+    if (audits.some(item => item.audit_type !== "custom_payload")) {
+      setError("La suppression globale est réservée à l'historique Custom Payload.");
+      return;
+    }
+    if (!confirm(`Supprimer définitivement les ${audits.length} audits Custom Payload de tous les projets ? Les findings indépendants seront conservés.`)) return;
+    try {
+      await api("/audits?audit_type=custom_payload&all_projects=true&confirm_delete=true",{method:"DELETE"});
+      setDetail(undefined);
+      await onDelete?.();
+    } catch(caught) {setError(caught instanceof Error ? caught.message : String(caught));}
+  }
   if(!audits.length)return null;
   return <section className="mt-7">
-    <div className="mb-3 flex items-center gap-3"><h2 className="text-lg font-semibold text-white">{title}</h2><span className="rounded-full bg-slate-800 px-2 py-0.5 text-xs text-slate-400">{filtered.length}</span>{onDelete&&<button className="btn ml-auto text-xs" onClick={()=>void clearHistory()} disabled={!filtered.length}><Trash2 size={14}/>Vider l'historique du projet</button>}</div>
+    <div className="mb-3 flex items-center gap-3"><h2 className="text-lg font-semibold text-white">{title}</h2><span className="rounded-full bg-slate-800 px-2 py-0.5 text-xs text-slate-400">{filtered.length}</span>{onDelete&&<div className="ml-auto flex flex-wrap gap-2"><button className="btn text-xs" onClick={()=>void clearHistory()} disabled={!filtered.length}><Trash2 size={14}/>Vider l'historique du projet</button>{allowClearAll&&<button className="btn text-xs text-red-300" onClick={()=>void clearAllCustom()}><Trash2 size={14}/>Vider tout l'historique Custom Payload</button>}</div>}</div>
     {error&&<ErrorBox message={error}/>}<div className="mb-3 grid grid-cols-[1fr_180px_180px] gap-3"><label className="relative"><Search className="absolute left-3 top-3 text-slate-500" size={15}/><input aria-label="Rechercher les audits" className="input pl-9" placeholder="ID, type, scénario…" value={search} onChange={event=>setSearch(event.target.value)}/></label><select aria-label="Filtrer par statut" className="input" value={status} onChange={event=>setStatus(event.target.value)}><option value="">Tous les statuts</option>{["queued","running","completed","failed","cancelled"].map(value=><option key={value}>{value}</option>)}</select><select aria-label="Trier les audits" className="input" value={sort} onChange={event=>setSort(event.target.value as "newest"|"oldest")}><option value="newest">Plus récents</option><option value="oldest">Plus anciens</option></select></div>
     <div className="table-wrap"><table className="table"><thead><tr><th>Audit</th><th>Scénario / catégorie</th><th>État</th><th>Mode</th><th>Date</th>{onDelete&&<th>Supprimer</th>}</tr></thead><tbody>{filtered.map(item=><tr key={item.id} className="cursor-pointer hover:bg-slate-800/50" onClick={()=>void open(item.id)}><td><p className="text-white">{item.audit_type}</p><p className="font-mono text-[10px] text-slate-600">{item.id}</p></td><td>{String(item.configuration.scenario_id||item.configuration.category||item.configuration.name||"—")}</td><td><Status value={item.status}/></td><td>{item.passive?"Passif":"Actif confirmé"}</td><td>{new Date(item.created_at).toLocaleString()}</td>{onDelete&&<td><button title="Supprimer cet audit" className="text-red-400" onClick={event=>{event.stopPropagation();void remove(item.id)}}><Trash2 size={15}/></button></td>}</tr>)}</tbody></table></div>
     {detail&&<div role="dialog" aria-modal="true" className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-8" onMouseDown={()=>setDetail(undefined)}><article className="panel max-h-[90vh] w-full max-w-5xl overflow-auto p-6" onMouseDown={event=>event.stopPropagation()}><div className="mb-5 flex items-start"><div><h2 className="text-xl font-semibold text-white">Détail de l’audit</h2><p className="font-mono text-xs text-slate-500">{detail.audit.id}</p></div><div className="ml-auto flex gap-2"><button className="btn" onClick={()=>void download(detail.audit.id,"json")}><Download size={15}/>JSON</button><button className="btn" onClick={()=>void download(detail.audit.id,"pdf")}><Download size={15}/>PDF</button><button aria-label="Fermer" className="btn" onClick={()=>setDetail(undefined)}><X size={16}/></button></div></div>{detail.historical_data_notice&&<p className="mb-4 rounded border border-amber-800 bg-amber-950/30 p-3 text-sm text-amber-200">{detail.historical_data_notice}</p>}{detail.audit.audit_type==="mcp_security"&&<MCPResultView summary={detail.audit.summary}/>}<DetailSection title="Audit et configuration" value={detail.audit}/><DetailSection title="Cible" value={detail.target}/><ExecutionSection executions={detail.executions}/><DetailSection title="Événements et outils observés" value={detail.events}/><DetailSection title="Preuves" value={detail.evidence}/><DetailSection title="Findings" value={detail.findings}/></article></div>}
