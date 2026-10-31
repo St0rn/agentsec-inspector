@@ -1,4 +1,4 @@
-"""Capture genuine AgentSec 1.3.0 UI screenshots against its real local API and lab.
+"""Capture genuine AgentSec 1.4.0 UI screenshots against its real local API and lab.
 
 This script starts no external test against third-party hosts. GitHub Actions
 runs the AgentSec backend and demo MCP/RAG server on 127.0.0.1 beforehand.
@@ -116,6 +116,12 @@ def main() -> None:
             {"tool_name": "read_lab_note", "arguments": {"note_id": "welcome"}},
         ],
     })
+    audit("/audits/mcp", {
+        "project_id": project_id,
+        "target_id": mcp_target["id"],
+        "passive": True,
+        "scan_mode": "vulnerability",
+    })
     audit("/audits/rag", {
         "project_id": project_id,
         "target_id": rag_target["id"],
@@ -172,11 +178,23 @@ def main() -> None:
         page.locator("select").nth(1).select_option(mcp_target["id"])
         page.get_by_text("Historique des audits").wait_for()
         page.screenshot(path=str(OUTPUT / "mcp-passive.png"), full_page=True, animations="disabled")
-        page.get_by_role("button", name="Actif — appel contrôlé").click()
+        page.get_by_role("button", name="Actif — outil contrôlé").click()
         page.locator("select").nth(2).select_option("read_lab_note")
-        page.locator("textarea").first.fill('{"note_id":"welcome"}')
+        page.get_by_label("note_id").select_option('"welcome"')
         page.screenshot(path=str(OUTPUT / "mcp-active.png"), full_page=True, animations="disabled")
 
+        page.screenshot(path=str(OUTPUT / "mcp-tool-form.png"), full_page=True, animations="disabled")
+        page.get_by_role("button", name="Audit de vulnérabilités").click()
+        page.screenshot(path=str(OUTPUT / "mcp-vulnerability-scan.png"), full_page=True, animations="disabled")
+        page.locator("table tbody tr").filter(has_text="mcp_security").first.click()
+        page.get_by_text("Détail de l’audit").wait_for(timeout=15_000)
+        page.get_by_role("dialog").get_by_role("button", name="Voir outils MCP").click()
+        page.get_by_role("dialog", name="Inventaire MCP : Outils").wait_for()
+        page.get_by_role("dialog", name="Inventaire MCP : Outils").get_by_text("read_lab_note", exact=True).click()
+        page.screenshot(path=str(OUTPUT / "mcp-inventory.png"), full_page=False, animations="disabled")
+        goto("/mcp")
+        page.locator("select").nth(0).select_option(project_id)
+        page.locator("select").nth(1).select_option(mcp_target["id"])
         # The first history row represents the active run and opens the actual
         # persisted audit detail, including the new structured result component.
         page.locator("table tbody tr").filter(has_text="Actif confirmé").first.click()
@@ -207,7 +225,8 @@ def main() -> None:
     for image in OUTPUT.glob("*.png"):
         if image.name in {
             "dashboard.png", "mcp-passive.png", "mcp-active.png",
-            "mcp-results.png", "rag-security.png", "rag-active-results.png",
+            "mcp-results.png", "mcp-inventory.png", "mcp-tool-form.png",
+            "mcp-vulnerability-scan.png", "rag-security.png", "rag-active-results.png",
             "findings.png",
         } and image.stat().st_size < 30_000:
             raise RuntimeError("Generated screenshot is suspiciously small: " + str(image))
