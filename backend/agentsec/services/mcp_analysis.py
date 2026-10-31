@@ -166,3 +166,76 @@ def _item(
         "classification": classification,
         "recommendation": recommendation,
     }
+
+
+def analyse_vulnerabilities(discovery: dict[str, Any]) -> list[dict[str, Any]]:
+    """Passive security assessment of advertised MCP interfaces.
+
+    Identifies suspicious attack surfaces, not confirmed exploitation. Never
+    invokes a tool, fetches resources, or sends payloads to third parties.
+    """
+    findings: list[dict[str, Any]] = []
+    for tool in discovery.get("tools", []):
+        if not isinstance(tool, dict):
+            continue
+        name = str(tool.get("name", "unnamed"))
+        description = str(tool.get("description", ""))
+        schema = tool.get("inputSchema") or {}
+        annotations = tool.get("annotations") or {}
+        if not isinstance(schema, dict):
+            findings.append(_item(
+                name, "Invalid MCP input schema",
+                "Tool inputSchema is not an object; clients cannot reliably validate arguments.",
+                repr(schema), "medium", "high", "Risk potential",
+                "Publish a valid JSON Schema object and validate arguments server-side.",
+            ))
+            continue
+        if is_sensitive_tool(tool) and isinstance(annotations, dict) and annotations.get("readOnlyHint") is True:
+            findings.append(_item(
+                name, "Potentially dangerous tool marked read-only",
+                "Tool capability or description suggests mutation despite readOnlyHint=true.",
+                json.dumps({"description": description, "annotations": annotations}, ensure_ascii=False),
+                "medium", "medium", "Risk potential",
+                "Correct annotations and enforce authorization, approval and server-side permissions.",
+            ))
+        properties = schema.get("properties") or {}
+        if not isinstance(properties, dict):
+            findings.append(_item(
+                name, "Malformed MCP input properties",
+                "Input properties is not a JSON Schema object.",
+                repr(properties), "medium", "high", "Risk potential",
+                "Publish well-formed input properties and validate all inputs.",
+            ))
+        elif schema.get("additionalProperties") is True and is_sensitive_tool(tool):
+            findings.append(_item(
+                name, "Sensitive tool explicitly accepts arbitrary arguments",
+                "Tool declares additionalProperties=true on a potentially mutating capability.",
+                json.dumps(schema, ensure_ascii=False)[:5000], "medium", "medium", "Risk potential",
+                "Use an allowlisted schema and enforce strict server-side input validation.",
+            ))
+    for resource in discovery.get("resources", []):
+        if not isinstance(resource, dict):
+            continue
+        uri = str(resource.get("uri", ""))
+        if not uri or any(uri.lower().startswith(prefix) for prefix in (
+            "file:///etc/", "file:///root/", "file:///home/", "file:///c:/windows/"
+        )):
+            findings.append(_item(
+                uri[:200] or "unnamed resource", "Exposed or invalid resource URI",
+                "A listed resource has no URI or advertises a sensitive local filesystem location.",
+                json.dumps(resource, ensure_ascii=False)[:5000],
+                "medium", "medium", "Risk potential",
+                "Publish least-privilege resource URIs and enforce resource access controls.",
+            ))
+    for prompt in discovery.get("prompts", []):
+        if not isinstance(prompt, dict):
+            continue
+        description = str(prompt.get("description", ""))
+        if INSTRUCTION_TEXT.search(description):
+            findings.append(_item(
+                str(prompt.get("name", "unnamed")), "Instruction-like MCP prompt metadata",
+                "Advertised prompt metadata includes instruction-like content that may influence agents.",
+                description, "medium", "medium", "Risk potential",
+                "Separate untrusted metadata from trusted instructions and audit prompt sources.",
+            ))
+    return findings
