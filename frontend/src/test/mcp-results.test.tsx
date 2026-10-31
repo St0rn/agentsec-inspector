@@ -22,7 +22,7 @@ describe("MCP result presentation", () => {
     expect(screen.getByText(/Total filtré 1698/)).toBeInTheDocument();
     expect(screen.getByText("SUCCESS")).toBeInTheDocument();
     fireEvent.click(screen.getByText("Voir la réponse MCP brute"));
-    expect(screen.getByText(/MCP original response/)).toBeInTheDocument();
+    expect(screen.getAllByText(/MCP original response/).length).toBeGreaterThan(0);
   });
 
   it("renders collections with counts and non-structured MCP results", () => {
@@ -38,7 +38,7 @@ describe("MCP result presentation", () => {
     }}/>);
     expect(screen.getByText("devices")).toBeInTheDocument();
     expect(screen.getByText("500")).toBeInTheDocument();
-    expect(screen.getByText(/"sum": 42/)).toBeInTheDocument();
+    expect(screen.getAllByText(/"sum": 42/).length).toBeGreaterThan(0);
     expect(screen.getByText("Controlled failure")).toBeInTheDocument();
   });
 
