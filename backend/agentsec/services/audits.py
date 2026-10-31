@@ -16,13 +16,13 @@ from ..models import (
     AuditRun,
     AuditStatus,
     Evidence,
-    Finding,
     Scenario,
     Severity,
     Target,
     TestExecution,
 )
 from .events import event_hub
+from .finding_dedup import record_finding
 from .llm_client import send_chat
 from .mcp_analysis import analyse_discovery, analyse_tool_result, is_sensitive_tool
 from .mcp_client import HTTPMCPClient, StdioMCPClient
@@ -119,12 +119,13 @@ async def run_mcp_audit(audit_id: str) -> None:
                     )
                 )
             for issue in issues:
-                finding = Finding(
-                    project_id=audit.project_id,
-                    audit_run_id=audit.id,
+                record_finding(
+                    db,
+                    audit,
+                    rule=f"mcp:{issue['title']}",
+                    component=issue["component"],
                     title=issue["title"],
                     description=issue["description"],
-                    component=issue["component"],
                     classification=issue["classification"],
                     severity=Severity(issue["severity"]),
                     confidence=issue["confidence"],
@@ -132,7 +133,6 @@ async def run_mcp_audit(audit_id: str) -> None:
                     expected_result="Capability documentation and schema should support safe, unambiguous use.",
                     recommendation=issue["recommendation"],
                 )
-                db.add(finding)
             db.add(
                 AgentEvent(
                     project_id=audit.project_id,
@@ -357,30 +357,30 @@ async def run_prompt_test(audit_id: str, request: dict[str, Any]) -> None:
                 )
             )
             if status == "FAIL":
-                db.add(
-                    Finding(
-                        project_id=audit.project_id,
-                        audit_run_id=audit.id,
-                        title=f"Security objective violated: {scenario['name']}",
-                        description="The observed response or tool activity violated at least one configured security rule.",
-                        component=target.name,
-                        classification="Confirmed vulnerability",
-                        severity=Severity.high,
-                        confidence="high",
-                        impact="An untrusted instruction may influence protected output or agent actions.",
-                        exploitation_conditions="A user or retrieved source can supply adversarial instructions.",
-                        reproduction_steps=_bounded_json(messages),
-                        observed_result=combined_response[:20_000],
-                        expected_result="The endpoint should satisfy every required security rule. Legitimate authorised tool use is not a violation by itself.",
-                        recommendation="Separate untrusted content from instructions, enforce tool authorisation outside the model, and add output controls.",
-                        frameworks=[
-                            {
-                                "framework": "OWASP Top 10 for LLM Applications",
-                                "version": "2025",
-                                "id": "LLM01",
-                            }
-                        ],
-                    )
+                violated = analysis.get("violated_rules") or ["scenario_failure"]
+                record_finding(
+                    db,
+                    audit,
+                    rule=f"llm:{scenario['id']}:{','.join(sorted(map(str, violated)))}",
+                    component=target.name,
+                    title=f"Security objective violated: {scenario['name']}",
+                    description="The observed response or tool activity violated at least one configured security rule.",
+                    classification="Confirmed vulnerability",
+                    severity=Severity.high,
+                    confidence="high",
+                    impact="An untrusted instruction may influence protected output or agent actions.",
+                    exploitation_conditions="A user or retrieved source can supply adversarial instructions.",
+                    reproduction_steps=_bounded_json(messages),
+                    observed_result=combined_response[:20_000],
+                    expected_result="The endpoint should satisfy every required security rule. Legitimate authorised tool use is not a violation by itself.",
+                    recommendation="Separate untrusted content from instructions, enforce tool authorisation outside the model, and add output controls.",
+                    frameworks=[
+                        {
+                            "framework": "OWASP Top 10 for LLM Applications",
+                            "version": "2025",
+                            "id": "LLM01",
+                        }
+                    ],
                 )
             audit.summary = {
                 "scenario": scenario["id"],
