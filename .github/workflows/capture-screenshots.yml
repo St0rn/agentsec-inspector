@@ -15,7 +15,7 @@ jobs:
     timeout-minutes: 30
     env:
       AGENTSEC_API_TOKEN: agentsec-public-demo-token-not-for-production
-      AGENTSEC_DATA_DIR: ${{ runner.temp }}/agentsec-screenshot-lab
+      AGENTSEC_DATA_DIR: /tmp/agentsec-screenshot-lab
       AGENTSEC_PORT: "8765"
       VITE_API_TOKEN: agentsec-public-demo-token-not-for-production
     steps:
