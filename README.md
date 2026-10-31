@@ -33,7 +33,7 @@ Une application desktop pour auditer, dans un cadre autorisé, des chatbots, des
 
 ![Dashboard AgentSec Inspector](docs/images/dashboard.png)
 
-<p align="center"><sub>Dashboard v1.3.0 connecté au laboratoire de test fourni avec le projet. Les données de démonstration restent séparées des projets d’audit.</sub></p>
+<p align="center"><sub>Dashboard v1.4.0 connecté au laboratoire de test fourni avec le projet. Les données de démonstration restent séparées des projets d’audit.</sub></p>
 
 <table>
   <tr>
@@ -64,6 +64,14 @@ AgentSec Inspector n’utilise pas un second modèle pour juger les réponses du
     <td width="50%"><img src="docs/images/mcp-results.png" alt="Résultats MCP actifs avec preuves"/><br/><sub>Résultats MCP structurés : paramètres, durée, preuves et JSON brut</sub></td>
     <td width="50%"><img src="docs/images/rag-active-results.png" alt="Tests RAG actifs et verdicts"/><br/><sub>Audit RAG actif sur un laboratoire local avec traces et verdicts observables</sub></td>
   </tr>
+  <tr>
+    <td width="50%"><img src="docs/images/mcp-vulnerability-scan.png" alt="Nouvel onglet Audit de vulnérabilités MCP"/><br/><sub>Troisième onglet MCP : analyse non destructive des risques exposés par le serveur</sub></td>
+    <td width="50%"><img src="docs/images/mcp-inventory.png" alt="Inventaire MCP : outils, ressources, prompts et observations"/><br/><sub>Inventaire cliquable avec descriptions et schémas de paramètres</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/images/mcp-tool-form.png" alt="Formulaire d'appel MCP construit depuis inputSchema"/><br/><sub>Paramètres typés et valeurs enum extraits de la découverte passive</sub></td>
+    <td width="50%"><img src="docs/images/findings.png" alt="Gestion et suppression confirmée des findings"/><br/><sub>Gestion des findings, historique et suppression individuelle sous confirmation</sub></td>
+  </tr>
 </table>
 
 <p align="center"><sub>Captures réalisées avec l’application connectée au laboratoire local fourni dans <code>demo/</code>.</sub></p>
@@ -74,14 +82,14 @@ Une mission regroupe ses cibles, ses tests, ses preuves, ses constats et ses rap
 
 | Domaine | Capacités opérationnelles |
 |---|---|
-| MCP Security | Découverte MCP paginée (outils, ressources, prompts), appels actifs explicitement confirmés et résultats structurés avec preuves |
+| MCP Security | Découverte paginée, inventaires cliquables, formulaires d'outils dérivés des schémas, appels actifs confirmés et onglet dédié à l'audit non destructif de vulnérabilités potentielles |
 | Prompt & LLM | 10 scénarios d’injection et 9 scénarios de jailbreak versionnés, connecteurs OpenAI-compatible, Ollama et HTTP, verdicts déterministes |
-| Custom Payload | Payloads libres et multi-tours, règles de sécurité configurables, conservation des réponses, événements et appels d’outils |
+| Custom Payload | Payloads libres et multi-tours, règles configurables, preuves conservées et suppression des historiques par audit, par projet ou globale (avec confirmation) |
 | Compatibilité streaming | JSON, NDJSON, SSE, OpenAI-compatible et Ollama normalisés dans un format de preuve commun |
 | Jailbreak | Module dédié : usurpation d’autorité, mode développeur fictif, changement de persona, cadrage hypothétique, suppression du refus, coercition de format, obfuscation, inversion de politique et faux reset de contexte |
 | RAG Security | Audits actifs sur API RAG autorisées, cas de référence et injections indirectes, télémétrie disponible, preuves et verdicts PASS/FAIL/INCONCLUSIVE/ERROR |
 | Agent Behavior | Chronologie des messages, appels MCP, paramètres, résultats, erreurs, durées et décisions observables |
-| Findings | Déduplication des constats par cible et contrôle, occurrences historisées, empreintes, preuves, impact et remédiation |
+| Findings | Déduplication des constats, occurrences historisées, preuves, suivi de remédiation et suppression individuelle avec confirmation |
 | Reporting | Prévisualisation A4, rapports techniques/exécutifs FR/EN en HTML, JSON et PDF, findings complets, payloads, preuves et enregistrement à l’emplacement choisi |
 | Scenario Packs | Import de scénarios JSON versionnés, sans exécution de code provenant du pack |
 
@@ -218,12 +226,12 @@ Le [catalogue des contrôles et attaques](docs/TEST_CATALOG.md) énumère exacte
 
 ### Télécharger AgentSec Inspector — Windows
 
-**Version : v1.3.0**
+**Version : v1.4.0**
 
-- [Télécharger le MSI Windows x64](https://github.com/St0rn/agentsec-inspector/releases/download/v1.3.0/AgentSec-Inspector_1.3.0_x64_en-US.msi)
-- [Télécharger le programme d’installation Windows x64](https://github.com/St0rn/agentsec-inspector/releases/download/v1.3.0/AgentSec-Inspector_1.3.0_x64-setup.exe)
-- [Vérifier les empreintes SHA-256](https://github.com/St0rn/agentsec-inspector/releases/download/v1.3.0/SHA256SUMS.txt)
-- [Consulter les notes de version](https://github.com/St0rn/agentsec-inspector/releases/tag/v1.3.0)
+- [Télécharger le MSI Windows x64](https://github.com/St0rn/agentsec-inspector/releases/download/v1.4.0/AgentSec-Inspector_1.4.0_x64_en-US.msi)
+- [Télécharger le programme d’installation Windows x64](https://github.com/St0rn/agentsec-inspector/releases/download/v1.4.0/AgentSec-Inspector_1.4.0_x64-setup.exe)
+- [Vérifier les empreintes SHA-256](https://github.com/St0rn/agentsec-inspector/releases/download/v1.4.0/SHA256SUMS.txt)
+- [Consulter les notes de version](https://github.com/St0rn/agentsec-inspector/releases/tag/v1.4.0)
 
 Les deux installateurs intègrent le backend. Python et Node.js ne sont pas nécessaires sur le poste final.
 
@@ -231,7 +239,7 @@ Pour installer depuis un artefact téléchargé ou construit localement :
 
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass
-.\scripts\install.ps1 -InstallerPath ".\AgentSec-Inspector_1.3.0_x64_en-US.msi"
+.\scripts\install.ps1 -InstallerPath ".\AgentSec-Inspector_1.4.0_x64_en-US.msi"
 .\scripts\verify-installation.ps1
 ```
 
@@ -239,8 +247,8 @@ Set-ExecutionPolicy -Scope Process Bypass
 
 L’AppImage contient le frontend et le backend autonome ; Python et Node.js ne sont pas nécessaires sur le poste final.
 
-- [Télécharger l’AppImage Linux x86_64](https://github.com/St0rn/agentsec-inspector/releases/download/v1.3.0/AgentSec-Inspector_1.3.0_amd64.AppImage)
-- [Télécharger le paquet DEB Linux x86_64](https://github.com/St0rn/agentsec-inspector/releases/download/v1.3.0/AgentSec-Inspector_1.3.0_amd64.deb)
+- [Télécharger l’AppImage Linux x86_64](https://github.com/St0rn/agentsec-inspector/releases/download/v1.4.0/AgentSec-Inspector_1.4.0_amd64.AppImage)
+- [Télécharger le paquet DEB Linux x86_64](https://github.com/St0rn/agentsec-inspector/releases/download/v1.4.0/AgentSec-Inspector_1.4.0_amd64.deb)
 
 Les deux paquets sont produits par le même build Linux x64 validé. Le fichier `SHA256SUMS.txt` de la release permet d’en vérifier l’intégrité.
 
@@ -337,18 +345,33 @@ Dans **MCP Security**, sélectionnez le projet et la cible, conservez le mode **
 
 <img src="docs/images/mcp-passive.png" alt="Configuration d’un audit MCP passif"/>
 
+Après le scan, cliquez sur les cartes **Outils**, **Ressources**, **Prompts** ou **Observations** pour ouvrir un inventaire détaillé et filtrable, avec les propriétés et schémas disponibles.
+
+<img src="docs/images/mcp-inventory.png" alt="Fenêtre de consultation détaillée des outils et de leurs paramètres MCP"/>
+
 </details>
 
 <details>
 <summary><strong>4. Autoriser un test MCP actif</strong></summary>
 
-Après la découverte passive, passez en mode **Actif — appel contrôlé**. Choisissez un seul outil découvert, vérifiez les paramètres JSON et confirmez cet appel précis. Une capacité sensible demande une seconde confirmation. Le résultat, la durée et les erreurs sont conservés comme preuves.
+Après la découverte passive, passez en mode **Actif — outil contrôlé**. Choisissez un seul outil découvert, vérifiez les champs générés depuis son `inputSchema` (types, paramètres requis, valeurs `enum` et JSON avancé), puis confirmez cet appel précis. Une capacité sensible demande une seconde confirmation. Le résultat, la durée et les erreurs sont conservés comme preuves.
 
 <img src="docs/images/mcp-active.png" alt="Configuration d’un appel MCP actif et explicitement autorisé"/>
 
+<img src="docs/images/mcp-tool-form.png" alt="Formulaire généré à partir du schéma d’entrée MCP"/>
+
 Après un appel, consultez les résultats structurés : arguments, durée, statut de l’outil, résumé des données et JSON brut. Une exécution `SUCCESS` ne prouve pas l’absence de vulnérabilités.
 
-<img src="docs/images/mcp-results.png" alt="Résultats et preuves d’un appel MCP actif dans AgentSec 1.3.0"/>
+<img src="docs/images/mcp-results.png" alt="Résultats et preuves d’un appel MCP actif dans AgentSec 1.4.0"/>
+
+</details>
+
+<details>
+<summary><strong>4 bis. Analyser les risques MCP sans appeler d'outil</strong></summary>
+
+Dans **MCP Security**, sélectionnez **Audit de vulnérabilités** puis lancez le contrôle de la cible autorisée. AgentSec examine les annotations, schémas d'entrée, capacités sensibles, URI de ressources et descriptions de prompts. Les résultats sont classés par sévérité, avec éléments observables et remédiations. Cette analyse n'exécute aucun outil et **ne confirme pas à elle seule une exploitation**.
+
+<img src="docs/images/mcp-vulnerability-scan.png" alt="Troisième onglet MCP : audit de vulnérabilités non destructif"/>
 
 </details>
 
@@ -540,7 +563,7 @@ docs/          architecture, sécurité et procédures Windows
 
 Cet outil est conçu pour les audits disposant d’une autorisation explicite et d’un périmètre documenté. Un serveur MCP non fiable doit être exécuté dans une VM ou une Windows Sandbox dédiée : les restrictions du sous-processus stdio ne constituent pas, à elles seules, une sandbox de sécurité.
 
-Les nouveautés v1.3.0 sont décrites dans les [notes de version](docs/RELEASE_NOTES_1.3.0.md). Les validations des installateurs Windows et Linux sont accessibles via les badges GitHub Actions en tête du document.
+Les nouveautés v1.4.0 (audit de vulnérabilités MCP, gestion des historiques, suppression des findings et ergonomie) sont décrites dans les [notes de version](docs/RELEASE_NOTES_1.4.0.md). Les validations des installateurs Windows et Linux sont accessibles via les badges GitHub Actions en tête du document.
 
 ## Licence
 
@@ -555,4 +578,4 @@ AgentSec Inspector est créé et maintenu par **St0rn**.
 
 ---
 
-<div align="center"><sub>AgentSec Inspector v1.3.0 · développé et maintenu par St0rn</sub></div>
+<div align="center"><sub>AgentSec Inspector v1.4.0 · développé et maintenu par St0rn</sub></div>
