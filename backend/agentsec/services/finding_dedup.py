@@ -26,6 +26,7 @@ def record_finding(
     rule: str,
     component: str,
     title: str,
+    identity_component: str | None = None,
     description: str,
     classification: str,
     severity: Severity,
@@ -39,7 +40,7 @@ def record_finding(
     The unique database constraint is authoritative under concurrent audit jobs.
     Separate occurrence rows preserve independently verifiable audit references.
     """
-    fingerprint = finding_fingerprint(audit, rule, component)
+    fingerprint = finding_fingerprint(audit, rule, identity_component or component)
     finding = db.scalar(
         select(Finding).where(Finding.project_id == audit.project_id, Finding.fingerprint == fingerprint)
     )
