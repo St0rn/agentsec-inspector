@@ -236,7 +236,7 @@ def test_alembic_migration_reaches_head() -> None:
     with engine.connect() as connection:
         assert (
             connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one()
-            == "0002_audit_evidence"
+            == "0003_finding_dedup"
         )
 
 
@@ -271,6 +271,6 @@ def test_v101_database_migration_preserves_existing_audits_and_scenarios(tmp_pat
     with sqlite3.connect(database) as connection:
         assert connection.execute("SELECT name FROM scenarios").fetchone() == ("Legacy",)
         assert connection.execute("SELECT content FROM evidence").fetchone() == ("preserve me",)
-        assert connection.execute("SELECT version_num FROM alembic_version").fetchone() == ("0002_audit_evidence",)
+        assert connection.execute("SELECT version_num FROM alembic_version").fetchone() == ("0003_finding_dedup",)
         assert "expected_marker" in {row[1] for row in connection.execute("PRAGMA table_info(scenarios)")}
         assert "audit_run_id" in {row[1] for row in connection.execute("PRAGMA table_info(evidence)")}
