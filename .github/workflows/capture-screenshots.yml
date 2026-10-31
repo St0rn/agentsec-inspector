@@ -56,6 +56,7 @@ jobs:
           git add docs/images/dashboard.png docs/images/mcp-passive.png docs/images/mcp-active.png docs/images/mcp-results.png docs/images/mcp-inventory.png docs/images/mcp-tool-form.png docs/images/mcp-vulnerability-scan.png docs/images/rag-security.png docs/images/rag-active-results.png docs/images/findings.png
           if ! git diff --cached --quiet; then
             git commit -m "docs(images): refresh real 1.4.0 screenshots from local MCP/RAG laboratory"
+            git pull --rebase origin main
             git push origin HEAD:main
           fi
       - name: Upload screenshots for inspection
