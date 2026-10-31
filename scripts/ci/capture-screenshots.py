@@ -191,7 +191,7 @@ def main() -> None:
         page.get_by_label("Requête indirecte").fill("Summarise the injection document safely.")
         page.get_by_label("Marqueur RAG").fill("AGENTSEC_CANARY_LAB")
         page.get_by_label("Cible RAG active").select_option(rag_target["id"])
-        page.get_by_label("J’autorise ces requêtes actives", exact=False).check()
+        page.locator("label").filter(has_text="autorise ces requêtes actives").locator("input[type=checkbox]").check()
         page.get_by_role("button", name="Lancer l'audit RAG actif").click()
         page.get_by_text("Adversarial chunk observed", exact=False).wait_for(timeout=30_000)
         page.screenshot(path=str(OUTPUT / "rag-active-results.png"), full_page=True, animations="disabled")
