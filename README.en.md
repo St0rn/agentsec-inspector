@@ -77,7 +77,7 @@ Each project keeps its targets, tests, evidence, findings, and reports together.
 | RAG Security | Documents and metadata, controlled injection cases, real traces, and Document → Retrieval → LLM → Response visualization |
 | Agent Behavior | Chronological view of messages, MCP calls, parameters, results, errors, durations, and observable decisions |
 | Findings | Full lifecycle, history, evidence, confidence, impact, reproduction, and remediation |
-| Reporting | Technical and executive reports in English or French, exported as HTML, JSON, or PDF |
+| Reporting | A4 preview, detailed technical/executive reports in English or French, HTML/JSON/PDF export, payloads, evidence, and Save As |
 | Scenario Packs | Import versioned JSON scenarios without executing code from the pack |
 
 ## Security test catalog
@@ -213,12 +213,12 @@ The [test and attack catalog](docs/TEST_CATALOG.md) states exactly what V1 execu
 
 ### Download AgentSec Inspector — Windows
 
-**Version: v1.1.0**
+**Version: v1.2.0**
 
-- [Download the Windows x64 MSI](https://github.com/St0rn/agentsec-inspector/releases/download/v1.1.0/AgentSec-Inspector_1.1.0_x64_en-US.msi)
-- [Download the Windows x64 Setup executable](https://github.com/St0rn/agentsec-inspector/releases/download/v1.1.0/AgentSec-Inspector_1.1.0_x64-setup.exe)
-- [Verify all SHA-256 checksums](https://github.com/St0rn/agentsec-inspector/releases/download/v1.1.0/SHA256SUMS.txt)
-- [Read the release notes](https://github.com/St0rn/agentsec-inspector/releases/tag/v1.1.0)
+- [Download the Windows x64 MSI](https://github.com/St0rn/agentsec-inspector/releases/download/v1.2.0/AgentSec-Inspector_1.2.0_x64_en-US.msi)
+- [Download the Windows x64 Setup executable](https://github.com/St0rn/agentsec-inspector/releases/download/v1.2.0/AgentSec-Inspector_1.2.0_x64-setup.exe)
+- [Verify all SHA-256 checksums](https://github.com/St0rn/agentsec-inspector/releases/download/v1.2.0/SHA256SUMS.txt)
+- [Read the release notes](https://github.com/St0rn/agentsec-inspector/releases/tag/v1.2.0)
 
 Both installers include the backend. End users do not need Python or Node.js.
 
@@ -226,7 +226,7 @@ To install a downloaded or locally built artifact:
 
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass
-.\scripts\install.ps1 -InstallerPath ".\AgentSec-Inspector_1.1.0_x64_en-US.msi"
+.\scripts\install.ps1 -InstallerPath ".\AgentSec-Inspector_1.2.0_x64_en-US.msi"
 .\scripts\verify-installation.ps1
 ```
 
@@ -234,8 +234,8 @@ Set-ExecutionPolicy -Scope Process Bypass
 
 The AppImage contains the frontend and standalone backend, so end users do not need Python or Node.js.
 
-- [Download the Linux x86_64 AppImage](https://github.com/St0rn/agentsec-inspector/releases/download/v1.1.0/AgentSec-Inspector_1.1.0_amd64.AppImage)
-- [Download the Linux x86_64 DEB package](https://github.com/St0rn/agentsec-inspector/releases/download/v1.1.0/AgentSec-Inspector_1.1.0_amd64.deb)
+- [Download the Linux x86_64 AppImage](https://github.com/St0rn/agentsec-inspector/releases/download/v1.2.0/AgentSec-Inspector_1.2.0_amd64.AppImage)
+- [Download the Linux x86_64 DEB package](https://github.com/St0rn/agentsec-inspector/releases/download/v1.2.0/AgentSec-Inspector_1.2.0_amd64.deb)
 
 Both packages come from the same validated Linux x64 build. Use the release's `SHA256SUMS.txt` file to verify their integrity.
 
@@ -408,9 +408,27 @@ In **Findings**, open each finding and review its evidence, classification, seve
 <details>
 <summary><strong>10. Generate the report</strong></summary>
 
-In **Reports**, select the project, technical or executive report, language, and HTML, PDF, or JSON format. Reports use the data stored in the project and receive a SHA-256 fingerprint.
+In **Reports**, select the project, technical or executive report, language, and HTML, PDF, or JSON format. Use **Preview** to review the content, then **Generate**. Report history is grouped by project and each group can be collapsed or expanded. **Save As** opens the system file picker when available.
 
-<img src="docs/images/reports.png" alt="Generating and downloading reports"/>
+Reports use only stored project data: scope, statistics, audits, findings, the exact payload for scenarios and custom tests, responses, tool calls, evidence, and recommendations. Every generated file receives a SHA-256 checksum.
+
+**Where reports are saved:**
+
+- **Download** saves the file to the system download folder, usually `%USERPROFILE%\Downloads` on Windows or `~/Downloads` on Linux.
+- **Save As** lets you choose the destination folder and filename.
+- AgentSec also keeps its internal project copy in `%LOCALAPPDATA%\com.agentsec.inspector\reports\<project-id>` on Windows and `${XDG_DATA_HOME:-$HOME/.local/share}/com.agentsec.inspector/reports/<project-id>` on Linux.
+- In a development environment, `AGENTSEC_DATA_DIR` overrides this location; scripts default to `%LOCALAPPDATA%\AgentSec` on Windows and `~/.local/share/agentsec-inspector` on Linux.
+
+<img src="docs/images/reports.png" alt="Report preview, generation, and history"/>
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/images/report-cover.png" alt="AgentSec Inspector PDF cover"/><br/><sub>A4 cover generated by the reporting engine</sub></td>
+    <td width="50%"><img src="docs/images/report-finding.png" alt="Detailed finding in a PDF report"/><br/><sub>Detailed finding with impact, reproduction, evidence, and payload</sub></td>
+  </tr>
+</table>
+
+<p align="center"><img src="docs/images/report-payload.png" width="68%" alt="Exact payload, response, and tool calls in a PDF report"/><br/><sub>The technical report preserves the exact payload, verdict, response, and observed tool calls.</sub></p>
 
 </details>
 
@@ -484,8 +502,8 @@ Verdicts use the structured rules selected at execution time and observable evid
 
 | Control | Result |
 |---|---|
-| Backend | 69/69 tests, 85.79% coverage with an 80% blocking threshold, Ruff and mypy successful |
-| Frontend | 20/20 tests, 86.87% line coverage with blocking thresholds, ESLint, TypeScript, and Vite build successful |
+| Backend | 71/71 tests, 87% coverage with an 80% blocking threshold, Ruff and mypy successful |
+| Frontend | 23/23 tests, 85.58% line coverage with blocking thresholds, ESLint, TypeScript, and Vite build successful |
 | Source and dependency security | `pip-audit` and `npm audit` found no known vulnerabilities; Bandit found no medium/high issue |
 | Standalone binary | Linux PyInstaller build verified with fresh migration, authentication, CORS, integrity, and PDF generation |
 | Laboratory | Passive MCP discovery, bounded active MCP call, and LLM exchanges completed successfully |
@@ -493,7 +511,7 @@ Verdicts use the structured rules selected at execution time and observable evid
 | Desktop packages | AppImage/DEB built and the AppImage verified twice on Linux; MSI/NSIS built, installed, and verified twice each on Windows |
 | Windows/PowerShell | 71 Pester tests passed on PowerShell 7 and 71 on Windows PowerShell 5.1; MSVC/SDK compilation probe, MSI, NSIS, API, desktop, sidecar, and uninstall checks passed |
 
-Version 1.1.0 was validated by the [Windows x64 run `41108334253`](https://github.com/St0rn/agentsec-inspector/actions/runs/41108334253) and [Linux x64 run `41108334280`](https://github.com/St0rn/agentsec-inspector/actions/runs/41108334280), then published by [release workflow `41110672480`](https://github.com/St0rn/agentsec-inspector/actions/runs/41110672480). See also [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md), the [installation validation matrix](INSTALLATION_VALIDATION_MATRIX.md), and the [detailed validation report](docs/VALIDATION_REPORT.md).
+Detailed version 1.2.0 results, including Windows/Linux runs, repeated installations, and published checksums, are recorded in [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md), the [installation validation matrix](INSTALLATION_VALIDATION_MATRIX.md), and the [validation report](docs/VALIDATION_REPORT.md).
 
 ## Repository layout
 
@@ -520,4 +538,4 @@ AgentSec Inspector is created and maintained by **St0rn**.
 
 ---
 
-<div align="center"><sub>AgentSec Inspector v1.1.0 · developed and maintained by St0rn</sub></div>
+<div align="center"><sub>AgentSec Inspector v1.2.0 · developed and maintained by St0rn</sub></div>

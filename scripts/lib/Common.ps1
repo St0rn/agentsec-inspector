@@ -1,6 +1,6 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-$script:AgentSecVersion = '1.1.0'
+$script:AgentSecVersion = '1.2.0'
 $script:RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $script:LogPath = $null
 

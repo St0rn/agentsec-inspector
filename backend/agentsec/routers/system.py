@@ -15,7 +15,7 @@ from ..config import get_settings
 from ..database import get_db
 from ..models import AuditRun, Connector, Finding, Project, Report
 from ..schemas import DashboardRead, ReportRequest
-from ..services.reports import generate_report
+from ..services.reports import generate_report, preview_report
 
 router = APIRouter(tags=["system"])
 
@@ -69,11 +69,31 @@ async def create_report(body: ReportRequest, db: Session = Depends(get_db)) -> d
     return {
         "id": report.id,
         "project_id": report.project_id,
+        "report_type": report.report_type,
         "format": report.format,
         "language": report.language,
+        "template_name": report.template_name,
+        "filename": Path(report.path).name,
+        "size_bytes": Path(report.path).stat().st_size,
         "sha256": report.sha256,
         "created_at": report.created_at,
     }
+
+
+@router.post("/reports/preview")
+async def report_preview(body: ReportRequest, db: Session = Depends(get_db)) -> Response:
+    try:
+        html = preview_report(db, body.project_id, body.report_type, body.language)
+    except ValueError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    return Response(
+        html,
+        media_type="text/html",
+        headers={
+            "Content-Disposition": "inline; filename=agentsec-report-preview.html",
+            "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; img-src data:",
+        },
+    )
 
 
 @router.get("/reports")
@@ -90,6 +110,9 @@ async def list_reports(
             "report_type": row.report_type,
             "language": row.language,
             "format": row.format,
+            "template_name": row.template_name,
+            "filename": Path(row.path).name,
+            "size_bytes": Path(row.path).stat().st_size if Path(row.path).is_file() else 0,
             "sha256": row.sha256,
             "created_at": row.created_at,
         }

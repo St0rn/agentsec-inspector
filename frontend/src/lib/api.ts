@@ -159,6 +159,23 @@ export async function downloadApi(path: string): Promise<Blob> {
   return response.blob();
 }
 
+export async function textApi(path: string, options: RequestInit = {}): Promise<string> {
+  const currentConfig = await readyBackend();
+  let response: Response;
+  try {
+    response = await fetchWithTimeout(`${currentConfig.baseUrl}/api/v1${path}`, {
+      ...options,
+      headers: requestHeaders(currentConfig, options),
+    }, REQUEST_TIMEOUT_MS);
+  } catch (error) {
+    updateConnectionState("offline");
+    readinessPromise = undefined;
+    throw readableNetworkError(error);
+  }
+  if (!response.ok) throw new Error(`Prévisualisation impossible (${response.status}).`);
+  return response.text();
+}
+
 export function setDevelopmentToken(token: string) {
   localStorage.setItem("agentsec-api-token", token);
   configPromise = undefined;

@@ -171,6 +171,10 @@ async def test_openai_compatible_and_ollama_clients(
     assert ollama.text == "ollama response"
     assert bodies[0]["temperature"] == 0
     assert bodies[1]["stream"] is False
+    assert compatible.request_payload == bodies[0]
+    assert compatible.request_url.endswith("/v1/chat/completions")
+    assert ollama.request_payload == bodies[1]
+    assert ollama.request_url.endswith("/api/chat")
 
 
 @pytest.mark.asyncio

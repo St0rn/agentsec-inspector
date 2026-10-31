@@ -268,6 +268,8 @@ async def run_prompt_test(audit_id: str, request: dict[str, Any]) -> None:
                 turns.append(
                     {
                         "step": index + 1,
+                        "exact_payload_sent": result.request_payload,
+                        "request_url": result.request_url,
                         "response": result.text,
                         "tool_calls": result.tool_calls,
                         "events": result.events,
@@ -301,6 +303,14 @@ async def run_prompt_test(audit_id: str, request: dict[str, Any]) -> None:
             execution.status = status
             execution.request_data = {
                 "messages": messages,
+                "turns": [
+                    {
+                        "step": turn["step"],
+                        "exact_payload_sent": turn["exact_payload_sent"],
+                        "request_url": turn["request_url"],
+                    }
+                    for turn in turns
+                ],
                 "security_objective": request["security_objective"],
                 "security_rules": request.get("security_rules", []),
             }

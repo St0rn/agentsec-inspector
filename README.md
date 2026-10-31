@@ -77,7 +77,7 @@ Une mission regroupe ses cibles, ses tests, ses preuves, ses constats et ses rap
 | RAG Security | Documents et métadonnées, injections contrôlées, traces réelles et parcours Document → Retrieval → LLM → Réponse |
 | Agent Behavior | Chronologie des messages, appels MCP, paramètres, résultats, erreurs, durées et décisions observables |
 | Findings | Gestion des constats : historique, preuves, confiance, impact, reproduction, statut et remédiation |
-| Reporting | Rapports techniques/exécutifs en français ou anglais, HTML, JSON et PDF |
+| Reporting | Prévisualisation A4, rapports techniques/exécutifs FR/EN en HTML, JSON et PDF, findings complets, payloads, preuves et enregistrement à l’emplacement choisi |
 | Scenario Packs | Import de scénarios JSON versionnés, sans exécution de code provenant du pack |
 
 ## Catalogue des tests de sécurité
@@ -213,12 +213,12 @@ Le [catalogue des contrôles et attaques](docs/TEST_CATALOG.md) énumère exacte
 
 ### Télécharger AgentSec Inspector — Windows
 
-**Version : v1.1.0**
+**Version : v1.2.0**
 
-- [Télécharger le MSI Windows x64](https://github.com/St0rn/agentsec-inspector/releases/download/v1.1.0/AgentSec-Inspector_1.1.0_x64_en-US.msi)
-- [Télécharger le programme d’installation Windows x64](https://github.com/St0rn/agentsec-inspector/releases/download/v1.1.0/AgentSec-Inspector_1.1.0_x64-setup.exe)
-- [Vérifier les empreintes SHA-256](https://github.com/St0rn/agentsec-inspector/releases/download/v1.1.0/SHA256SUMS.txt)
-- [Consulter les notes de version](https://github.com/St0rn/agentsec-inspector/releases/tag/v1.1.0)
+- [Télécharger le MSI Windows x64](https://github.com/St0rn/agentsec-inspector/releases/download/v1.2.0/AgentSec-Inspector_1.2.0_x64_en-US.msi)
+- [Télécharger le programme d’installation Windows x64](https://github.com/St0rn/agentsec-inspector/releases/download/v1.2.0/AgentSec-Inspector_1.2.0_x64-setup.exe)
+- [Vérifier les empreintes SHA-256](https://github.com/St0rn/agentsec-inspector/releases/download/v1.2.0/SHA256SUMS.txt)
+- [Consulter les notes de version](https://github.com/St0rn/agentsec-inspector/releases/tag/v1.2.0)
 
 Les deux installateurs intègrent le backend. Python et Node.js ne sont pas nécessaires sur le poste final.
 
@@ -226,7 +226,7 @@ Pour installer depuis un artefact téléchargé ou construit localement :
 
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass
-.\scripts\install.ps1 -InstallerPath ".\AgentSec-Inspector_1.1.0_x64_en-US.msi"
+.\scripts\install.ps1 -InstallerPath ".\AgentSec-Inspector_1.2.0_x64_en-US.msi"
 .\scripts\verify-installation.ps1
 ```
 
@@ -234,8 +234,8 @@ Set-ExecutionPolicy -Scope Process Bypass
 
 L’AppImage contient le frontend et le backend autonome ; Python et Node.js ne sont pas nécessaires sur le poste final.
 
-- [Télécharger l’AppImage Linux x86_64](https://github.com/St0rn/agentsec-inspector/releases/download/v1.1.0/AgentSec-Inspector_1.1.0_amd64.AppImage)
-- [Télécharger le paquet DEB Linux x86_64](https://github.com/St0rn/agentsec-inspector/releases/download/v1.1.0/AgentSec-Inspector_1.1.0_amd64.deb)
+- [Télécharger l’AppImage Linux x86_64](https://github.com/St0rn/agentsec-inspector/releases/download/v1.2.0/AgentSec-Inspector_1.2.0_amd64.AppImage)
+- [Télécharger le paquet DEB Linux x86_64](https://github.com/St0rn/agentsec-inspector/releases/download/v1.2.0/AgentSec-Inspector_1.2.0_amd64.deb)
 
 Les deux paquets sont produits par le même build Linux x64 validé. Le fichier `SHA256SUMS.txt` de la release permet d’en vérifier l’intégrité.
 
@@ -408,9 +408,27 @@ Dans **Findings**, ouvrez chaque constat, vérifiez sa preuve, sa classification
 <details>
 <summary><strong>10. Générer le rapport</strong></summary>
 
-Dans **Reports**, sélectionnez le projet, le type technique ou exécutif, la langue et le format HTML, PDF ou JSON. Le rapport reprend les données enregistrées dans le projet et reçoit une empreinte SHA-256.
+Dans **Reports**, sélectionnez le projet, le type technique ou exécutif, la langue et le format HTML, PDF ou JSON. Utilisez **Prévisualiser** pour contrôler le contenu avant export, puis **Générer**. L’historique est regroupé par projet et chaque groupe peut être replié ou déplié. **Enregistrer sous** ouvre le sélecteur de fichiers du système lorsqu’il est disponible.
 
-<img src="docs/images/reports.png" alt="Génération et téléchargement des rapports"/>
+Les rapports sont alimentés uniquement par les données conservées : périmètre, statistiques, audits, findings, payload exact de chaque scénario ou test personnalisé, réponses, appels d’outils, preuves et recommandations. Chaque fichier reçoit une empreinte SHA-256.
+
+**Où retrouver les rapports :**
+
+- **Télécharger** enregistre le fichier dans le dossier de téléchargement configuré par le système, généralement `%USERPROFILE%\Downloads` sous Windows ou `~/Downloads` sous Linux.
+- **Enregistrer sous** permet de choisir directement le dossier et le nom du fichier.
+- AgentSec conserve aussi sa copie interne par projet dans `%LOCALAPPDATA%\com.agentsec.inspector\reports\<project-id>` sous Windows et `${XDG_DATA_HOME:-$HOME/.local/share}/com.agentsec.inspector/reports/<project-id>` sous Linux.
+- En environnement de développement, `AGENTSEC_DATA_DIR` remplace ce chemin lorsqu’elle est définie ; les scripts utilisent par défaut `%LOCALAPPDATA%\AgentSec` sous Windows et `~/.local/share/agentsec-inspector` sous Linux.
+
+<img src="docs/images/reports.png" alt="Prévisualisation, génération et historique des rapports"/>
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/images/report-cover.png" alt="Couverture PDF AgentSec Inspector"/><br/><sub>Couverture A4 générée par le moteur de rapports</sub></td>
+    <td width="50%"><img src="docs/images/report-finding.png" alt="Finding détaillé dans un rapport PDF"/><br/><sub>Finding détaillé avec impact, reproduction, preuve et payload</sub></td>
+  </tr>
+</table>
+
+<p align="center"><img src="docs/images/report-payload.png" width="68%" alt="Payload exact, réponse et appels d’outils dans un rapport PDF"/><br/><sub>Le payload exact, le verdict, la réponse et les appels d’outils restent consultables dans le rapport technique.</sub></p>
 
 </details>
 
@@ -484,8 +502,8 @@ Le verdict repose sur les règles structurées choisies au lancement et sur les 
 
 | Contrôle | Résultat |
 |---|---|
-| Backend | 69/69 tests, 85,79 % de couverture (seuil bloquant 80 %), Ruff et mypy réussis |
-| Frontend | 20/20 tests, 86,87 % des lignes couvertes avec seuils bloquants, ESLint, TypeScript et build Vite réussis |
+| Backend | 71/71 tests, 87 % de couverture (seuil bloquant 80 %), Ruff et mypy réussis |
+| Frontend | 23/23 tests, 85,58 % des lignes couvertes avec seuils bloquants, ESLint, TypeScript et build Vite réussis |
 | Sécurité source/dépendances | `pip-audit` et `npm audit` sans vulnérabilité connue ; Bandit sans finding moyen/élevé |
 | Binaire autonome | Build Linux PyInstaller, migration neuve, auth, CORS, intégrité et PDF vérifiés |
 | Laboratoire | Découverte MCP passive, appel MCP actif borné et échange LLM exécutés avec succès |
@@ -493,7 +511,7 @@ Le verdict repose sur les règles structurées choisies au lancement et sur les 
 | Paquets desktop | AppImage/DEB construits et AppImage vérifiée deux fois sous Linux ; MSI/NSIS construits, installés et vérifiés deux fois chacun sous Windows |
 | Windows/PowerShell | 71 tests Pester réussis sous PowerShell 7 et 71 sous Windows PowerShell 5.1 ; test de compilation MSVC/SDK, MSI, NSIS, API, desktop, sidecar et désinstallations réussis |
 
-La version 1.1.0 a été validée dans les runs [Windows x64 `41108334253`](https://github.com/St0rn/agentsec-inspector/actions/runs/41108334253) et [Linux x64 `41108334280`](https://github.com/St0rn/agentsec-inspector/actions/runs/41108334280), puis publiée par le [workflow de release `41110672480`](https://github.com/St0rn/agentsec-inspector/actions/runs/41110672480). Consultez aussi [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md), la [matrice de validation](INSTALLATION_VALIDATION_MATRIX.md) et le [rapport détaillé](docs/VALIDATION_REPORT.md).
+Les résultats détaillés de la version 1.2.0, y compris les runs Windows/Linux, les installations répétées et les empreintes publiées, sont consignés dans [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md), la [matrice de validation](INSTALLATION_VALIDATION_MATRIX.md) et le [rapport de validation](docs/VALIDATION_REPORT.md).
 
 ## Organisation du dépôt
 
@@ -520,4 +538,4 @@ AgentSec Inspector est créé et maintenu par **St0rn**.
 
 ---
 
-<div align="center"><sub>AgentSec Inspector v1.1.0 · développé et maintenu par St0rn</sub></div>
+<div align="center"><sub>AgentSec Inspector v1.2.0 · développé et maintenu par St0rn</sub></div>

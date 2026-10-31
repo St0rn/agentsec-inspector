@@ -9,18 +9,18 @@
 
 ## Installation par paquet
 
-1. Télécharger le [MSI x64](https://github.com/St0rn/agentsec-inspector/releases/download/v1.1.0/AgentSec-Inspector_1.1.0_x64_en-US.msi) ou le [programme NSIS x64](https://github.com/St0rn/agentsec-inspector/releases/download/v1.1.0/AgentSec-Inspector_1.1.0_x64-setup.exe) de la version 1.1.0.
+1. Télécharger le [MSI x64](https://github.com/St0rn/agentsec-inspector/releases/download/v1.2.0/AgentSec-Inspector_1.2.0_x64_en-US.msi) ou le [programme NSIS x64](https://github.com/St0rn/agentsec-inspector/releases/download/v1.2.0/AgentSec-Inspector_1.2.0_x64-setup.exe) de la version 1.2.0.
 2. Vérifier son empreinte publiée :
 
 ```powershell
-Get-FileHash '.\AgentSec-Inspector_1.1.0_x64_en-US.msi' -Algorithm SHA256
+Get-FileHash '.\AgentSec-Inspector_1.2.0_x64_en-US.msi' -Algorithm SHA256
 ```
 
 3. Depuis la racine du dépôt de livraison :
 
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass
-.\scripts\install.ps1 -InstallerPath '.\AgentSec-Inspector_1.1.0_x64_en-US.msi'
+.\scripts\install.ps1 -InstallerPath '.\AgentSec-Inspector_1.2.0_x64_en-US.msi'
 ```
 
 Le script demande une confirmation, installe le paquet puis exécute un contrôle fonctionnel. Il ne désactive aucune protection Windows et n’installe aucun logiciel tiers silencieusement.
@@ -28,13 +28,13 @@ Le script demande une confirmation, installe le paquet puis exécute un contrôl
 Pour le programme NSIS :
 
 ```powershell
-.\scripts\install.ps1 -InstallerPath '.\AgentSec-Inspector_1.1.0_x64-setup.exe'
+.\scripts\install.ps1 -InstallerPath '.\AgentSec-Inspector_1.2.0_x64-setup.exe'
 ```
 
 Dans une CI ou un environnement de test isolé, l’installation sans interface reste explicite :
 
 ```powershell
-.\scripts\install.ps1 -InstallerPath '.\AgentSec-Inspector_1.1.0_x64_en-US.msi' -Confirmed -Quiet
+.\scripts\install.ps1 -InstallerPath '.\AgentSec-Inspector_1.2.0_x64_en-US.msi' -Confirmed -Quiet
 ```
 
 Les codes MSI `1641` et `3010` signifient qu’un redémarrage est demandé. Le script les reconnaît sans masquer les autres erreurs.

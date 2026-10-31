@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import Finding, FindingHistory, Project
+from ..models import AuditRun, Evidence, Finding, FindingHistory, Project, TestExecution
 from ..schemas import FindingCreate, FindingRead, FindingUpdate
 
 router = APIRouter(tags=["findings"])
@@ -56,6 +57,38 @@ async def update_finding(
     db.commit()
     db.refresh(finding)
     return finding
+
+
+@router.get("/findings/{finding_id}/detail")
+async def finding_detail(finding_id: str, db: Session = Depends(get_db)) -> dict[str, object]:
+    finding = db.get(Finding, finding_id)
+    if not finding:
+        raise HTTPException(404, "Finding not found")
+    audit = db.get(AuditRun, finding.audit_run_id) if finding.audit_run_id else None
+    executions = (
+        list(
+            db.scalars(
+                select(TestExecution)
+                .where(TestExecution.audit_run_id == finding.audit_run_id)
+                .order_by(TestExecution.started_at)
+            )
+        )
+        if finding.audit_run_id
+        else []
+    )
+    evidence = list(
+        db.scalars(
+            select(Evidence)
+            .where(Evidence.finding_id == finding.id)
+            .order_by(Evidence.created_at)
+        )
+    )
+    return {
+        "finding": jsonable_encoder(FindingRead.model_validate(finding)),
+        "audit": jsonable_encoder(audit) if audit else None,
+        "executions": [jsonable_encoder(item) for item in executions],
+        "evidence": [jsonable_encoder(item) for item in evidence],
+    }
 
 
 @router.get("/findings/{finding_id}/history")

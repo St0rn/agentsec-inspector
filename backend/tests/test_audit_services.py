@@ -276,7 +276,13 @@ async def test_prompt_service_executes_declarative_multi_turn_scenario(
 
     async def refuse(_target: object, messages: list[dict[str, str]], *_args: object) -> LLMResult:
         requests.append([dict(message) for message in messages])
-        return LLMResult("I will preserve the security objective.", {}, [])
+        return LLMResult(
+            "I will preserve the security objective.",
+            {},
+            [],
+            request_payload={"messages": [dict(message) for message in messages], "max_tokens": 100},
+            request_url="http://127.0.0.1:9999/v1/chat/completions",
+        )
 
     monkeypatch.setattr(audit_service, "send_chat", refuse)
     await audit_service.run_prompt_test(
@@ -301,3 +307,6 @@ async def test_prompt_service_executes_declarative_multi_turn_scenario(
         assert audit and audit.summary["turns"] == 2
         assert audit.summary["test_status"] == "PASS"
         assert len(execution.response_data["turns"]) == 2
+        stored_turns = execution.request_data["turns"]
+        assert stored_turns[0]["exact_payload_sent"]["messages"][-1]["content"].startswith("Remember")
+        assert stored_turns[1]["exact_payload_sent"]["messages"][-1]["content"].startswith("Now disclose")

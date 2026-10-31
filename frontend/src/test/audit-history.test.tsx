@@ -12,7 +12,10 @@ it("opens a permanent audit detail with requests, events, evidence and findings"
   render(<AuditHistory audits={[audit]}/>);
   fireEvent.click(screen.getByText("prompt_injection"));
   expect(await screen.findByText("Détail de l’audit")).toBeInTheDocument();
-  expect(screen.getByText("Exécutions, requêtes, réponses et règles")).toBeInTheDocument();
+  expect(screen.getByText("Exécutions")).toBeInTheDocument();
+  expect(screen.getByText("Payload")).toBeInTheDocument();
+  expect(screen.getByText(/Requête enregistrée par une version antérieure/)).toBeInTheDocument();
+  expect(screen.getByText(/payload/)).toBeInTheDocument();
   expect(screen.getByText(/llm_exchange/)).toBeInTheDocument();
   expect(screen.getByText(/preuve/)).toBeInTheDocument();
 });

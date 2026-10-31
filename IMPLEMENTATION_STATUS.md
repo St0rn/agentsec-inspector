@@ -1,6 +1,6 @@
-# AgentSec Inspector — état d’implémentation v1.1.0
+# AgentSec Inspector — état d’implémentation v1.2.0
 
-Date : 2026-10-30. Ce document distingue livraison de code, exécution locale Linux et validation Windows CI.
+Date : 2026-10-31. Ce document distingue livraison de code, exécution locale Linux et validation Windows CI.
 
 ## Terminé et exécuté sous Linux
 
@@ -20,20 +20,23 @@ Date : 2026-10-30. Ce document distingue livraison de code, exécution locale Li
 - API de packs de scénarios JSON déclaratifs, versionnés et strictement validés; aucun code plugin n’est exécuté.
 - RAG : import de document, inspection d’instructions, import de trace, respect du drapeau de télémétrie, comparaison obtenu/attendu.
 - Événements observables d’agent, timeline et graphe d’interactions observées; déplacement, zoom, recentrage, organisation automatique et disposition persistante des nœuds.
-- Historique complet cliquable avec recherche, filtres, tri, requêtes, réponses, événements, preuves, findings et exports JSON/PDF.
-- Findings complets et modifiables.
-- Rapports HTML, JSON et PDF, français/anglais, technique/exécutif.
+- Historique complet cliquable avec recherche, filtres, tri, payload exact envoyé à chaque tour, réponses, événements, preuves, findings et exports JSON/PDF.
+- Findings complets et modifiables, avec payloads des scénarios et tests personnalisés dans leur vue détaillée.
+- Reporting Engine commun HTML, JSON et PDF, français/anglais, technique/exécutif : couverture, sommaire, statistiques, pagination A4, findings détaillés, preuves volumineuses, payloads, appels d’outils et prévisualisation protégée par CSP.
+- Fonction Enregistrer sous avec sélecteur de fichier système lorsqu’il est disponible et téléchargement standard en repli.
+- Targets, Findings et Reports regroupés par projet dans des sections repliables et dépliables.
 - Sauvegarde SQLite en ligne via API; scripts archive/restauration hors ligne.
 - Frontend React/TypeScript/Tailwind sombre avec les 12 menus demandés, un module Jailbreak dédié supplémentaire et des états vides explicites.
 - Communication desktop corrigée pour l’origine WebView2 Windows, avec attente du backend, délais bornés, reconnexion et état de connexion dynamique.
 - CRUD projets complet dans l’interface : création, affichage, modification et suppression, sans données de remplacement en cas d’erreur.
 - Laboratoire distinct : endpoint chat déterministe, MCP et corpus RAG contrôlé.
-- 69 tests backend réussis (85,79 %, seuil bloquant 80 %); 20 tests frontend réussis (86,87 % des lignes et seuils bloquants); Ruff, mypy, ESLint et build web réussis.
+- 71 tests backend réussis (87,23 %, seuil bloquant 80 %); 23 tests frontend réussis (85,68 % des lignes et seuils bloquants); Ruff, mypy, ESLint et build web réussis.
 - Intégration loopback réelle : découverte MCP passive, appel actif autorisé et test LLM réussis contre le laboratoire.
 - Backend autonome Linux PyInstaller vérifié sur base neuve : migration, santé, rejet sans jeton, CORS authentifié, CRUD, intégrité et génération/téléchargement PDF.
 - Audits de dépendances `pip-audit` et `npm audit` réussis sans vulnérabilité connue; Bandit sans finding moyen ou élevé.
 - Six captures réelles produites depuis le frontend connecté aux résultats du laboratoire contrôlé : dashboard, MCP actif, prompt injection, findings, attack chains et packs de scénarios.
 - Sept captures supplémentaires produites pour le manuel utilisateur : projet, cible, MCP passif, jailbreak, RAG, comportement agent et rapports.
+- Trois captures du Reporting Engine 1.2 produites à partir d’un vrai PDF A4 généré par les tests : couverture, finding détaillé et page présentant le payload exact.
 
 ## Terminé et exécuté sous Linux — cycle d’installation
 
@@ -41,7 +44,7 @@ Date : 2026-10-30. Ce document distingue livraison de code, exécution locale Li
 - Vérification des prérequis standard réussie; erreur de build contrôlée et dépendances système manquantes correctement détaillées sans installation automatique.
 - `install-dev.sh` exécuté deux fois sur le même environnement; base SQLite restée intègre.
 - `start-dev.sh` vérifié avec backend sain, API protégée (401 sans jeton) et frontend disponible.
-- `test-all.sh` exécuté ; la validation directe actuelle couvre 69 tests backend, 20 tests frontend, lint, typage et build.
+- `test-all.sh` exécuté ; la validation directe actuelle couvre 71 tests backend, 23 tests frontend, lint, typage et build.
 - Tests isolés des scripts réussis : syntaxe Bash, sauvegarde, restauration avec confirmation, idempotence, refus de downgrade, rejet d’un artefact invalide, préservation et suppression confirmée des données.
 - Sauvegarde et restauration réelles exécutées sur une base SQLite; empreinte et intégrité vérifiées, ancienne arborescence préservée.
 - Workflow `linux-build.yml` exécuté avec succès sur Ubuntu x64 : AppImage et DEB construits, AppImage installée et vérifiée deux fois, artefact CI `agentsec-linux-x64` publié ([run `41108334280`](https://github.com/St0rn/agentsec-inspector/actions/runs/41108334280), artefact `13001809139`).
@@ -100,8 +103,8 @@ Sur Windows CI, `check-prerequisites.ps1 -ForBuild`, `setup-database.ps1` (deux 
 
 ## Résultats de tests
 
-- Backend : 69/69 réussis; couverture 85,79 % (minimum imposé 80 %); Ruff et mypy réussis.
-- Frontend : 20/20 réussis; 86,87 % des lignes avec seuils minimums; lint et build réussis.
+- Backend : 71/71 réussis; couverture 87,23 % (minimum imposé 80 %); Ruff et mypy réussis.
+- Frontend : 23/23 réussis; 85,68 % des lignes avec seuils minimums; lint et build réussis.
 - Intégration laboratoire : MCP passif, MCP actif contrôlé et LLM réussis.
 - Dépendances : `pip-audit` et `npm audit` sans vulnérabilité connue.
 - PyInstaller Linux : binaire autonome construit et smoke-testé, rapports PDF inclus.

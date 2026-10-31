@@ -255,9 +255,14 @@ async def export_audit(audit_id: str, format: str = "json", db: Session = Depend
         return Response(content, media_type="application/json", headers={"Content-Disposition": f'attachment; filename="audit-{audit_id}.json"'})
     if format != "pdf":
         raise HTTPException(422, "Export format must be json or pdf")
-    from reportlab.lib.pagesizes import A4
-    from reportlab.lib.styles import getSampleStyleSheet
-    from reportlab.platypus import Paragraph, Preformatted, SimpleDocTemplate, Spacer
+    from reportlab.lib.pagesizes import A4  # type: ignore[import-untyped]
+    from reportlab.lib.styles import getSampleStyleSheet  # type: ignore[import-untyped]
+    from reportlab.platypus import (  # type: ignore[import-untyped]
+        Paragraph,
+        Preformatted,
+        SimpleDocTemplate,
+        Spacer,
+    )
 
     buffer = io.BytesIO()
     styles = getSampleStyleSheet()

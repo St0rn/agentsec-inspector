@@ -64,7 +64,7 @@ it("edits an existing target and displays the detected streaming protocol",async
   const fetchMock=vi.fn(async(input:RequestInfo|URL,options?:RequestInit)=>{const url=String(input);let value:unknown=[];if(url.endsWith("/health"))value={status:"ok",service:"agentsec-backend",version:"1.1.0"};else if(url.includes("/projects"))value=[{id:"p1",client_name:"Lab",engagement_name:"Range"}];else if(url.endsWith("/test"))value={connected:true,protocol:"ndjson",model:"qwen2.5:3b",response:"CONNECTED",tool_calls:[],events:[{type:"done"}],completed:true,suggested_configuration:{response_format:"ndjson"}};else if(options?.method==="PUT")value={...target,name:"Range updated"};else if(url.includes("/targets"))value=[target];return new Response(JSON.stringify(value),{status:200,headers:{"Content-Type":"application/json"}})});
   vi.stubGlobal("fetch",fetchMock);
   render(<MemoryRouter initialEntries={["/targets"]}><App/></MemoryRouter>);
-  expect(await screen.findByText("Range")).toBeInTheDocument();
+  expect((await screen.findAllByText("Range")).length).toBeGreaterThanOrEqual(2);
   fireEvent.click(screen.getByRole("button",{name:"Modifier"}));
   fireEvent.change(screen.getByLabelText("Nom"),{target:{value:"Range updated"}});
   fireEvent.click(screen.getByRole("button",{name:"Enregistrer les modifications"}));

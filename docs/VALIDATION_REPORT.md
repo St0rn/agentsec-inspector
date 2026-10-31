@@ -1,4 +1,4 @@
-# Rapport de validation — 2026-10-30
+# Rapport de validation — 2026-10-31
 
 ## Environnement observé
 
@@ -18,8 +18,8 @@ ruff check agentsec tests ../demo
 All checks passed!
 
 pytest --cov=agentsec --cov-report=term-missing
-69 passed
-Couverture totale : 85,79 % (seuil bloquant : 80 %)
+71 passed
+Couverture totale : 87,23 % (seuil bloquant : 80 %)
 
 mypy agentsec
 0 erreur
@@ -32,12 +32,12 @@ npm run lint
 0 erreur
 
 npm run test
-10 fichiers, 20 tests réussis
-Couverture : 75,28 % statements, 68,67 % branches, 68,15 % fonctions, 86,87 % lignes
+12 fichiers, 23 tests réussis
+Couverture : 76,56 % statements, 67,69 % branches, 72,76 % fonctions, 85,68 % lignes
 Seuils bloquants : 65 % statements, 60 % branches, 55 % fonctions, 80 % lignes
 
 npm run build
-TypeScript + Vite réussis, 2405 modules transformés; chunks inférieurs à 500 ko
+TypeScript + Vite réussis, 2408 modules transformés; chunks inférieurs à 500 ko
 
 npm audit --audit-level=high
 0 vulnérabilité
@@ -84,6 +84,8 @@ cargo check --target x86_64-pc-windows-msvc : tenté, bloqué par llvm-rc absent
 ```
 
 Six captures du frontend réellement connecté au laboratoire sont conservées dans `docs/images/` : dashboard, MCP actif, prompt injection, findings, graphe observé et packs de scénarios.
+
+Le Reporting Engine 1.2 a également été vérifié avec un projet vide et un projet détaillé contenant un finding critique, le payload exact, un appel d’outil, des caractères spéciaux et une preuve de 12 000 caractères. Les exports JSON, HTML et PDF utilisent les mêmes données. Le PDF obtenu comporte 12 pages A4 sans JavaScript embarqué; la couverture, la fiche finding et la page payload ont été contrôlées visuellement et conservées dans `docs/images/`.
 
 Scripts PowerShell :
 

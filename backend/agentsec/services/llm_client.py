@@ -27,6 +27,8 @@ class LLMResult:
     events: list[dict[str, Any]] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
     completed: bool | None = None
+    request_payload: dict[str, Any] = field(default_factory=dict)
+    request_url: str = ""
 
 
 _PATH_PART = re.compile(r"^[A-Za-z0-9_-]{1,80}$")
@@ -304,6 +306,8 @@ async def send_chat(target: Target, messages: list[dict[str, str]], max_tokens: 
                 raise LLMProtocolError(f"Invalid JSON response: {exc.msg}") from exc
             result = normalise_json(raw, target.target_type, config)
             result.metadata.update({"content_type": response.headers.get("content-type", "").casefold(), "endpoint_protocol": "json"})
+            result.request_payload = copy.deepcopy(payload)
+            result.request_url = url
             return result
         async with client.stream("POST", url, headers=_headers(config), json=payload) as response:
             response.raise_for_status()
@@ -325,4 +329,6 @@ async def send_chat(target: Target, messages: list[dict[str, str]], max_tokens: 
                     raise LLMProtocolError(f"Invalid JSON response: {exc.msg}") from exc
                 result = normalise_json(raw, target.target_type, config)
             result.metadata.update({"content_type": content_type, "endpoint_protocol": protocol})
+            result.request_payload = copy.deepcopy(payload)
+            result.request_url = url
             return result

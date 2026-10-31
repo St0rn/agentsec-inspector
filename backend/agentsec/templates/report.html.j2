@@ -1,13 +1,126 @@
 <!doctype html>
 <html lang="{{ language }}">
-<head><meta charset="utf-8"><title>AgentSec – {{ project.engagement_name }}</title>
-<style>body{font:14px/1.5 Arial,sans-serif;color:#172033;margin:40px}h1,h2{color:#075985}.meta{color:#475569}.finding{page-break-inside:avoid;border-left:4px solid #0891b2;padding:8px 16px;margin:18px 0}.critical,.high{border-color:#dc2626}.medium{border-color:#d97706}table{border-collapse:collapse;width:100%}td,th{padding:8px;border:1px solid #cbd5e1;text-align:left}</style></head>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>AgentSec Inspector — {{ project.engagement_name }}</title>
+  <style>
+    :root{--navy:#07111f;--navy2:#0b1b31;--cyan:#22d3ee;--electric:#2f7bff;--ink:#172033;--slate:#64748b;--line:#dbe4ee;--paper:#fff;--soft:#f4f8fc;--critical:#e11d48;--high:#f43f5e;--medium:#f59e0b;--low:#38bdf8;--info:#64748b}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#dce5ef;color:var(--ink);font:14px/1.55 Inter,"Segoe UI",Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}.document{width:210mm;margin:18px auto;background:var(--paper);box-shadow:0 18px 60px #07111f33}.page{position:relative;min-height:297mm;padding:22mm 17mm 20mm}.cover{overflow:hidden;background:var(--navy);color:#fff;display:flex;flex-direction:column}.cover:before{content:"";position:absolute;width:150mm;height:150mm;border-radius:50%;right:-54mm;top:-42mm;background:var(--navy2);border:1px solid #22d3ee55}.cover:after{content:"";position:absolute;width:104mm;height:104mm;border-radius:50%;right:-27mm;top:-19mm;border:2px solid var(--cyan)}.brand{position:relative;z-index:1;display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.16em}.logo{display:grid;width:38px;height:38px;place-items:center;border-radius:9px;background:var(--cyan);color:var(--navy);font-size:19px;box-shadow:0 0 24px #22d3ee55}.classification{margin-left:auto;color:var(--cyan);font-size:11px}.cover-main{position:relative;z-index:1;margin:auto 0 20mm}.eyebrow{color:var(--cyan);font-size:11px;font-weight:800;letter-spacing:.2em;text-transform:uppercase}.cover h1{max-width:150mm;margin:8mm 0 7mm;font-size:35px;line-height:1.08;letter-spacing:-.035em}.accent{width:58mm;height:3px;background:linear-gradient(90deg,var(--cyan),var(--electric));margin-bottom:10mm}.client{font-size:19px;font-weight:700}.cover-grid{position:relative;z-index:1;display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:7mm;padding-top:7mm;border-top:1px solid #ffffff2a}.cover-label,.section-label{color:#8fa5bd;font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.cover-value{margin-top:2mm;color:#f8fbff}.running-header,.running-footer{position:absolute;left:17mm;right:17mm;display:flex;align-items:center;color:var(--slate);font-size:9px}.running-header{top:8mm;padding-bottom:3mm;border-bottom:1px solid var(--line)}.running-header strong{color:var(--navy);letter-spacing:.12em}.running-footer{bottom:7mm;padding-top:3mm;border-top:1px solid var(--line)}.running-header span:last-child,.running-footer span:last-child{margin-left:auto}.section{scroll-margin-top:15px}.section+.section{margin-top:11mm}.page-title{margin:0 0 6mm;color:var(--navy);font-size:25px;line-height:1.15;letter-spacing:-.025em}.page-title:after{content:"";display:block;width:24mm;height:3px;margin-top:3mm;background:linear-gradient(90deg,var(--cyan),var(--electric))}h2{margin:7mm 0 3mm;color:#075985;font-size:17px}h3{margin:5mm 0 2mm;color:var(--navy);font-size:14px}p{margin:0 0 3mm}.muted{color:var(--slate)}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:3mm;margin:5mm 0 8mm}.metric{padding:5mm 3mm;border:1px solid #bae6fd;border-radius:9px;background:#f0f9ff;text-align:center}.metric strong{display:block;color:var(--electric);font-size:24px;line-height:1}.metric span{display:block;margin-top:2mm;color:var(--slate);font-size:9px;font-weight:700;text-transform:uppercase}.risk-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:7mm}.chart{padding:5mm;border:1px solid var(--line);border-radius:9px;background:var(--soft)}.bar-row{display:grid;grid-template-columns:22mm 1fr 10mm;align-items:center;gap:3mm;margin:3mm 0}.bar-label{font-size:9px;font-weight:800;text-transform:uppercase}.bar-track{height:9px;overflow:hidden;border-radius:99px;background:#e2e8f0}.bar{height:100%;min-width:0;border-radius:99px}.bar.critical{background:var(--critical)}.bar.high{background:var(--high)}.bar.medium{background:var(--medium)}.bar.low{background:var(--low)}.bar.info{background:var(--info)}.bar-count{text-align:right;font-weight:800}.toc{margin:8mm 0;padding:0;list-style:none;border-top:1px solid var(--line)}.toc li{border-bottom:1px solid var(--line)}.toc a{display:flex;padding:3.3mm 0;color:var(--ink);text-decoration:none}.toc a span:last-child{margin-left:auto;color:var(--slate)}table{width:100%;border-collapse:collapse;font-size:10px}thead{display:table-header-group}tr{break-inside:avoid}th{padding:3mm;background:var(--navy);color:#fff;text-align:left;font-size:8px;letter-spacing:.08em;text-transform:uppercase}td{padding:3mm;border:1px solid var(--line);vertical-align:top;overflow-wrap:anywhere}tbody tr:nth-child(even){background:#f8fafc}.badge{display:inline-block;padding:1mm 2.5mm;border-radius:99px;color:#fff;font-size:8px;font-weight:800;text-transform:uppercase}.badge.critical{background:var(--critical)}.badge.high{background:var(--high)}.badge.medium{background:var(--medium)}.badge.low{background:#0284c7}.badge.info{background:var(--info)}.finding{margin-top:8mm;break-before:page}.finding:first-of-type{break-before:auto}.finding-header{display:grid;grid-template-columns:15mm 1fr;align-items:stretch;margin-bottom:4mm}.finding-index{display:grid;place-items:center;background:var(--severity);color:#fff;font-size:17px;font-weight:800;border-radius:8px 0 0 8px}.finding-title{padding:4mm;border:1px solid var(--line);border-left:0;border-radius:0 8px 8px 0}.finding-title h2{margin:0;color:var(--navy)}.finding-title .muted{margin-top:1mm;font:9px ui-monospace,SFMono-Regular,Consolas,monospace}.finding-meta{display:grid;grid-template-columns:repeat(4,1fr);margin-bottom:5mm;border:1px solid var(--line);border-radius:8px;overflow:hidden}.meta-cell{padding:3mm;border-right:1px solid var(--line)}.meta-cell:nth-child(4n){border-right:0}.meta-cell:nth-child(n+5){border-top:1px solid var(--line)}.meta-cell strong{display:block;margin-top:1mm;font-size:10px}.field{margin:5mm 0;break-inside:auto}.field h3{margin-bottom:2mm}.code{margin:2mm 0 5mm;padding:4mm;overflow-wrap:anywhere;white-space:pre-wrap;border:1px solid #1e3a5f;border-radius:7px;background:var(--navy);color:#dbeafe;font:9px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace;break-inside:auto}.evidence{margin:4mm 0;padding:4mm;border-left:3px solid var(--cyan);border-radius:0 7px 7px 0;background:#ecfeff;break-inside:auto}.evidence-head{display:flex;gap:3mm;align-items:baseline;font-size:10px}.hash{color:var(--slate);font:8px ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere}.audit{margin:8mm 0;padding-top:5mm;border-top:2px solid var(--navy);break-inside:auto}.audit-head{display:flex;gap:4mm;align-items:center}.audit-head h2{margin:0}.empty{padding:8mm;border:1px dashed #94a3b8;border-radius:8px;background:#f8fafc;color:var(--slate);text-align:center}.notice{padding:4mm;border:1px solid #bae6fd;border-radius:8px;background:#f0f9ff}.print-only{display:none}@page{size:A4;margin:0}@media print{body{background:#fff}.document{width:auto;margin:0;box-shadow:none}.page{break-after:page}.page:last-child{break-after:auto}.screen-only{display:none!important}.print-only{display:block}.finding{break-before:page}.code{white-space:pre-wrap}a{color:inherit;text-decoration:none}}@media(max-width:850px){.document{width:100%;margin:0}.page{min-height:0;padding:55px 24px}.cover{min-height:100vh}.metrics{grid-template-columns:repeat(2,1fr)}.risk-grid{grid-template-columns:1fr}.cover-grid{grid-template-columns:1fr}.finding-meta{grid-template-columns:repeat(2,1fr)}.meta-cell:nth-child(2n){border-right:0}.meta-cell:nth-child(n+3){border-top:1px solid var(--line)}}
+  </style>
+</head>
 <body>
-<h1>AgentSec Inspector — {{ project.engagement_name }}</h1><p class="meta">{{ project.client_name }} · {{ report_type }} · {{ language }}</p>
-<h2>{{ "Périmètre" if language == "fr" else "Scope" }}</h2><p>{{ project.authorized_scope }}</p>
-<h2>{{ "Méthodologie" if language == "fr" else "Methodology" }}</h2><p>{{ methodology }}</p>
-<h2>{{ "Synthèse des risques" if language == "fr" else "Risk summary" }}</h2><p>{{ findings|length }} finding(s), {{ audits|length }} audit(s).</p>
-<h2>{{ "Résultats" if language == "fr" else "Results" }}</h2>
-{% for f in findings %}<section class="finding {{ f.severity }}"><h3>{{ f.title }}</h3><p><strong>{{ f.severity|upper }} · {{ f.classification }} · {{ f.confidence }}</strong></p><p>{{ f.description }}</p><p><strong>Impact:</strong> {{ f.impact }}</p><p><strong>{{ "Recommandation" if language == "fr" else "Recommendation" }}:</strong> {{ f.recommendation }}</p></section>{% else %}<p>{{ "Aucun finding enregistré." if language == "fr" else "No findings recorded." }}</p>{% endfor %}
-<h2>{{ "Limites de l’audit" if language == "fr" else "Audit limitations" }}</h2><p>{{ limitations }}</p>
-</body></html>
+<main class="document">
+  <section class="page cover">
+    <div class="brand"><span class="logo">A</span><span>AGENTSEC INSPECTOR</span><span class="classification">{{ confidentiality }}</span></div>
+    <div class="cover-main">
+      <div class="eyebrow">{{ translations.technical_report if report_type == "technical" else translations.executive_report }}</div>
+      <h1>{{ project.engagement_name }}</h1><div class="accent"></div>
+      <div class="cover-label">{{ translations.prepared_for }}</div><div class="client">{{ project.client_name }}</div>
+    </div>
+    <div class="cover-grid">
+      <div><div class="cover-label">{{ translations.scope }}</div><div class="cover-value">{{ project.authorized_scope or translations.none }}</div></div>
+      <div><div class="cover-label">{{ translations.period }}</div><div class="cover-value">{{ project.start_date or "—" }}<br>{{ project.end_date or "—" }}</div></div>
+      <div><div class="cover-label">{{ translations.generated }}</div><div class="cover-value">{{ generated_display }}</div></div>
+    </div>
+  </section>
+
+  <section class="page">
+    <header class="running-header"><strong>AGENTSEC INSPECTOR</strong><span>{{ project.engagement_name }}</span></header>
+    <h1 class="page-title">{{ translations.contents }}</h1>
+    <ol class="toc">
+      <li><a href="#summary"><span>01 · {{ translations.executive_summary }}</span><span>→</span></a></li>
+      <li><a href="#engagement"><span>02 · {{ translations.engagement }}</span><span>→</span></a></li>
+      <li><a href="#methodology"><span>03 · {{ translations.methodology }}</span><span>→</span></a></li>
+      <li><a href="#risk"><span>04 · {{ translations.risk_overview }}</span><span>→</span></a></li>
+      <li><a href="#findings"><span>05 · {{ translations.detailed_findings }}</span><span>→</span></a></li>
+      {% if report_type == "technical" %}<li><a href="#audits"><span>06 · {{ translations.audit_results }}</span><span>→</span></a></li>{% endif %}
+      <li><a href="#limitations"><span>{{ "07" if report_type == "technical" else "06" }} · {{ translations.limitations }}</span><span>→</span></a></li>
+    </ol>
+    <footer class="running-footer"><span>{{ confidentiality }}</span><span>{{ project.client_name }}</span></footer>
+  </section>
+
+  <section class="page">
+    <header class="running-header"><strong>AGENTSEC INSPECTOR</strong><span>{{ project.engagement_name }}</span></header>
+    <div id="summary" class="section"><h1 class="page-title">{{ translations.executive_summary }}</h1>
+      <div class="metrics">
+        <div class="metric"><strong>{{ statistics.findings }}</strong><span>{{ translations.total_findings }}</span></div>
+        <div class="metric"><strong>{{ statistics.audits }}</strong><span>{{ translations.total_audits }}</span></div>
+        <div class="metric"><strong>{{ statistics.confirmed }}</strong><span>{{ translations.confirmed }}</span></div>
+        <div class="metric"><strong>{{ statistics.remediated }}</strong><span>{{ translations.remediated }}</span></div>
+      </div>
+      <p>{{ project.description or translations.none }}</p>
+    </div>
+    <div id="engagement" class="section"><h1 class="page-title">{{ translations.engagement }}</h1><p>{{ project.description or translations.none }}</p><h2>{{ translations.scope }}</h2><p>{{ project.authorized_scope or translations.none }}</p></div>
+    <div id="methodology" class="section"><h1 class="page-title">{{ translations.methodology }}</h1><p>{{ methodology }}</p></div>
+    <footer class="running-footer"><span>{{ confidentiality }}</span><span>{{ project.client_name }}</span></footer>
+  </section>
+
+  <section class="page">
+    <header class="running-header"><strong>AGENTSEC INSPECTOR</strong><span>{{ project.engagement_name }}</span></header>
+    <div id="risk" class="section"><h1 class="page-title">{{ translations.risk_overview }}</h1>
+      <div class="risk-grid"><div class="chart"><h3>{{ translations.severity }}</h3>
+        {% set maximum = [statistics.findings, 1]|max %}
+        {% for severity, count in statistics.severity.items() %}<div class="bar-row"><span class="bar-label">{{ severity }}</span><div class="bar-track"><div class="bar {{ severity }}" style="width:{{ (count / maximum * 100)|round }}%"></div></div><span class="bar-count">{{ count }}</span></div>{% endfor %}
+      </div><div class="chart"><h3>{{ translations.security_indicators }}</h3>
+        {% for status, count in statistics.statuses.items() %}<div class="bar-row"><span class="bar-label">{{ status }}</span><div class="bar-track"><div class="bar info" style="width:{{ (count / maximum * 100)|round }}%"></div></div><span class="bar-count">{{ count }}</span></div>{% else %}<p class="muted">{{ translations.no_findings }}</p>{% endfor %}
+      </div></div>
+      <h2>{{ translations.finding_summary }}</h2>
+      {% if findings %}<table><thead><tr><th>{{ translations.identifier }}</th><th>{{ translations.title }}</th><th>{{ translations.severity }}</th><th>{{ translations.status }}</th><th>{{ translations.target }}</th></tr></thead><tbody>{% for finding in findings %}<tr><td class="hash">{{ finding.id }}</td><td>{{ finding.title }}</td><td><span class="badge {{ finding.severity }}">{{ finding.severity }}</span></td><td>{{ finding.status }}</td><td>{{ finding.target or finding.component }}</td></tr>{% endfor %}</tbody></table>{% else %}<div class="empty">{{ translations.no_findings }}</div>{% endif %}
+      <h2>{{ translations.audit_summary }}</h2>
+      {% if audits %}<table><thead><tr><th>{{ translations.date }}</th><th>{{ translations.type }}</th><th>{{ translations.target }}</th><th>{{ translations.result }}</th></tr></thead><tbody>{% for audit in audits %}<tr><td>{{ audit.created_at[:19] }}</td><td>{{ audit.type }}</td><td>{{ audit.target or "—" }}</td><td>{{ audit.status }}</td></tr>{% endfor %}</tbody></table>{% else %}<div class="empty">{{ translations.no_audits }}</div>{% endif %}
+    </div>
+    <footer class="running-footer"><span>{{ confidentiality }}</span><span>{{ project.client_name }}</span></footer>
+  </section>
+
+  <section class="page" id="findings">
+    <header class="running-header"><strong>AGENTSEC INSPECTOR</strong><span>{{ project.engagement_name }}</span></header>
+    <h1 class="page-title">{{ translations.detailed_findings }}</h1>
+    {% if not findings %}<div class="empty">{{ translations.no_findings }}</div>{% endif %}
+    {% for finding in findings %}<article class="finding" style="--severity:var(--{{ finding.severity }})">
+      <div class="finding-header"><div class="finding-index">{{ "%02d"|format(loop.index) }}</div><div class="finding-title"><h2>{{ finding.title }}</h2><div class="muted">{{ finding.id }}</div></div></div>
+      <div class="finding-meta">
+        <div class="meta-cell"><span class="section-label">{{ translations.severity }}</span><strong><span class="badge {{ finding.severity }}">{{ finding.severity }}</span></strong></div>
+        <div class="meta-cell"><span class="section-label">{{ translations.classification }}</span><strong>{{ finding.classification }}</strong></div>
+        <div class="meta-cell"><span class="section-label">{{ translations.status }}</span><strong>{{ finding.status }}</strong></div>
+        <div class="meta-cell"><span class="section-label">{{ translations.confidence }}</span><strong>{{ finding.confidence }}</strong></div>
+        <div class="meta-cell"><span class="section-label">{{ translations.component }}</span><strong>{{ finding.component or translations.none }}</strong></div>
+        <div class="meta-cell"><span class="section-label">{{ translations.target }}</span><strong>{{ finding.target or translations.none }}</strong></div>
+        <div class="meta-cell"><span class="section-label">{{ translations.audit }}</span><strong class="hash">{{ finding.audit_id or translations.none }}</strong></div>
+        <div class="meta-cell"><span class="section-label">{{ translations.date }}</span><strong>{{ finding.created_at[:19] }}</strong></div>
+      </div>
+      {% for key,label in [("description",translations.description),("impact",translations.impact),("exploitation_conditions",translations.conditions),("reproduction_steps",translations.reproduction),("observed_result",translations.observed),("expected_result",translations.expected),("recommendation",translations.recommendation)] %}{% if finding[key] %}<div class="field"><h3>{{ label }}</h3><p>{{ finding[key] }}</p></div>{% endif %}{% endfor %}
+      {% if finding.frameworks %}<div class="field"><h3>{{ translations.frameworks }}</h3><pre class="code">{{ finding.frameworks|tojson(indent=2) }}</pre></div>{% endif %}
+      {% if finding.evidence %}<div class="field"><h3>{{ translations.evidence }}</h3>{% for evidence in finding.evidence %}<div class="evidence"><div class="evidence-head"><strong>{{ evidence.title }}</strong><span class="muted">{{ evidence.type }}</span></div><div class="hash">SHA-256 {{ evidence.sha256 }}</div><pre class="code">{{ evidence.content }}</pre></div>{% endfor %}</div>{% endif %}
+      {% if finding.executions %}<div class="field"><h3>{{ translations.requests }}</h3>{% for execution in finding.executions %}<p class="muted">{{ execution.scenario_id }}@{{ execution.scenario_version }} · {{ execution.status }}</p>{% set turns = execution.request.turns or [] %}{% for turn in turns %}<h3>{{ translations.payload }}</h3><pre class="code">{{ turn.exact_payload_sent|tojson(indent=2) }}</pre>{% endfor %}{% if not turns and execution.request.messages %}<h3>{{ translations.payload }}</h3><pre class="code">{{ {"messages":execution.request.messages}|tojson(indent=2) }}</pre>{% endif %}<pre class="code">{{ {"response":execution.response,"analysis":execution.analysis}|tojson(indent=2) }}</pre>{% endfor %}</div>{% endif %}
+      {% if finding.tool_calls %}<div class="field"><h3>{{ translations.tools }}</h3><pre class="code">{{ finding.tool_calls|tojson(indent=2) }}</pre></div>{% endif %}
+    </article>{% endfor %}
+    <footer class="running-footer"><span>{{ confidentiality }}</span><span>{{ project.client_name }}</span></footer>
+  </section>
+
+  {% if report_type == "technical" %}<section class="page" id="audits">
+    <header class="running-header"><strong>AGENTSEC INSPECTOR</strong><span>{{ project.engagement_name }}</span></header>
+    <h1 class="page-title">{{ translations.audit_results }}</h1>
+    {% if not audits %}<div class="empty">{{ translations.no_audits }}</div>{% endif %}
+    {% for audit in audits %}<article class="audit"><div class="audit-head"><span class="badge info">{{ audit.mode }}</span><h2>{{ audit.type }}</h2></div><p class="hash">{{ audit.id }}</p>
+      <table><thead><tr><th>{{ translations.target }}</th><th>{{ translations.result }}</th><th>{{ translations.date }}</th></tr></thead><tbody><tr><td>{{ audit.target or "—" }}{% if audit.target_endpoint %}<br><span class="hash">{{ audit.target_endpoint }}</span>{% endif %}</td><td>{{ audit.status }}</td><td>{{ audit.created_at[:19] }}</td></tr></tbody></table>
+      {% if audit.configuration %}<h3>{{ translations.configuration }}</h3><pre class="code">{{ audit.configuration|tojson(indent=2) }}</pre>{% endif %}
+      {% if audit.summary %}<h3>{{ translations.executive_summary }}</h3><pre class="code">{{ audit.summary|tojson(indent=2) }}</pre>{% endif %}
+      {% if audit.error %}<h3>{{ translations.error }}</h3><pre class="code">{{ audit.error }}</pre>{% endif %}
+      {% if audit.executions %}<h3>{{ translations.requests }}</h3>{% for execution in audit.executions %}<p class="muted">{{ execution.scenario_id }}@{{ execution.scenario_version }} · {{ execution.status }}</p>{% set turns = execution.request.turns or [] %}{% for turn in turns %}<h3>{{ translations.payload }}</h3><pre class="code">{{ turn.exact_payload_sent|tojson(indent=2) }}</pre>{% endfor %}{% if not turns and execution.request.messages %}<h3>{{ translations.payload }}</h3><pre class="code">{{ {"messages":execution.request.messages}|tojson(indent=2) }}</pre>{% endif %}<pre class="code">{{ {"response":execution.response,"analysis":execution.analysis}|tojson(indent=2) }}</pre>{% endfor %}{% endif %}
+      {% if audit.tool_calls %}<h3>{{ translations.tools }}</h3><pre class="code">{{ audit.tool_calls|tojson(indent=2) }}</pre>{% endif %}
+      {% if audit.events %}<h3>{{ translations.events }}</h3><pre class="code">{{ audit.events|tojson(indent=2) }}</pre>{% endif %}
+      {% if audit.evidence %}<h3>{{ translations.evidence }}</h3>{% for evidence in audit.evidence %}<div class="evidence"><div class="evidence-head"><strong>{{ evidence.title }}</strong><span class="muted">{{ evidence.type }}</span></div><div class="hash">SHA-256 {{ evidence.sha256 }}</div><pre class="code">{{ evidence.content }}</pre></div>{% endfor %}{% endif %}
+    </article>{% endfor %}
+    <footer class="running-footer"><span>{{ confidentiality }}</span><span>{{ project.client_name }}</span></footer>
+  </section>{% endif %}
+
+  <section class="page" id="limitations">
+    <header class="running-header"><strong>AGENTSEC INSPECTOR</strong><span>{{ project.engagement_name }}</span></header>
+    <h1 class="page-title">{{ translations.limitations }}</h1><div class="notice">{{ limitations }}</div>
+    {% if findings %}<h1 class="page-title" style="margin-top:14mm">{{ translations.recommendations }}</h1>{% for finding in findings if finding.recommendation %}<h3>{{ finding.title }}</h3><p>{{ finding.recommendation }}</p>{% endfor %}{% endif %}
+    <footer class="running-footer"><span>{{ confidentiality }}</span><span>{{ project.client_name }}</span></footer>
+  </section>
+</main>
+</body>
+</html>
