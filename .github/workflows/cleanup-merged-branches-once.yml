@@ -1,0 +1,32 @@
+name: One-time cleanup of merged release branches
+on:
+  push:
+    paths:
+      - .github/workflows/cleanup-merged-branches-once.yml
+permissions:
+  contents: write
+  pull-requests: read
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Remove only fully merged temporary branches
+        shell: bash
+        run: |
+          set -euo pipefail
+          default_branch="$(gh api "repos/$GH_REPO" --jq '.default_branch')"
+          test "$default_branch" = "main"
+          for branch in ci/publish-v130-validated docs/v130-readme-refresh; do
+            merged="$(gh pr list --repo "$GH_REPO" --state merged --head "$branch" --json number --jq 'length')"
+            test "$merged" -gt 0 || { echo "Refusing to delete unmerged branch: $branch"; exit 1; }
+            if gh api "repos/$GH_REPO/git/ref/heads/$branch" >/dev/null 2>&1; then
+              gh api -X DELETE "repos/$GH_REPO/git/refs/heads/$branch"
+              echo "Deleted $branch"
+            fi
+          done
+          count="$(gh api --paginate "repos/$GH_REPO/branches?per_page=100" --jq '.[].name' | grep -v '^main$' | wc -l)"
+          test "$count" -eq 0 || { echo "Other branches still exist"; exit 1; }
+          echo "Only main remains."
