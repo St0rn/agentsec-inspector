@@ -3,7 +3,7 @@ from __future__ import annotations
 from conftest import APIClient
 
 from agentsec.database import SessionLocal
-from agentsec.models import AuditRun, AuditStatus, Finding, Project
+from agentsec.models import AuditRun, AuditStatus, Finding
 
 
 def make_completed_audit(project_id: str) -> str:
