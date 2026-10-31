@@ -1,4 +1,4 @@
-import { Download, Search, X } from "lucide-react";
+import { Download, Search, Trash2, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ErrorBox, Status } from "./ui";
 import { MCPResultView } from "./MCPResultView";
@@ -8,9 +8,10 @@ import type { Audit, AuditDetail } from "../types";
 interface Props {
   audits: Audit[];
   title?: string;
+  onDelete?: () => Promise<unknown>;
 }
 
-export function AuditHistory({audits,title="Historique des audits"}:Props){
+export function AuditHistory({audits,title="Historique des audits",onDelete}:Props){
   const [search,setSearch]=useState("");
   const [status,setStatus]=useState("");
   const [sort,setSort]=useState<"newest"|"oldest">("newest");
@@ -22,11 +23,37 @@ export function AuditHistory({audits,title="Historique des audits"}:Props){
   async function download(id:string,format:"json"|"pdf"){
     try{const blob=await downloadApi(`/audits/${id}/export?format=${format}`);const href=URL.createObjectURL(blob);const anchor=document.createElement("a");anchor.href=href;anchor.download=`audit-${id}.${format}`;anchor.click();URL.revokeObjectURL(href)}catch(caught){setError(caught instanceof Error?caught.message:String(caught))}
   }
+  async function remove(id: string) {
+    if (!confirm("Supprimer cet audit et ses preuves associées ? Les findings conservés ne seront pas effacés.")) return;
+    try {
+      await api(`/audits/${id}?confirm_delete=true`, {method:"DELETE"});
+      setDetail(undefined);
+      await onDelete?.();
+    } catch(caught) {setError(caught instanceof Error ? caught.message : String(caught));}
+  }
+  async function clearHistory() {
+    const projectIds = Array.from(new Set(filtered.map(item => item.project_id)));
+    if (projectIds.length !== 1) {
+      setError("Sélectionnez une vue limitée à un seul projet pour vider l'historique.");
+      return;
+    }
+    if (!confirm(`Supprimer ${filtered.length} audit(s) de ce projet ? Cette action est irréversible.`)) return;
+    try {
+      const types = Array.from(new Set(filtered.map(item => item.audit_type)));
+      if (types.length !== 1) {
+        setError("Choisissez un seul type d'audit avant la suppression groupée.");
+        return;
+      }
+      await api(`/audits?project_id=${encodeURIComponent(projectIds[0])}&audit_type=${encodeURIComponent(types[0])}&confirm_delete=true`, {method:"DELETE"});
+      setDetail(undefined);
+      await onDelete?.();
+    } catch(caught) {setError(caught instanceof Error ? caught.message : String(caught));}
+  }
   if(!audits.length)return null;
   return <section className="mt-7">
-    <div className="mb-3 flex items-center gap-3"><h2 className="text-lg font-semibold text-white">{title}</h2><span className="rounded-full bg-slate-800 px-2 py-0.5 text-xs text-slate-400">{filtered.length}</span></div>
+    <div className="mb-3 flex items-center gap-3"><h2 className="text-lg font-semibold text-white">{title}</h2><span className="rounded-full bg-slate-800 px-2 py-0.5 text-xs text-slate-400">{filtered.length}</span>{onDelete&&<button className="btn ml-auto text-xs" onClick={()=>void clearHistory()} disabled={!filtered.length}><Trash2 size={14}/>Vider l'historique du projet</button>}</div>
     {error&&<ErrorBox message={error}/>}<div className="mb-3 grid grid-cols-[1fr_180px_180px] gap-3"><label className="relative"><Search className="absolute left-3 top-3 text-slate-500" size={15}/><input aria-label="Rechercher les audits" className="input pl-9" placeholder="ID, type, scénario…" value={search} onChange={event=>setSearch(event.target.value)}/></label><select aria-label="Filtrer par statut" className="input" value={status} onChange={event=>setStatus(event.target.value)}><option value="">Tous les statuts</option>{["queued","running","completed","failed","cancelled"].map(value=><option key={value}>{value}</option>)}</select><select aria-label="Trier les audits" className="input" value={sort} onChange={event=>setSort(event.target.value as "newest"|"oldest")}><option value="newest">Plus récents</option><option value="oldest">Plus anciens</option></select></div>
-    <div className="table-wrap"><table className="table"><thead><tr><th>Audit</th><th>Scénario / catégorie</th><th>État</th><th>Mode</th><th>Date</th></tr></thead><tbody>{filtered.map(item=><tr key={item.id} className="cursor-pointer hover:bg-slate-800/50" onClick={()=>void open(item.id)}><td><p className="text-white">{item.audit_type}</p><p className="font-mono text-[10px] text-slate-600">{item.id}</p></td><td>{String(item.configuration.scenario_id||item.configuration.category||item.configuration.name||"—")}</td><td><Status value={item.status}/></td><td>{item.passive?"Passif":"Actif confirmé"}</td><td>{new Date(item.created_at).toLocaleString()}</td></tr>)}</tbody></table></div>
+    <div className="table-wrap"><table className="table"><thead><tr><th>Audit</th><th>Scénario / catégorie</th><th>État</th><th>Mode</th><th>Date</th>{onDelete&&<th>Supprimer</th>}</tr></thead><tbody>{filtered.map(item=><tr key={item.id} className="cursor-pointer hover:bg-slate-800/50" onClick={()=>void open(item.id)}><td><p className="text-white">{item.audit_type}</p><p className="font-mono text-[10px] text-slate-600">{item.id}</p></td><td>{String(item.configuration.scenario_id||item.configuration.category||item.configuration.name||"—")}</td><td><Status value={item.status}/></td><td>{item.passive?"Passif":"Actif confirmé"}</td><td>{new Date(item.created_at).toLocaleString()}</td>{onDelete&&<td><button title="Supprimer cet audit" className="text-red-400" onClick={event=>{event.stopPropagation();void remove(item.id)}}><Trash2 size={15}/></button></td>}</tr>)}</tbody></table></div>
     {detail&&<div role="dialog" aria-modal="true" className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-8" onMouseDown={()=>setDetail(undefined)}><article className="panel max-h-[90vh] w-full max-w-5xl overflow-auto p-6" onMouseDown={event=>event.stopPropagation()}><div className="mb-5 flex items-start"><div><h2 className="text-xl font-semibold text-white">Détail de l’audit</h2><p className="font-mono text-xs text-slate-500">{detail.audit.id}</p></div><div className="ml-auto flex gap-2"><button className="btn" onClick={()=>void download(detail.audit.id,"json")}><Download size={15}/>JSON</button><button className="btn" onClick={()=>void download(detail.audit.id,"pdf")}><Download size={15}/>PDF</button><button aria-label="Fermer" className="btn" onClick={()=>setDetail(undefined)}><X size={16}/></button></div></div>{detail.historical_data_notice&&<p className="mb-4 rounded border border-amber-800 bg-amber-950/30 p-3 text-sm text-amber-200">{detail.historical_data_notice}</p>}{detail.audit.audit_type==="mcp_security"&&<MCPResultView summary={detail.audit.summary}/>}<DetailSection title="Audit et configuration" value={detail.audit}/><DetailSection title="Cible" value={detail.target}/><ExecutionSection executions={detail.executions}/><DetailSection title="Événements et outils observés" value={detail.events}/><DetailSection title="Preuves" value={detail.evidence}/><DetailSection title="Findings" value={detail.findings}/></article></div>}
   </section>
 }
