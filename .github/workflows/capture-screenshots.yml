@@ -1,0 +1,80 @@
+name: Capture real AgentSec 1.3.0 screenshots
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/capture-screenshots.yml
+
+permissions:
+  contents: write
+
+jobs:
+  capture:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    env:
+      AGENTSEC_API_TOKEN: agentsec-public-demo-token-not-for-production
+      AGENTSEC_DATA_DIR: ${{ runner.temp }}/agentsec-screenshot-lab
+      AGENTSEC_PORT: "8765"
+      VITE_API_TOKEN: agentsec-public-demo-token-not-for-production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install backend, frontend and headless browser
+        run: |
+          python -m pip install -r backend/requirements.lock 'playwright==1.56.0'
+          python -m playwright install --with-deps chromium
+          npm --prefix frontend ci
+      - name: Start isolated real AgentSec backend and test servers
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$AGENTSEC_DATA_DIR"
+          python -m uvicorn agentsec.main:app --app-dir backend --host 127.0.0.1 --port 8765 > /tmp/agentsec-api.log 2>&1 &
+          python -m uvicorn demo.server:app --host 127.0.0.1 --port 8877 > /tmp/agentsec-lab.log 2>&1 &
+          npm --prefix frontend run dev -- --host 127.0.0.1 > /tmp/agentsec-vite.log 2>&1 &
+      - name: Capture actual app screens using laboratory data
+        run: python scripts/ci/capture-screenshots.py
+      - name: Verify screenshots and commit replacements
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in dashboard mcp-passive mcp-active mcp-results rag-security rag-active-results findings; do
+            test -s "docs/images/${file}.png"
+          done
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/images/dashboard.png docs/images/mcp-passive.png docs/images/mcp-active.png docs/images/mcp-results.png docs/images/rag-security.png docs/images/rag-active-results.png docs/images/findings.png
+          if ! git diff --cached --quiet; then
+            git commit -m "docs(images): refresh real 1.3.0 screenshots from local MCP/RAG laboratory"
+            git push origin HEAD:main
+          fi
+      - name: Upload screenshots for inspection
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agentsec-1.3.0-screenshots
+          path: |
+            docs/images/dashboard.png
+            docs/images/mcp-passive.png
+            docs/images/mcp-active.png
+            docs/images/mcp-results.png
+            docs/images/rag-security.png
+            docs/images/rag-active-results.png
+            docs/images/findings.png
+      - name: Print logs if failed
+        if: failure()
+        shell: bash
+        run: |
+          for file in /tmp/agentsec-api.log /tmp/agentsec-lab.log /tmp/agentsec-vite.log; do
+            echo "=== $file ==="
+            tail -80 "$file" 2>/dev/null || true
+          done
