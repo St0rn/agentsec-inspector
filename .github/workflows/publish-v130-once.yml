@@ -1,0 +1,133 @@
+name: Publish AgentSec v1.3.0 (validated one-time)
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/publish-v130-once.yml
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  validate-and-publish:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 100
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RELEASE_TAG: v1.3.0
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify release inputs and exact version
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s docs/RELEASE_NOTES_1.3.0.md
+          test -s docs/images/mcp-results.png
+          test -s docs/images/rag-active-results.png
+          grep -q '"version": "1.3.0"' src-tauri/tauri.conf.json
+          grep -q 'version = "1.3.0"' src-tauri/Cargo.toml
+          grep -q 'version: str = "1.3.0"' backend/agentsec/config.py
+          git status --porcelain
+          if git rev-parse "refs/tags/$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Refusing to re-tag existing $RELEASE_TAG"
+            exit 1
+          fi
+          if gh release view "$RELEASE_TAG" --repo "$GH_REPO" >/dev/null 2>&1; then
+            echo "Refusing to replace existing GitHub release"
+            exit 1
+          fi
+
+      - name: Create immutable version tag
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$RELEASE_TAG" -m "AgentSec Inspector $RELEASE_TAG"
+          git push origin "$RELEASE_TAG"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Dispatch complete Windows and Linux tagged builds
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh workflow run windows-build.yml --repo "$GH_REPO" --ref "$RELEASE_TAG"
+          gh workflow run linux-build.yml --repo "$GH_REPO" --ref "$RELEASE_TAG"
+
+      - name: Require successful installer smoke tests on tag SHA
+        id: builds
+        shell: bash
+        env:
+          TAG_SHA: ${{ steps.version.outputs.sha }}
+        run: |
+          set -euo pipefail
+          windows=""
+          linux=""
+          for attempt in $(seq 1 180); do
+            win_json="$(gh run list --repo "$GH_REPO" --workflow windows-build.yml --branch "$RELEASE_TAG" --event workflow_dispatch --limit 30 --json databaseId,conclusion,headSha,status)"
+            linux_json="$(gh run list --repo "$GH_REPO" --workflow linux-build.yml --branch "$RELEASE_TAG" --event workflow_dispatch --limit 30 --json databaseId,conclusion,headSha,status)"
+            if echo "$win_json" | jq -e --arg sha "$TAG_SHA" 'any(.[]; .headSha == $sha and (.conclusion == "failure" or .conclusion == "cancelled"))' >/dev/null; then
+              echo "Windows validation failed for $TAG_SHA"
+              exit 1
+            fi
+            if echo "$linux_json" | jq -e --arg sha "$TAG_SHA" 'any(.[]; .headSha == $sha and (.conclusion == "failure" or .conclusion == "cancelled"))' >/dev/null; then
+              echo "Linux validation failed for $TAG_SHA"
+              exit 1
+            fi
+            windows="$(echo "$win_json" | jq -r --arg sha "$TAG_SHA" '[.[] | select(.headSha == $sha and .conclusion == "success")] | first | .databaseId // empty')"
+            linux="$(echo "$linux_json" | jq -r --arg sha "$TAG_SHA" '[.[] | select(.headSha == $sha and .conclusion == "success")] | first | .databaseId // empty')"
+            if [[ -n "$windows" && -n "$linux" ]]; then
+              break
+            fi
+            sleep 20
+          done
+          [[ -n "$windows" && -n "$linux" ]] || { echo "No successful matching platform builds"; exit 1; }
+          echo "windows=$windows" >> "$GITHUB_OUTPUT"
+          echo "linux=$linux" >> "$GITHUB_OUTPUT"
+
+      - name: Download validated artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release/windows release/linux
+          gh run download "${{ steps.builds.outputs.windows }}" --repo "$GH_REPO" --name agentsec-windows-x64 --dir release/windows
+          gh run download "${{ steps.builds.outputs.linux }}" --repo "$GH_REPO" --name agentsec-linux-x64 --dir release/linux
+
+      - name: Generate four installers and checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${RELEASE_TAG#v}"
+          msi="$(find release/windows -type f -name '*.msi' -print -quit)"
+          nsis="$(find release/windows -type f -name '*.exe' -print -quit)"
+          appimage="$(find release/linux -type f -name '*.AppImage' -print -quit)"
+          deb="$(find release/linux -type f -name '*.deb' -print -quit)"
+          [[ -s "$msi" && -s "$nsis" && -s "$appimage" && -s "$deb" ]] || {
+            echo "One or more installers are missing or empty"
+            exit 1
+          }
+          mkdir -p release/assets
+          cp "$msi" "release/assets/AgentSec-Inspector_${version}_x64_en-US.msi"
+          cp "$nsis" "release/assets/AgentSec-Inspector_${version}_x64-setup.exe"
+          cp "$appimage" "release/assets/AgentSec-Inspector_${version}_amd64.AppImage"
+          cp "$deb" "release/assets/AgentSec-Inspector_${version}_amd64.deb"
+          (cd release/assets && sha256sum AgentSec-Inspector_* > SHA256SUMS.txt)
+          test "$(find release/assets -type f | wc -l)" -eq 5
+
+      - name: Publish new release without modifying v1.2.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f docs/RELEASE_NOTES_1.3.0.md
+          gh release create "$RELEASE_TAG" --repo "$GH_REPO" --verify-tag \
+            --title "AgentSec Inspector $RELEASE_TAG" \
+            --notes-file docs/RELEASE_NOTES_1.3.0.md \
+            release/assets/*
+          gh release view "$RELEASE_TAG" --repo "$GH_REPO" --json tagName,assets,url
