@@ -182,6 +182,7 @@ def main() -> None:
         page.locator("table tbody tr").filter(has_text="Actif confirmé").first.click()
         page.get_by_text("Détail de l’audit").wait_for(timeout=15_000)
         page.get_by_role("dialog").get_by_text("read_lab_note", exact=True).wait_for()
+        page.get_by_role("dialog").get_by_text("Voir la réponse MCP brute").click()
         page.screenshot(path=str(OUTPUT / "mcp-results.png"), full_page=False, animations="disabled")
         goto("/rag")
         page.locator("select").first.select_option(project_id)
@@ -193,7 +194,7 @@ def main() -> None:
         page.get_by_label("Cible RAG active").select_option(rag_target["id"])
         page.locator("label").filter(has_text="autorise ces requêtes actives").locator("input[type=checkbox]").check()
         page.get_by_role("button", name="Lancer l'audit RAG actif").click()
-        page.get_by_text("Adversarial chunk observed", exact=False).wait_for(timeout=30_000)
+        page.locator("section.card").filter(has_text="Audit RAG actif sur endpoint réel").get_by_text("PASS", exact=True).first.wait_for(timeout=30_000)
         page.screenshot(path=str(OUTPUT / "rag-active-results.png"), full_page=True, animations="disabled")
 
         goto("/findings")
