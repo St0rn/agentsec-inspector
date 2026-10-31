@@ -203,6 +203,7 @@ async def run_rag_audit(audit_id: str, request: dict[str, Any]) -> None:
                             db, audit,
                             rule=f"rag:{case['kind']}:{case['name']}:{case['marker']}",
                             component=target.name,
+                            identity_component=target.id,
                             title=f"RAG indirect injection: {case['name']}",
                             description="The observed retrieved content caused disclosure of a protected fictional marker.",
                             classification="Confirmed vulnerability",
