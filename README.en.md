@@ -12,6 +12,7 @@ A desktop application for authorized security assessments of chatbots, AI agents
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.162-009688?style=flat-square&logo=fastapi&logoColor=white)
 ![React](https://img.shields.io/badge/React-19-149ECA?style=flat-square&logo=react&logoColor=white)
 ![Tauri](https://img.shields.io/badge/Tauri-2-24C8DB?style=flat-square&logo=tauri&logoColor=white)
+[![MIT License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
 ![Windows](https://img.shields.io/badge/Windows-x64-0078D4?style=flat-square&logo=windows11&logoColor=white)
 ![Linux](https://img.shields.io/badge/Linux-x64-FCC624?style=flat-square&logo=linux&logoColor=111)
 ![Mode](https://img.shields.io/badge/passive%20audit%20by%20default-22C55E?style=flat-square)
@@ -32,7 +33,7 @@ A desktop application for authorized security assessments of chatbots, AI agents
 
 ![AgentSec Inspector Dashboard](docs/images/dashboard.png)
 
-<p align="center"><sub>V1 dashboard connected to the included test laboratory. Demo data remains separate from assessment projects.</sub></p>
+<p align="center"><sub>v1.3.0 dashboard connected to the included test laboratory. Demo data remains separate from assessment projects.</sub></p>
 
 <table>
   <tr>
@@ -59,6 +60,10 @@ AgentSec Inspector does not ask a second model to judge the system under test. O
     <td width="50%"><img src="docs/images/jailbreak.png" alt="Jailbreak Tester result"/><br/><sub>Jailbreak scenario executed against the test laboratory</sub></td>
     <td width="50%"><img src="docs/images/scenario-packs.png" alt="Scenario-pack import"/><br/><sub>Add scenarios through versioned JSON packs checked on import</sub></td>
   </tr>
+  <tr>
+    <td width="50%"><img src="docs/images/mcp-results.png" alt="MCP active call results and evidence"/><br/><sub>Structured MCP results: arguments, latency, evidence and raw JSON</sub></td>
+    <td width="50%"><img src="docs/images/rag-active-results.png" alt="Active RAG tests and verdicts"/><br/><sub>Active RAG assessment of a local lab with traces and observable verdicts</sub></td>
+  </tr>
 </table>
 
 <p align="center"><sub>Screenshots taken from the application connected to the local laboratory in <code>demo/</code>.</sub></p>
@@ -69,14 +74,14 @@ Each project keeps its targets, tests, evidence, findings, and reports together.
 
 | Domain | Operational capabilities |
 |---|---|
-| MCP Security | Passive Streamable HTTP/stdio discovery and explicitly selected, configured, and confirmed active calls |
+| MCP Security | Paginated MCP discovery (tools, resources, prompts), explicitly authorized active tool calls and structured results with retained evidence |
 | Prompt & LLM | 10 injection scenarios and 9 versioned jailbreak scenarios, OpenAI-compatible, Ollama, and HTTP connectors, with deterministic outcomes |
 | Custom Payload | Free-form multi-turn payloads, configurable security rules, and complete response, event, and tool evidence |
 | Streaming compatibility | JSON, NDJSON, SSE, OpenAI-compatible, and Ollama responses normalized into one evidence model |
 | Jailbreak | Dedicated module: authority impersonation, simulated developer mode, persona override, hypothetical framing, refusal suppression, format coercion, obfuscation, policy reversal, and fake context reset |
-| RAG Security | Documents and metadata, controlled injection cases, real traces, and Document → Retrieval → LLM → Response visualization |
+| RAG Security | Active assessments against authorized RAG APIs, baseline and indirect-injection cases, available telemetry, evidence and PASS/FAIL/INCONCLUSIVE/ERROR verdicts |
 | Agent Behavior | Chronological view of messages, MCP calls, parameters, results, errors, durations, and observable decisions |
-| Findings | Full lifecycle, history, evidence, confidence, impact, reproduction, and remediation |
+| Findings | Target/rule-based deduplication, first/last seen and occurrence history, evidence, severity and remediation |
 | Reporting | A4 preview, detailed technical/executive reports in English or French, HTML/JSON/PDF export, payloads, evidence, and Save As |
 | Scenario Packs | Import versioned JSON scenarios without executing code from the pack |
 
@@ -213,12 +218,12 @@ The [test and attack catalog](docs/TEST_CATALOG.md) states exactly what V1 execu
 
 ### Download AgentSec Inspector — Windows
 
-**Version: v1.2.0**
+**Version: v1.3.0**
 
-- [Download the Windows x64 MSI](https://github.com/St0rn/agentsec-inspector/releases/download/v1.2.0/AgentSec-Inspector_1.2.0_x64_en-US.msi)
-- [Download the Windows x64 Setup executable](https://github.com/St0rn/agentsec-inspector/releases/download/v1.2.0/AgentSec-Inspector_1.2.0_x64-setup.exe)
-- [Verify all SHA-256 checksums](https://github.com/St0rn/agentsec-inspector/releases/download/v1.2.0/SHA256SUMS.txt)
-- [Read the release notes](https://github.com/St0rn/agentsec-inspector/releases/tag/v1.2.0)
+- [Download the Windows x64 MSI](https://github.com/St0rn/agentsec-inspector/releases/download/v1.3.0/AgentSec-Inspector_1.3.0_x64_en-US.msi)
+- [Download the Windows x64 Setup executable](https://github.com/St0rn/agentsec-inspector/releases/download/v1.3.0/AgentSec-Inspector_1.3.0_x64-setup.exe)
+- [Verify all SHA-256 checksums](https://github.com/St0rn/agentsec-inspector/releases/download/v1.3.0/SHA256SUMS.txt)
+- [Read the release notes](https://github.com/St0rn/agentsec-inspector/releases/tag/v1.3.0)
 
 Both installers include the backend. End users do not need Python or Node.js.
 
@@ -226,7 +231,7 @@ To install a downloaded or locally built artifact:
 
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass
-.\scripts\install.ps1 -InstallerPath ".\AgentSec-Inspector_1.2.0_x64_en-US.msi"
+.\scripts\install.ps1 -InstallerPath ".\AgentSec-Inspector_1.3.0_x64_en-US.msi"
 .\scripts\verify-installation.ps1
 ```
 
@@ -234,8 +239,8 @@ Set-ExecutionPolicy -Scope Process Bypass
 
 The AppImage contains the frontend and standalone backend, so end users do not need Python or Node.js.
 
-- [Download the Linux x86_64 AppImage](https://github.com/St0rn/agentsec-inspector/releases/download/v1.2.0/AgentSec-Inspector_1.2.0_amd64.AppImage)
-- [Download the Linux x86_64 DEB package](https://github.com/St0rn/agentsec-inspector/releases/download/v1.2.0/AgentSec-Inspector_1.2.0_amd64.deb)
+- [Download the Linux x86_64 AppImage](https://github.com/St0rn/agentsec-inspector/releases/download/v1.3.0/AgentSec-Inspector_1.3.0_amd64.AppImage)
+- [Download the Linux x86_64 DEB package](https://github.com/St0rn/agentsec-inspector/releases/download/v1.3.0/AgentSec-Inspector_1.3.0_amd64.deb)
 
 Both packages come from the same validated Linux x64 build. Use the release's `SHA256SUMS.txt` file to verify their integrity.
 
@@ -341,6 +346,10 @@ After passive discovery, switch to **Actif — appel contrôlé**. Choose one di
 
 <img src="docs/images/mcp-active.png" alt="Configuring an explicitly approved active MCP call"/>
 
+After a call, review structured results: sent arguments, duration, tool status, data summary and raw JSON. A technical `SUCCESS` does not mean no vulnerability exists.
+
+<img src="docs/images/mcp-results.png" alt="Structured MCP call results and evidence in AgentSec 1.3.0"/>
+
 </details>
 
 <details>
@@ -376,9 +385,11 @@ A tool call does not fail a test by itself. `FAIL` requires an observable violat
 <details>
 <summary><strong>7. Analyze a RAG system</strong></summary>
 
-In **RAG Security**, import a test document or an execution trace. When telemetry is available, add the retrieved chunks and context sent to the LLM. Otherwise, leave those fields empty. The comparison between expected and observed responses then remains limited to the available information.
+In **RAG Security**, configure an authorized RAG target to run baseline queries and indirect prompt-injection tests. When the API exposes retrieval chunks and LLM context, AgentSec saves them and assigns evidence-grounded `PASS`, `FAIL`, `INCONCLUSIVE` or `ERROR` verdicts. Manual document and trace imports remain available. Controlled laboratory documents may only be posted to a configured ingestion endpoint with separate approval.
 
-<img src="docs/images/rag-security.png" alt="Analyzing a RAG document and trace"/>
+<img src="docs/images/rag-security.png" alt="Active RAG assessment and trace analysis interface"/>
+
+<img src="docs/images/rag-active-results.png" alt="Evidence-grounded active RAG verdicts"/>
 
 </details>
 
@@ -511,7 +522,7 @@ Verdicts use the structured rules selected at execution time and observable evid
 | Desktop packages | AppImage/DEB built and the AppImage verified twice on Linux; MSI/NSIS built, installed, and verified twice each on Windows |
 | Windows/PowerShell | 71 Pester tests passed on PowerShell 7 and 71 on Windows PowerShell 5.1; MSVC/SDK compilation probe, MSI, NSIS, API, desktop, sidecar, and uninstall checks passed |
 
-Detailed version 1.2.0 results, including Windows/Linux runs, repeated installations, and published checksums, are recorded in [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md), the [installation validation matrix](INSTALLATION_VALIDATION_MATRIX.md), and the [validation report](docs/VALIDATION_REPORT.md).
+Historical v1.2.0 validation results, including Windows/Linux runs, repeated installations, and published checksums, are recorded in [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md), the [installation validation matrix](INSTALLATION_VALIDATION_MATRIX.md), and the [validation report](docs/VALIDATION_REPORT.md).
 
 ## Repository layout
 
@@ -529,6 +540,12 @@ docs/          architecture, security, and Windows procedures
 
 This tool is intended exclusively for audits with explicit authorization and a documented scope. Run untrusted MCP servers inside a dedicated VM or Windows Sandbox: stdio subprocess restrictions alone are not a security sandbox.
 
+Read the [v1.3.0 release notes](docs/RELEASE_NOTES_1.3.0.md) for the new functionality. The Windows and Linux validation runs are linked through the GitHub Actions badges above.
+
+## License
+
+AgentSec Inspector is distributed under the [MIT License](LICENSE), copyright © 2026 Fabien Dromas (St0rn).
+
 ## Author and contact
 
 AgentSec Inspector is created and maintained by **St0rn**.
@@ -538,4 +555,4 @@ AgentSec Inspector is created and maintained by **St0rn**.
 
 ---
 
-<div align="center"><sub>AgentSec Inspector v1.2.0 · developed and maintained by St0rn</sub></div>
+<div align="center"><sub>AgentSec Inspector v1.3.0 · developed and maintained by St0rn</sub></div>
