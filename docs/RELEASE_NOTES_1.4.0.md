@@ -18,6 +18,22 @@ A successful MCP call shows that the specified tool executed, **not that it is s
 
 Windows x64: MSI or NSIS EXE. Linux x64: AppImage or DEB. The final GitHub release bundles the backend and includes `SHA256SUMS.txt` for integrity checks. See the French and English README for current links and the workflow runs for exact build validation.
 
+## Verified build and test evidence
+
+All checks below succeeded on the same source commit, `566ac79c64ad5f5d68332e5c04e73a4ae4e8fe1f`:
+
+- [Windows MSI/NSIS build, repeated installation, uninstallation and smoke tests](https://github.com/St0rn/agentsec-inspector/actions/runs/41220253001).
+- [Linux AppImage/DEB build and installation smoke tests](https://github.com/St0rn/agentsec-inspector/actions/runs/41220253100).
+- [Frontend lint, unit tests, coverage and production build](https://github.com/St0rn/agentsec-inspector/actions/runs/41220252963).
+- [Backend lint, tests and coverage](https://github.com/St0rn/agentsec-inspector/actions/runs/41220253012).
+- [Dependency and security checks](https://github.com/St0rn/agentsec-inspector/actions/runs/41220252983).
+
+The release tag also includes documentation updates; no application source files were changed after this validated commit. Artifact names and SHA-256 hashes are published alongside the release downloads.
+
+## Interface screenshots
+
+The French and English READMEs include real v1.4.0 screenshots for the new MCP vulnerability-assessment tab, clickable inventory and schema-driven active forms, captured from the application against its controlled local demo server.
+
 ## Notes en français
 
 - Trois onglets MCP : **Découverte passive**, **Appel actif contrôlé**, **Audit de vulnérabilités** non destructif.
