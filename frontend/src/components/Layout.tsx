@@ -123,7 +123,7 @@ export function Layout() {
         <header className="sticky top-0 z-10 flex h-16 items-center border-b border-slate-800 bg-ink/75 px-8 backdrop-blur">
           <h1 className="text-lg font-semibold text-white">{current}</h1>
           <div className="ml-auto text-xs text-slate-500">
-          Audit passif par défaut · v1.2.0
+          Audit passif par défaut · v1.3.0
           </div>
         </header>
         <div className="p-8">
