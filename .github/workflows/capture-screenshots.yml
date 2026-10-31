@@ -8,7 +8,7 @@ on:
       - scripts/ci/capture-screenshots.py
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   capture:
@@ -44,21 +44,14 @@ jobs:
           npm --prefix frontend run dev -- --host 127.0.0.1 > /tmp/agentsec-vite.log 2>&1 &
       - name: Capture actual app screens using laboratory data
         run: python scripts/ci/capture-screenshots.py
-      - name: Verify screenshots and commit replacements
+      - name: Verify generated screenshots (no automated Git commits)
         shell: bash
         run: |
           set -euo pipefail
           for file in dashboard mcp-passive mcp-active mcp-results mcp-inventory mcp-tool-form mcp-vulnerability-scan rag-security rag-active-results findings; do
             test -s "docs/images/${file}.png"
           done
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/images/dashboard.png docs/images/mcp-passive.png docs/images/mcp-active.png docs/images/mcp-results.png docs/images/mcp-inventory.png docs/images/mcp-tool-form.png docs/images/mcp-vulnerability-scan.png docs/images/rag-security.png docs/images/rag-active-results.png docs/images/findings.png
-          if ! git diff --cached --quiet; then
-            git commit -m "docs(images): refresh real 1.4.0 screenshots from local MCP/RAG laboratory"
-            git pull --rebase origin main
-            git push origin HEAD:main
-          fi
+          echo "Screenshots generated; inspect/download the workflow artifact before adding images via normal maintainer commits."
       - name: Upload screenshots for inspection
         if: always()
         uses: actions/upload-artifact@v4
