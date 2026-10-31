@@ -24,7 +24,12 @@ from ..models import (
 from .events import event_hub
 from .finding_dedup import record_finding
 from .llm_client import send_chat
-from .mcp_analysis import analyse_discovery, analyse_tool_result, analyse_vulnerabilities, is_sensitive_tool
+from .mcp_analysis import (
+    analyse_discovery,
+    analyse_tool_result,
+    analyse_vulnerabilities,
+    is_sensitive_tool,
+)
 from .mcp_client import HTTPMCPClient, StdioMCPClient
 from .scenarios import evaluate, scenario_messages
 
