@@ -31,7 +31,7 @@ describe("MCP passive and active audit controls",()=>{
     render(<MemoryRouter initialEntries={["/mcp"]}><App/></MemoryRouter>);
     fireEvent.change(await screen.findByLabelText("Projet"),{target:{value:"project-1"}});
     fireEvent.change(screen.getByLabelText("Cible compatible"),{target:{value:"target-1"}});
-    fireEvent.click(screen.getByRole("button",{name:/Actif — appel contrôlé/i}));
+    fireEvent.click(screen.getByRole("button",{name:/Actif — outil contrôlé/i}));
     fireEvent.change(screen.getByLabelText("Outil découvert"),{target:{value:"read_lab_note"}});
     fireEvent.change(screen.getByLabelText("Paramètres JSON exacts"),{target:{value:'{"note_id":"welcome"}'}});
     fireEvent.click(screen.getByLabelText(/J’autorise cet appel précis/i));
@@ -49,7 +49,7 @@ describe("MCP passive and active audit controls",()=>{
     render(<MemoryRouter initialEntries={["/mcp"]}><App/></MemoryRouter>);
     fireEvent.change(await screen.findByLabelText("Projet"),{target:{value:"project-1"}});
     fireEvent.change(screen.getByLabelText("Cible compatible"),{target:{value:"target-1"}});
-    fireEvent.click(screen.getByRole("button",{name:/Actif — appel contrôlé/i}));
+    fireEvent.click(screen.getByRole("button",{name:/Actif — outil contrôlé/i}));
     fireEvent.change(screen.getByLabelText("Outil découvert"),{target:{value:"delete_demo_record"}});
     fireEvent.click(screen.getByLabelText(/J’autorise cet appel précis/i));
     const launch=screen.getByRole("button",{name:/Confirmer et lancer l’appel actif/i});
