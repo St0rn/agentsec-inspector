@@ -1,6 +1,6 @@
 [package]
 name = "agentsec-inspector"
-version = "1.3.0"
+version = "1.4.0"
 description = "AI Red Team & MCP Security Auditing Platform"
 authors = ["AgentSec"]
 edition = "2021"
