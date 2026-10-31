@@ -13,7 +13,6 @@ from agentsec.models import (
     Finding,
     FindingOccurrence,
     Project,
-    RAGDocument,
     RAGTrace,
     Severity,
     Target,
