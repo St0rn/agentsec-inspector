@@ -99,6 +99,6 @@ export default function AuditRunner({mode}:{mode:RunnerMode}) {
       </div>
       <div className="card"><div className="mb-4 flex items-center gap-2"><Radio className="text-cyan" size={18}/><h3 className="font-semibold text-white">Exécution</h3></div>{active?<div className="space-y-3 text-sm"><Status value={active.status}/><p className="font-mono text-xs text-slate-500">{active.id}</p>{active.error&&<p className="text-red-300">{active.error}</p>}{Object.keys(active.summary).length>0&&mode==="mcp"?<MCPResultView summary={active.summary}/>:<pre className="max-h-96 overflow-auto whitespace-pre-wrap rounded bg-slate-950 p-3 text-xs text-slate-300">{JSON.stringify(active.summary,null,2)}</pre>}</div>:<div className="py-12 text-center text-slate-500"><ShieldAlert className="mx-auto mb-3"/><p className="text-sm">Aucune exécution active</p></div>}</div>
     </div>
-    <AuditHistory audits={(audits.data||[]).filter(item=>mode==="mcp"?item.audit_type==="mcp_security":mode==="jailbreak"?item.audit_type==="jailbreak":mode==="llm"?["prompt_injection","jailbreak"].includes(item.audit_type):item.audit_type==="prompt_injection")}/>
+    <AuditHistory onDelete={async()=>{await audits.reload()}} audits={(audits.data||[]).filter(item=>(!projectId||item.project_id===projectId)&& (mode==="mcp"?item.audit_type==="mcp_security":mode==="jailbreak"?item.audit_type==="jailbreak":mode==="llm"?["prompt_injection","jailbreak"].includes(item.audit_type):item.audit_type==="prompt_injection"))}/>
   </>;
 }
