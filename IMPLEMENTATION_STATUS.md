@@ -32,13 +32,22 @@ Status date: 2026-11-01. This document deliberately separates implemented code, 
 
 The v1.5.0 MSI, NSIS Setup executable, AppImage, and DEB are not considered validated by the local source tests. Their status is established by the Windows and Linux workflows for the exact release tag and by the published `SHA256SUMS.txt`.
 
-The last published platform proof before this candidate is v1.4.0:
+The exact-tag v1.5.0 platform validations completed successfully for commit `a5a694a3ca37232790affa17e700a64b29b5dd11`:
 
-- Windows x64 build and installer validation: [run 41224219837](https://github.com/St0rn/agentsec-inspector/actions/runs/41224219837).
-- Linux x86_64 build and installation smoke test: [run 41224219868](https://github.com/St0rn/agentsec-inspector/actions/runs/41224219868).
-- Published packages: [AgentSec Inspector v1.4.0](https://github.com/St0rn/agentsec-inspector/releases/tag/v1.4.0).
+- Windows x64 MSI/NSIS build, repeated installation, runtime verification, and data-preserving uninstall: [run 41293107640](https://github.com/St0rn/agentsec-inspector/actions/runs/41293107640).
+- Linux x86_64 AppImage/DEB build and repeated AppImage installation/runtime verification: [run 41293107481](https://github.com/St0rn/agentsec-inspector/actions/runs/41293107481).
+- Clean-environment screenshot regeneration: [run 41293107465](https://github.com/St0rn/agentsec-inspector/actions/runs/41293107465).
+- Release assembly and publication from those validated artifacts: [run 41294325538](https://github.com/St0rn/agentsec-inspector/actions/runs/41294325538).
+- Published packages and checksums: [AgentSec Inspector v1.5.0](https://github.com/St0rn/agentsec-inspector/releases/tag/v1.5.0).
 
-The v1.5.0 run identifiers and package checksums are added only after the tag workflows and release workflow succeed.
+Published SHA-256 values:
+
+```text
+d32977790b825a7592e90a8130b96df21c01f8773fa83e7ded422c2ec83d287f  AgentSec-Inspector_1.5.0_amd64.AppImage
+ed4f146883ecbad07f3caef066f3a699d65d6b8d17b37da431a1bda61f44672f  AgentSec-Inspector_1.5.0_amd64.deb
+0830eac08171faa6ad94f91db9e31a93cc4ef5a8a52cac0212f048093b95ee88  AgentSec-Inspector_1.5.0_x64-setup.exe
+2a201fd497102db5a3c25f6c592e114c2a907c33db2474d16e2367af256b6656  AgentSec-Inspector_1.5.0_x64_en-US.msi
+```
 
 ## Partial capabilities and explicit limits
 

@@ -13,7 +13,22 @@
 
 ### Validation de plateforme
 
-Les tests locaux ne valident ni MSI/NSIS ni AppImage/DEB. Les identifiants des runs Windows/Linux v1.5.0 et les empreintes des quatre paquets seront inscrits après réussite des workflows sur le tag exact. Jusqu’à cette étape, la dernière preuve publiée reste la v1.4.0 : [Windows 41224219837](https://github.com/St0rn/agentsec-inspector/actions/runs/41224219837), [Linux 41224219868](https://github.com/St0rn/agentsec-inspector/actions/runs/41224219868) et [release v1.4.0](https://github.com/St0rn/agentsec-inspector/releases/tag/v1.4.0).
+Les tests locaux ne valident ni MSI/NSIS ni AppImage/DEB. Ces paquets ont été validés séparément par les workflows du tag exact `v1.5.0`, tous deux rattachés au commit `a5a694a3ca37232790affa17e700a64b29b5dd11` :
+
+- Windows x64 : [run 41293107640](https://github.com/St0rn/agentsec-inspector/actions/runs/41293107640), avec parsing et analyse des scripts, Pester sous PowerShell 7 et 5.1, build MSI/NSIS, installation et vérification deux fois pour chaque format, puis désinstallation avec conservation des données.
+- Linux x86_64 : [run 41293107481](https://github.com/St0rn/agentsec-inspector/actions/runs/41293107481), avec Bash/ShellCheck, tests de cycle de vie, build AppImage/DEB, puis deux installations et vérifications de l’AppImage.
+- Captures v1.5.0 : [run 41293107465](https://github.com/St0rn/agentsec-inspector/actions/runs/41293107465), 27 images du README et du manuel régénérées depuis l’application et le laboratoire locaux.
+- Publication : [run 41294325538](https://github.com/St0rn/agentsec-inspector/actions/runs/41294325538), exécuté uniquement après la réussite des deux validations de plateforme.
+- Release : [AgentSec Inspector v1.5.0](https://github.com/St0rn/agentsec-inspector/releases/tag/v1.5.0).
+
+Empreintes publiées dans [`SHA256SUMS.txt`](https://github.com/St0rn/agentsec-inspector/releases/download/v1.5.0/SHA256SUMS.txt) :
+
+```text
+d32977790b825a7592e90a8130b96df21c01f8773fa83e7ded422c2ec83d287f  AgentSec-Inspector_1.5.0_amd64.AppImage
+ed4f146883ecbad07f3caef066f3a699d65d6b8d17b37da431a1bda61f44672f  AgentSec-Inspector_1.5.0_amd64.deb
+0830eac08171faa6ad94f91db9e31a93cc4ef5a8a52cac0212f048093b95ee88  AgentSec-Inspector_1.5.0_x64-setup.exe
+2a201fd497102db5a3c25f6c592e114c2a907c33db2474d16e2367af256b6656  AgentSec-Inspector_1.5.0_x64_en-US.msi
+```
 
 PowerShell, WebView2 et la chaîne MSVC ne sont pas disponibles dans cet environnement Linux. Aucune exécution Windows locale n’est revendiquée.
 

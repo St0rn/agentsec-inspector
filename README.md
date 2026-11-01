@@ -582,7 +582,7 @@ The interface starts in English. Open **Settings → Application Language** to s
 | Source and dependencies | `pip-audit` found no known Python vulnerability; Bandit found no medium/high issue. `npm audit --audit-level=high` passed, with 12 moderate findings confined to the development lint stack (`minimatch`) and no high/critical finding |
 | Controlled laboratory | The screenshot and integration run completed real passive/active MCP and RAG exchanges against the local demo services; no external target was involved |
 | Linux scripts | Bash syntax and the isolated lifecycle suite passed, including repeated install, backup/restore, update error handling, and both data-preserving and confirmed-data-removal uninstall paths |
-| Desktop packages | v1.5.0 Windows/Linux package validation is performed by the platform workflows linked in the badges above; local source tests are not presented as installer validation |
+| Desktop packages | Exact-tag validation passed for [Windows MSI/NSIS](https://github.com/St0rn/agentsec-inspector/actions/runs/41293107640) and [Linux AppImage/DEB](https://github.com/St0rn/agentsec-inspector/actions/runs/41293107481); the [release workflow](https://github.com/St0rn/agentsec-inspector/actions/runs/41294325538) published only those validated artifacts |
 
 The exact scope of local and platform validation, including the previously published v1.4.0 proof, is recorded in [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md), the [installation validation matrix](INSTALLATION_VALIDATION_MATRIX.md), and the [validation report](docs/VALIDATION_REPORT.md).
 

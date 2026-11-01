@@ -582,7 +582,7 @@ L’interface démarre en anglais. Ouvrez **Settings → Application Language** 
 | Source et dépendances | `pip-audit` ne détecte aucune vulnérabilité Python connue ; Bandit ne relève aucun problème moyen/élevé. `npm audit --audit-level=high` réussit, avec 12 alertes modérées limitées à la chaîne de lint de développement (`minimatch`) et aucune alerte haute/critique |
 | Laboratoire contrôlé | La génération des captures et les intégrations ont réalisé de vrais échanges MCP passifs/actifs et RAG contre les services de démonstration locaux, sans cible externe |
 | Scripts Linux | La syntaxe Bash et la suite isolée du cycle de vie réussissent, avec réinstallation, sauvegarde/restauration, erreurs de mise à jour et désinstallation avec conservation ou suppression confirmée des données |
-| Paquets desktop | La validation des paquets v1.5.0 Windows/Linux est réalisée par les workflows de plateforme indiqués dans les badges ; les tests source locaux ne sont pas présentés comme une validation d’installateur |
+| Paquets desktop | Les validations du tag exact réussissent pour [Windows MSI/NSIS](https://github.com/St0rn/agentsec-inspector/actions/runs/41293107640) et [Linux AppImage/DEB](https://github.com/St0rn/agentsec-inspector/actions/runs/41293107481) ; le [workflow de release](https://github.com/St0rn/agentsec-inspector/actions/runs/41294325538) publie uniquement ces artefacts validés |
 
 Le périmètre exact des validations locales et de plateforme, ainsi que les preuves de la version v1.4.0 déjà publiée, sont consignés dans [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md), la [matrice de validation](INSTALLATION_VALIDATION_MATRIX.md) et le [rapport de validation](docs/VALIDATION_REPORT.md).
 
