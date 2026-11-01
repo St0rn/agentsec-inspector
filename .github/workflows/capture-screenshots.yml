@@ -48,7 +48,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for file in dashboard dashboard-en language-selector mcp-passive mcp-active mcp-results mcp-inventory mcp-tool-form mcp-vulnerability-scan rag-security rag-active-results controlled-lab black-box-request-preview adaptive-red-team adaptive-red-team-fr findings report-preview-v1.5; do
+          for file in dashboard dashboard-en language-selector manual-project manual-target mcp-passive mcp-active mcp-results mcp-inventory mcp-tool-form mcp-vulnerability-scan prompt-injection jailbreak rag-security rag-active-results controlled-lab black-box-request-preview adaptive-red-team adaptive-red-team-fr agent-behavior attack-chains scenario-packs findings reports report-preview-v1.5 report-cover report-finding report-payload; do
             test -s "docs/images/${file}.png"
           done
           echo "Screenshots generated; inspect/download the workflow artifact before adding images via normal maintainer commits."
@@ -61,20 +61,31 @@ jobs:
             docs/images/dashboard.png
             docs/images/dashboard-en.png
             docs/images/language-selector.png
+            docs/images/manual-project.png
+            docs/images/manual-target.png
             docs/images/mcp-passive.png
             docs/images/mcp-active.png
             docs/images/mcp-results.png
             docs/images/mcp-inventory.png
             docs/images/mcp-tool-form.png
             docs/images/mcp-vulnerability-scan.png
+            docs/images/prompt-injection.png
+            docs/images/jailbreak.png
             docs/images/rag-security.png
             docs/images/rag-active-results.png
             docs/images/black-box-request-preview.png
             docs/images/controlled-lab.png
             docs/images/adaptive-red-team.png
             docs/images/adaptive-red-team-fr.png
+            docs/images/agent-behavior.png
+            docs/images/attack-chains.png
+            docs/images/scenario-packs.png
             docs/images/findings.png
+            docs/images/reports.png
             docs/images/report-preview-v1.5.png
+            docs/images/report-cover.png
+            docs/images/report-finding.png
+            docs/images/report-payload.png
       - name: Print logs if failed
         if: failure()
         shell: bash

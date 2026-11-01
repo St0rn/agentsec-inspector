@@ -52,7 +52,7 @@ Before sending a prompt, the request preview shows the effective method, URL, co
 <table>
   <tr>
     <td width="50%"><img src="docs/images/mcp-active.png" alt="Controlled active MCP audit"/><br/><sub>Bounded and explicitly authorized active MCP call</sub></td>
-    <td width="50%"><img src="docs/images/prompt-injection.png" alt="Prompt Injection Tester"/><br/><sub>Versioned injection scenarios using fictional markers</sub></td>
+    <td width="50%"><img src="docs/images/prompt-injection.png" alt="Prompt Injection Tester"/><br/><sub>Versioned Black-Box scenarios evaluated with local evidence rules</sub></td>
   </tr>
   <tr>
     <td width="50%"><img src="docs/images/findings.png" alt="Findings management"/><br/><sub>Traceable findings with severity, confidence, and remediation</sub></td>

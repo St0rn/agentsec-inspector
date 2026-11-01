@@ -52,7 +52,7 @@ Avant l’envoi, la prévisualisation affiche la méthode, l’URL, le payload d
 <table>
   <tr>
     <td width="50%"><img src="docs/images/mcp-active.png" alt="Audit MCP actif contrôlé"/><br/><sub>Appel MCP actif borné et explicitement autorisé</sub></td>
-    <td width="50%"><img src="docs/images/prompt-injection.png" alt="Prompt Injection Tester"/><br/><sub>Scénarios d’injection versionnés avec marqueur fictif</sub></td>
+    <td width="50%"><img src="docs/images/prompt-injection.png" alt="Prompt Injection Tester"/><br/><sub>Scénarios Black-Box versionnés, évalués par des règles locales fondées sur les preuves</sub></td>
   </tr>
   <tr>
     <td width="50%"><img src="docs/images/findings.png" alt="Gestion des constats"/><br/><sub>Constat, sévérité, confiance et suivi de la remédiation</sub></td>

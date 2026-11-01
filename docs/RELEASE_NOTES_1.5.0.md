@@ -11,7 +11,7 @@ AgentSec Inspector 1.5.0 separates the payload sent to a target from the auditor
 - RAG document import for TXT, Markdown, and PDF, strict size limits, extraction metadata, and evidence requirements for adversarial verdicts.
 - English interface by default with an immediate French switch in Settings. Report language remains independent.
 - Historical audit notices when older records do not contain fields that cannot be reconstructed safely.
-- New real-application screenshots for Black-Box request preview, Adaptive Red Team, and A4 report preview.
+- Every README and user-manual screenshot was regenerated from the v1.5.0 application connected to the controlled local laboratory, including the A4 report cover, finding, and exact payload views.
 
 ## Security boundaries
 
