@@ -3,8 +3,8 @@
 Vérifier l’empreinte et exécuter :
 
 ```powershell
-Get-FileHash .\AgentSec-Inspector_1.2.0_x64-setup.exe -Algorithm SHA256
-.\scripts\update.ps1 -InstallerPath .\AgentSec-Inspector_1.2.0_x64-setup.exe -TargetVersion 1.2.0
+Get-FileHash .\AgentSec-Inspector_1.5.0_x64-setup.exe -Algorithm SHA256
+.\scripts\update.ps1 -InstallerPath .\AgentSec-Inspector_1.5.0_x64-setup.exe -TargetVersion 1.5.0
 ```
 
 Le script refuse une version non supérieure, arrête en cas d’échec de sauvegarde, demande confirmation, installe, vérifie puis tente une restauration des données si la vérification échoue. Les migrations de schéma sont appliquées au démarrage par la couche de migration livrée avec la version.

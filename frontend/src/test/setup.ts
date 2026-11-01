@@ -1,8 +1,10 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
-import { afterEach, vi } from "vitest";
+import { afterEach, beforeEach, vi } from "vitest";
 
 Object.defineProperty(window, "confirm", { value: () => true, writable: true });
+
+beforeEach(() => localStorage.setItem("agentsec-language", "fr"));
 
 afterEach(() => {
   cleanup();

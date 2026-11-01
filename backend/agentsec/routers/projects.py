@@ -122,16 +122,41 @@ async def test_target_connection(
     if not target:
         raise HTTPException(404, "Target not found")
     if not body.confirm_active_request:
-        raise HTTPException(409, "The connection test sends a real request and requires confirmation")
+        raise HTTPException(
+            409, "The connection test sends a real request and requires confirmation"
+        )
     settings = get_settings()
     if target.target_type == "mcp_http":
-        http_client = HTTPMCPClient(target.endpoint or "", dict(target.configuration.get("headers", {})), settings, target.remote_authorized)
+        http_client = HTTPMCPClient(
+            target.endpoint or "",
+            dict(target.configuration.get("headers", {})),
+            settings,
+            target.remote_authorized,
+        )
         discovery = await http_client.discover()
-        return {"connected": True, "protocol": "mcp", "server_info": discovery.server_info, "capabilities": discovery.capabilities, "tools": len(discovery.tools), "suggested_configuration": {}}
+        return {
+            "connected": True,
+            "protocol": "mcp",
+            "server_info": discovery.server_info,
+            "capabilities": discovery.capabilities,
+            "tools": len(discovery.tools),
+            "suggested_configuration": {},
+        }
     if target.target_type == "mcp_stdio":
-        async with StdioMCPClient(str(target.configuration.get("command", "")), list(target.configuration.get("args", [])), settings) as stdio_client:
+        async with StdioMCPClient(
+            str(target.configuration.get("command", "")),
+            list(target.configuration.get("args", [])),
+            settings,
+        ) as stdio_client:
             discovery = await stdio_client.discover()
-        return {"connected": True, "protocol": "mcp-stdio", "server_info": discovery.server_info, "capabilities": discovery.capabilities, "tools": len(discovery.tools), "suggested_configuration": {}}
+        return {
+            "connected": True,
+            "protocol": "mcp-stdio",
+            "server_info": discovery.server_info,
+            "capabilities": discovery.capabilities,
+            "tools": len(discovery.tools),
+            "suggested_configuration": {},
+        }
     if target.target_type == "rag":
         raise HTTPException(422, "RAG targets do not expose a standard chat connection test")
     result = await send_chat(

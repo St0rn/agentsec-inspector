@@ -40,9 +40,7 @@ def test_api_rejects_missing_token(client: APIClient) -> None:
         "http://127.0.0.1:1420",
     ],
 )
-def test_cors_preflight_reaches_restricted_cors_middleware(
-    client: APIClient, origin: str
-) -> None:
+def test_cors_preflight_reaches_restricted_cors_middleware(client: APIClient, origin: str) -> None:
     response = client.options(
         "/api/v1/dashboard",
         headers={
@@ -111,28 +109,69 @@ def test_project_full_crud_roundtrip(client: APIClient, headers: dict[str, str])
 
 
 def test_target_edit_and_real_connection_test_contract(
-    client: APIClient, headers: dict[str, str], project: dict[str, object], monkeypatch: pytest.MonkeyPatch
+    client: APIClient,
+    headers: dict[str, str],
+    project: dict[str, object],
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     created = client.post(
         "/api/v1/targets",
         headers=headers,
-        json={"project_id": project["id"], "name": "Range", "target_type": "chatbot", "endpoint": "http://127.0.0.1:8789/target/api/chat/stream", "configuration": {"response_format": "ndjson"}, "remote_authorized": False},
+        json={
+            "project_id": project["id"],
+            "name": "Range",
+            "target_type": "chatbot",
+            "endpoint": "http://127.0.0.1:8789/target/api/chat/stream",
+            "configuration": {"response_format": "ndjson"},
+            "remote_authorized": False,
+        },
     )
     assert created.status_code == 201
     target_id = created.json()["id"]
     payload = created.json()
-    payload.update({"name": "Range edited", "configuration": {"message_path": "message", "response_format": "ndjson"}})
-    payload = {key: payload[key] for key in ("project_id", "name", "target_type", "endpoint", "configuration", "remote_authorized")}
+    payload.update(
+        {
+            "name": "Range edited",
+            "configuration": {"message_path": "message", "response_format": "ndjson"},
+        }
+    )
+    payload = {
+        key: payload[key]
+        for key in (
+            "project_id",
+            "name",
+            "target_type",
+            "endpoint",
+            "configuration",
+            "remote_authorized",
+        )
+    }
     updated = client.put(f"/api/v1/targets/{target_id}", headers=headers, json=payload)
     assert updated.status_code == 200
     assert updated.json()["name"] == "Range edited"
-    assert client.post(f"/api/v1/targets/{target_id}/test", headers=headers, json={"confirm_active_request": False}).status_code == 409
+    assert (
+        client.post(
+            f"/api/v1/targets/{target_id}/test",
+            headers=headers,
+            json={"confirm_active_request": False},
+        ).status_code
+        == 409
+    )
 
     async def fixture(*_args: object, **_kwargs: object) -> LLMResult:
-        return LLMResult("CONNECTED", {"type": "done"}, [{"name": "search"}], [{"type": "done", "response": "CONNECTED"}], {"protocol": "ndjson", "model": "fixture"}, True)
+        return LLMResult(
+            "CONNECTED",
+            {"type": "done"},
+            [{"name": "search"}],
+            [{"type": "done", "response": "CONNECTED"}],
+            {"protocol": "ndjson", "model": "fixture"},
+            True,
+        )
 
     monkeypatch.setattr(project_router, "send_chat", fixture)
-    tested = client.post(f"/api/v1/targets/{target_id}/test", headers=headers, json={"confirm_active_request": True})
+    tested = client.post(
+        f"/api/v1/targets/{target_id}/test", headers=headers, json={"confirm_active_request": True}
+    )
     assert tested.status_code == 200
     assert tested.json()["protocol"] == "ndjson"
     assert tested.json()["completed"] is True
@@ -142,28 +181,75 @@ def test_audit_detail_exports_and_attack_chain_layout_persist(
     client: APIClient, headers: dict[str, str], project: dict[str, object]
 ) -> None:
     with SessionLocal() as db:
-        target = Target(project_id=str(project["id"]), name="History target", target_type="agent_lab", endpoint="http://127.0.0.1:9999", configuration={})
+        target = Target(
+            project_id=str(project["id"]),
+            name="History target",
+            target_type="agent_lab",
+            endpoint="http://127.0.0.1:9999",
+            configuration={},
+        )
         db.add(target)
         db.flush()
-        audit = AuditRun(project_id=str(project["id"]), target_id=target.id, audit_type="custom_payload", status=AuditStatus.completed, passive=False, configuration={"security_objective": "Protect marker"}, summary={"test_status": "PASS"})
+        audit = AuditRun(
+            project_id=str(project["id"]),
+            target_id=target.id,
+            audit_type="custom_payload",
+            status=AuditStatus.completed,
+            passive=False,
+            configuration={"security_objective": "Protect marker"},
+            summary={"test_status": "PASS"},
+        )
         db.add(audit)
         db.flush()
-        db.add(ExecutionRecord(audit_run_id=audit.id, scenario_id="custom.fixture", scenario_version="1.0.0", status="PASS", request_data={"messages": [{"role": "user", "content": "test"}]}, response_data={"text": "safe"}, analysis={"rules": []}))
-        db.add(Evidence(project_id=str(project["id"]), audit_run_id=audit.id, evidence_type="prompt_test", title="Fixture", content="observable", sha256="0" * 64))
-        db.add(AgentEvent(project_id=str(project["id"]), audit_run_id=audit.id, event_type="llm_exchange", actor="AgentSec", target="History target", payload={"status": "PASS"}))
+        db.add(
+            ExecutionRecord(
+                audit_run_id=audit.id,
+                scenario_id="custom.fixture",
+                scenario_version="1.0.0",
+                status="PASS",
+                request_data={"messages": [{"role": "user", "content": "test"}]},
+                response_data={"text": "safe"},
+                analysis={"rules": []},
+            )
+        )
+        db.add(
+            Evidence(
+                project_id=str(project["id"]),
+                audit_run_id=audit.id,
+                evidence_type="prompt_test",
+                title="Fixture",
+                content="observable",
+                sha256="0" * 64,
+            )
+        )
+        db.add(
+            AgentEvent(
+                project_id=str(project["id"]),
+                audit_run_id=audit.id,
+                event_type="llm_exchange",
+                actor="AgentSec",
+                target="History target",
+                payload={"status": "PASS"},
+            )
+        )
         audit_id = audit.id
         db.commit()
-    detail=client.get(f"/api/v1/audits/{audit_id}/detail",headers=headers)
-    assert detail.status_code==200
-    assert detail.json()["executions"][0]["response_data"]["text"]=="safe"
-    assert detail.json()["evidence"][0]["content"]=="observable"
-    assert client.get(f"/api/v1/audits/{audit_id}/export?format=json",headers=headers).status_code==200
-    pdf=client.get(f"/api/v1/audits/{audit_id}/export?format=pdf",headers=headers)
-    assert pdf.status_code==200 and pdf.content.startswith(b"%PDF")
-    layout={"nodes":{"AgentSec":{"x":120,"y":240},"History target":{"x":500,"y":240}}}
-    saved=client.put(f"/api/v1/attack-chain-layout/{project['id']}",headers=headers,json=layout)
-    assert saved.status_code==200
-    assert client.get(f"/api/v1/attack-chain-layout/{project['id']}",headers=headers).json()==layout
+    detail = client.get(f"/api/v1/audits/{audit_id}/detail", headers=headers)
+    assert detail.status_code == 200
+    assert detail.json()["executions"][0]["response_data"]["text"] == "safe"
+    assert detail.json()["evidence"][0]["content"] == "observable"
+    assert (
+        client.get(f"/api/v1/audits/{audit_id}/export?format=json", headers=headers).status_code
+        == 200
+    )
+    pdf = client.get(f"/api/v1/audits/{audit_id}/export?format=pdf", headers=headers)
+    assert pdf.status_code == 200 and pdf.content.startswith(b"%PDF")
+    layout = {"nodes": {"AgentSec": {"x": 120, "y": 240}, "History target": {"x": 500, "y": 240}}}
+    saved = client.put(f"/api/v1/attack-chain-layout/{project['id']}", headers=headers, json=layout)
+    assert saved.status_code == 200
+    assert (
+        client.get(f"/api/v1/attack-chain-layout/{project['id']}", headers=headers).json() == layout
+    )
 
 
 def test_project_crud_and_isolation(
@@ -306,6 +392,97 @@ def test_jailbreak_scenario_creates_a_distinct_audit_type(
     )
     assert response.status_code == 202
     assert response.json()["audit_type"] == "jailbreak"
+
+
+def test_black_box_preview_contains_only_the_connector_request(
+    client: APIClient, headers: dict[str, str], project: dict[str, object]
+) -> None:
+    target = client.post(
+        "/api/v1/targets",
+        headers=headers,
+        json={
+            "project_id": project["id"],
+            "name": "Preview target",
+            "target_type": "openai",
+            "endpoint": "http://127.0.0.1:9999",
+            "configuration": {
+                "model": "fixture-model",
+                "api_key_env": "AGENTSEC_PREVIEW_SECRET",
+            },
+            "remote_authorized": False,
+        },
+    )
+    assert target.status_code == 201
+    objective = "LOCAL_ONLY_OBJECTIVE_31F4"
+    rule_value = "LOCAL_ONLY_RULE_72B9"
+    response = client.post(
+        "/api/v1/audits/prompt/preview",
+        headers=headers,
+        json={
+            "project_id": project["id"],
+            "target_id": target.json()["id"],
+            "scenario_id": "pi.direct",
+            "security_objective": objective,
+            "security_rules": [
+                {
+                    "id": "local-rule",
+                    "rule_type": "response_not_contains",
+                    "value": rule_value,
+                }
+            ],
+        },
+    )
+    assert response.status_code == 200
+    preview = response.json()
+    assert preview["test_mode"] == "black_box"
+    assert [message["role"] for message in preview["messages"]] == ["user"]
+    assert preview["payload"]["messages"] == preview["messages"]
+    assert preview["security_objective_sent"] is False
+    assert preview["evaluation_rules_sent"] is False
+    assert objective not in response.text
+    assert rule_value not in response.text
+    assert "AGENTSEC_PREVIEW_SECRET" not in response.text
+    assert "secret values are never previewed" in preview["authentication"]
+
+
+def test_controlled_lab_preview_requires_confirmation_and_adds_system_message(
+    client: APIClient, headers: dict[str, str], project: dict[str, object]
+) -> None:
+    target = client.post(
+        "/api/v1/targets",
+        headers=headers,
+        json={
+            "project_id": project["id"],
+            "name": "Controlled target",
+            "target_type": "ollama",
+            "endpoint": "http://127.0.0.1:11434",
+            "configuration": {"model": "fixture-model"},
+            "remote_authorized": False,
+        },
+    )
+    body = {
+        "project_id": project["id"],
+        "target_id": target.json()["id"],
+        "scenario_id": "pi.direct",
+        "security_objective": "Test the controlled boundary",
+        "test_mode": "controlled_lab",
+        "marker_provenance": "controlled_lab",
+        "system_instruction": "Protect the controlled marker.",
+    }
+    rejected = client.post("/api/v1/audits/prompt/preview", headers=headers, json=body)
+    assert rejected.status_code == 422
+    accepted = client.post(
+        "/api/v1/audits/prompt/preview",
+        headers=headers,
+        json={**body, "confirm_controlled_lab": True},
+    )
+    assert accepted.status_code == 200
+    preview = accepted.json()
+    assert [message["role"] for message in preview["messages"]] == ["system", "user"]
+    assert "AGENTSEC_CANARY_7F3A" in preview["messages"][0]["content"]
+    assert "AGENTSEC_CANARY_7F3A" not in preview["messages"][1]["content"]
+    assert preview["payload"]["messages"] == preview["messages"]
+    assert preview["url"].endswith("/api/chat")
 
 
 def test_finding_history(

@@ -9,7 +9,7 @@ Un scénario est un contrat de test reproductible : il décrit l’objectif et l
 - un pack contient de 1 à 100 scénarios ;
 - chaque couple `id` / `version` est unique et utilise une version sémantique ;
 - seules les étapes déclaratives `chat` avec un modèle de texte borné sont admises ;
-- le marqueur `{marker}` est obligatoire et remplacé par une valeur fictive au moment du test ;
+- le marqueur `{marker}` est obligatoire ; en Black-Box il devient une donnée fictive du payload, tandis qu’en Controlled Lab la valeur exacte reste dans la politique artificielle et le payload n’en reçoit qu’une référence symbolique ;
 - plusieurs étapes `chat` sont exécutées séquentiellement contre la cible, avec conservation des réponses intermédiaires dans le contexte et les preuves ;
 - les champs inconnus, commandes, scripts et procédures exécutables sont rejetés ;
 - une version existante n’est remplacée qu’avec `replace_existing: true` ;
@@ -50,7 +50,7 @@ Chaque étape de `procedure` accepte exactement deux attributs :
 | `type` | Toujours `"chat"` en V1 |
 | `template` | Texte de 1 à 10 000 caractères contenant obligatoirement `{marker}` |
 
-Au démarrage du test, `{marker}` est remplacé par le marqueur fictif choisi par l’auditeur. Dans une procédure multi-tour, AgentSec envoie les étapes dans l’ordre et réinjecte les réponses intermédiaires dans l’historique. Les requêtes, réponses, appels d’outils observés et horodatages restent attachés à l’exécution.
+Au démarrage d’un test Black-Box, `{marker}` est remplacé par la valeur fictive choisie par l’auditeur ; cette provenance utilisateur rend une règle de divulgation non concluante à elle seule. En Controlled Lab, le marqueur exact est prépositionné dans la politique système artificielle et `{marker}` devient une référence symbolique dans le message utilisateur. Dans une procédure multi-tour, AgentSec envoie les étapes dans l’ordre et réinjecte les réponses intermédiaires dans l’historique. Les requêtes, réponses, appels d’outils observés et horodatages restent attachés à l’exécution.
 
 ### Évaluation structurée
 

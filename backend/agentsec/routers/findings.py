@@ -86,9 +86,7 @@ async def finding_detail(finding_id: str, db: Session = Depends(get_db)) -> dict
     )
     evidence = list(
         db.scalars(
-            select(Evidence)
-            .where(Evidence.finding_id == finding.id)
-            .order_by(Evidence.created_at)
+            select(Evidence).where(Evidence.finding_id == finding.id).order_by(Evidence.created_at)
         )
     )
     occurrences = list(

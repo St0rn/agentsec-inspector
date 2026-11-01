@@ -81,6 +81,9 @@ export function MCPResultView({summary}:{summary:Obj}) {
     Observations:asRows(summary.findings),
   };
   const stats:Inventory[]=["Outils","Ressources","Prompts","Observations"];
+  const permissionAnalysis=asObject(summary.permission_analysis);
+  const permissionDifferences=asRows(permissionAnalysis.differences);
+  const attackChains=asRows(summary.attack_chains);
   return <section className="space-y-4" aria-label="Résultats MCP">
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{stats.map((kind)=>
       <button type="button" key={kind} aria-label={`Voir ${kind.toLowerCase()} MCP`}
@@ -97,6 +100,16 @@ export function MCPResultView({summary}:{summary:Obj}) {
     {summary.scan_mode==="vulnerability"&&<div className="rounded-lg border border-cyan/20 bg-cyan/5 p-3 text-sm text-slate-300">
       Contrôles des métadonnées et schémas MCP : ces constats indiquent des risques potentiels, pas une exploitation démontrée.
       {inventory.Observations.length>0&&<span className="ml-2 font-semibold text-white">{inventory.Observations.length} constat(s) à examiner.</span>}
+    </div>}
+    {(permissionDifferences.length>0||attackChains.length>0)&&<div className="grid gap-3 lg:grid-cols-2">
+      <details className="rounded border border-slate-800 bg-slate-950/30" open={permissionDifferences.length>0}>
+        <summary className="cursor-pointer px-3 py-2 text-sm text-cyan">Identity permission comparison · {permissionDifferences.length} difference(s)</summary>
+        <pre data-i18n-ignore="true" className="max-h-80 overflow-auto whitespace-pre-wrap border-t border-slate-800 p-3 text-xs text-slate-300">{JSON.stringify(permissionAnalysis,null,2)}</pre>
+      </details>
+      <details className="rounded border border-slate-800 bg-slate-950/30" open={attackChains.length>0}>
+        <summary className="cursor-pointer px-3 py-2 text-sm text-cyan">MCP attack chains · {attackChains.length}</summary>
+        <div className="space-y-2 border-t border-slate-800 p-3">{attackChains.map((chain,index)=><article key={index} className="rounded border border-slate-800 p-3"><div className="flex items-center gap-2"><strong className="text-white">{display(chain.id)}</strong><span className={chain.validated?"text-amber-300":"text-slate-400"}>{chain.validated?"Observed authorised call":"Potential path"}</span></div><p className="mt-2 text-xs text-slate-400">{display(chain.impact)}</p><pre data-i18n-ignore="true" className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap rounded bg-black p-2 text-xs">{JSON.stringify({nodes:chain.nodes,edges:chain.edges,evidence:chain.evidence},null,2)}</pre></article>)}</div>
+      </details>
     </div>}
     {calls.map((call,index)=>{
       const result=asObject(call.result);

@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import io
 import json
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Response, WebSocket, WebSocketDisconnect
 from fastapi.encoders import jsonable_encoder
@@ -26,6 +27,7 @@ from ..models import (
     TestExecution,
 )
 from ..schemas import (
+    AdaptiveAuditRequest,
     AuditRead,
     CustomPayloadRequest,
     GraphLayoutUpdate,
@@ -34,10 +36,17 @@ from ..schemas import (
     RAGActiveAuditRequest,
     ScenarioPackImport,
 )
+from ..services.adaptive import run_adaptive_audit
 from ..services.audits import run_mcp_audit, run_prompt_test
 from ..services.events import event_hub
+from ..services.llm_client import preview_chat_request
 from ..services.mcp_analysis import is_sensitive_tool
 from ..services.rag_active import run_rag_audit
+from ..services.scenarios import (
+    controlled_lab_system_message,
+    render_attack_payload,
+    scenario_messages,
+)
 
 router = APIRouter(tags=["audits"])
 
@@ -124,7 +133,11 @@ async def list_audits(
     if search:
         pattern = f"%{search[:200]}%"
         statement = statement.outerjoin(Target, Target.id == AuditRun.target_id).where(
-            or_(AuditRun.id.ilike(pattern), AuditRun.audit_type.ilike(pattern), Target.name.ilike(pattern))
+            or_(
+                AuditRun.id.ilike(pattern),
+                AuditRun.audit_type.ilike(pattern),
+                Target.name.ilike(pattern),
+            )
         )
     return list(db.scalars(statement))
 
@@ -159,6 +172,7 @@ async def start_mcp_audit(body: MCPAuditRequest, db: Session = Depends(get_db)) 
             "confirmed_active": body.confirm_active_operations,
             "scan_mode": body.scan_mode,
             "active_tool_calls": [item.model_dump() for item in body.active_tool_calls],
+            "identity_names": body.identity_names,
         },
     )
     db.add(audit)
@@ -169,9 +183,7 @@ async def start_mcp_audit(body: MCPAuditRequest, db: Session = Depends(get_db)) 
 
 
 @router.post("/audits/rag", response_model=AuditRead, status_code=202)
-async def start_rag_audit(
-    body: RAGActiveAuditRequest, db: Session = Depends(get_db)
-) -> AuditRun:
+async def start_rag_audit(body: RAGActiveAuditRequest, db: Session = Depends(get_db)) -> AuditRun:
     target = _validate_target(db, body.project_id, body.target_id)
     if target.target_type not in {"rag", "chatbot", "agent_lab", "custom_http", "openai", "ollama"}:
         raise HTTPException(422, "Target is not a compatible RAG or chat endpoint")
@@ -181,16 +193,30 @@ async def start_rag_audit(
         raise HTTPException(409, "RAG active testing requires explicit confirmation")
     if body.upload_document_id:
         document = db.get(RAGDocument, body.upload_document_id)
-        if document is None or document.project_id != body.project_id or not document.is_lab_document:
-            raise HTTPException(422, "Only imported controlled laboratory documents can be uploaded")
+        if (
+            document is None
+            or document.project_id != body.project_id
+            or not document.is_lab_document
+        ):
+            raise HTTPException(
+                422, "Only imported controlled laboratory documents can be uploaded"
+            )
         if not body.confirm_document_upload or not target.configuration.get("ingest_endpoint"):
-            raise HTTPException(409, "Document upload requires explicit approval and a configured ingestion endpoint")
+            raise HTTPException(
+                409,
+                "Document upload requires explicit approval and a configured ingestion endpoint",
+            )
     for case in body.cases:
         if case.kind != "baseline" and case.marker.casefold() in case.query.casefold():
-            raise HTTPException(422, "Indirect injection markers must be supplied by retrieved material, not the user query")
+            raise HTTPException(
+                422,
+                "Indirect injection markers must be supplied by retrieved material, not the user query",
+            )
     audit = AuditRun(
-        project_id=body.project_id, target_id=body.target_id,
-        audit_type="rag_security", passive=False,
+        project_id=body.project_id,
+        target_id=body.target_id,
+        audit_type="rag_security",
+        passive=False,
         configuration={
             "cases": [item.model_dump() for item in body.cases],
             "upload_document_id": body.upload_document_id,
@@ -224,6 +250,13 @@ async def start_prompt_test(body: PromptTestRequest, db: Session = Depends(get_d
             "scenario_version": body.scenario_version,
             "security_objective": body.security_objective,
             "security_rules": [rule.model_dump() for rule in body.security_rules],
+            "test_mode": body.test_mode,
+            "marker_provenance": body.marker_provenance,
+            "criteria_provenance": "auditor_local_rules",
+            "evaluation_engine_version": "2.0.0",
+            "controlled_lab_instruction": body.system_instruction
+            if body.test_mode == "controlled_lab"
+            else None,
         },
     )
     db.add(audit)
@@ -251,6 +284,13 @@ async def start_custom_test(body: CustomPayloadRequest, db: Session = Depends(ge
             "security_objective": body.security_objective,
             "security_rules": [rule.model_dump() for rule in body.security_rules],
             "payload_count": len(body.payloads),
+            "test_mode": body.test_mode,
+            "marker_provenance": body.marker_provenance,
+            "criteria_provenance": "auditor_local_rules",
+            "evaluation_engine_version": "2.0.0",
+            "controlled_lab_instruction": body.system_instruction
+            if body.test_mode == "controlled_lab"
+            else None,
         },
     )
     db.add(audit)
@@ -268,8 +308,154 @@ async def start_custom_test(body: CustomPayloadRequest, db: Session = Depends(ge
     return audit
 
 
+@router.post("/audits/prompt/preview")
+async def preview_prompt_test(
+    body: PromptTestRequest, db: Session = Depends(get_db)
+) -> dict[str, object]:
+    target = _validate_target(db, body.project_id, body.target_id)
+    scenario = db.get(Scenario, (body.scenario_id, body.scenario_version))
+    if not scenario:
+        raise HTTPException(404, "Scenario not found")
+    chat_steps = [
+        item
+        for item in scenario.procedure
+        if item.get("type") == "chat" and isinstance(item.get("template"), str)
+    ]
+    if not chat_steps:
+        raise HTTPException(422, "Scenario has no supported declarative chat step")
+    messages = scenario_messages(
+        {"id": scenario.id, "template": chat_steps[0]["template"]},
+        body.fictional_marker,
+        body.system_instruction,
+        body.test_mode,
+    )
+    return {
+        **preview_chat_request(target, messages, body.max_tokens, get_settings()),
+        "test_mode": body.test_mode,
+        "security_objective_sent": False,
+        "evaluation_rules_sent": False,
+        "remaining_turns": max(0, len(chat_steps) - 1),
+    }
+
+
+@router.post("/audits/custom/preview")
+async def preview_custom_test(
+    body: CustomPayloadRequest, db: Session = Depends(get_db)
+) -> dict[str, object]:
+    target = _validate_target(db, body.project_id, body.target_id)
+    messages: list[dict[str, str]] = []
+    if body.test_mode == "controlled_lab":
+        messages.append(
+            {
+                "role": "system",
+                "content": controlled_lab_system_message(
+                    body.system_instruction, body.fictional_marker
+                ),
+            }
+        )
+    messages.append(
+        {
+            "role": "user",
+            "content": render_attack_payload(
+                body.payloads[0], body.fictional_marker, body.test_mode
+            ),
+        }
+    )
+    return {
+        **preview_chat_request(target, messages, body.max_tokens, get_settings()),
+        "test_mode": body.test_mode,
+        "security_objective_sent": False,
+        "evaluation_rules_sent": False,
+        "remaining_turns": len(body.payloads) - 1,
+    }
+
+
+@router.post("/audits/adaptive/preview")
+async def preview_adaptive_test(
+    body: AdaptiveAuditRequest, db: Session = Depends(get_db)
+) -> dict[str, object]:
+    target = _validate_target(db, body.project_id, body.target_id)
+    step = next(item for item in body.steps if item.id == body.entry_step)
+    messages: list[dict[str, str]] = []
+    if body.test_mode == "controlled_lab":
+        messages.append(
+            {
+                "role": "system",
+                "content": controlled_lab_system_message(
+                    body.system_instruction, body.fictional_marker
+                ),
+            }
+        )
+    messages.append(
+        {
+            "role": "user",
+            "content": render_attack_payload(step.payload, body.fictional_marker, body.test_mode),
+        }
+    )
+    return {
+        **preview_chat_request(target, messages, body.max_tokens_per_turn, get_settings()),
+        "entry_step": body.entry_step,
+        "test_mode": body.test_mode,
+        "security_objective_sent": False,
+        "evaluation_rules_sent": False,
+        "branching": "Transitions are evaluated locally after each observed response.",
+    }
+
+
+@router.post("/audits/adaptive", response_model=AuditRead, status_code=202)
+async def start_adaptive_test(
+    body: AdaptiveAuditRequest, db: Session = Depends(get_db)
+) -> AuditRun:
+    target = _validate_target(db, body.project_id, body.target_id)
+    if target.target_type not in {"openai", "ollama", "custom_http", "chatbot", "agent_lab"}:
+        raise HTTPException(422, "Adaptive Red Team requires an LLM or agent endpoint")
+    if not body.confirm_active_test:
+        raise HTTPException(409, "Adaptive active testing requires explicit confirmation")
+    audit = AuditRun(
+        project_id=body.project_id,
+        target_id=body.target_id,
+        audit_type="adaptive_red_team",
+        passive=False,
+        configuration={
+            "name": body.name,
+            "entry_step": body.entry_step,
+            "step_count": len(body.steps),
+            "max_turns": body.max_turns,
+            "token_budget": body.token_budget,
+            "security_objective": body.security_objective,
+            "security_rules": [rule.model_dump() for rule in body.security_rules],
+            "test_mode": body.test_mode,
+            "marker_provenance": body.marker_provenance,
+            "criteria_provenance": "auditor_local_rules",
+            "evaluation_engine_version": "2.0.0",
+        },
+    )
+    db.add(audit)
+    db.commit()
+    db.refresh(audit)
+    asyncio.create_task(run_adaptive_audit(audit.id, body.model_dump()))
+    return audit
+
+
+@router.post("/audits/{audit_id}/cancel", response_model=AuditRead)
+async def cancel_audit(audit_id: str, db: Session = Depends(get_db)) -> AuditRun:
+    audit = db.get(AuditRun, audit_id)
+    if not audit:
+        raise HTTPException(404, "Audit not found")
+    if audit.status not in {AuditStatus.queued, AuditStatus.running}:
+        raise HTTPException(409, "Only a queued or running audit can be cancelled")
+    audit.status = AuditStatus.cancelled
+    audit.finished_at = audit.finished_at or datetime.now(UTC)
+    db.commit()
+    db.refresh(audit)
+    await event_hub.publish(audit.id, {"stage": "cancellation_requested", "progress": 100})
+    return audit
+
+
 @router.delete("/audits/{audit_id}", status_code=204)
-async def delete_audit(audit_id: str, confirm_delete: bool = False, db: Session = Depends(get_db)) -> Response:
+async def delete_audit(
+    audit_id: str, confirm_delete: bool = False, db: Session = Depends(get_db)
+) -> Response:
     """Delete one historical execution and its audit-bound evidence, not shared findings."""
     if not confirm_delete:
         raise HTTPException(409, "Audit deletion requires explicit confirmation")
@@ -322,14 +508,50 @@ async def audit_detail(audit_id: str, db: Session = Depends(get_db)) -> dict[str
     if not audit:
         raise HTTPException(404, "Audit not found")
     target = db.get(Target, audit.target_id) if audit.target_id else None
-    executions = list(db.scalars(select(TestExecution).where(TestExecution.audit_run_id == audit.id).order_by(TestExecution.started_at)))
-    evidence = list(db.scalars(select(Evidence).where(Evidence.audit_run_id == audit.id).order_by(Evidence.created_at)))
-    events = list(db.scalars(select(AgentEvent).where(AgentEvent.audit_run_id == audit.id).order_by(AgentEvent.occurred_at)))
-    findings = list(db.scalars(select(Finding).outerjoin(
-        FindingOccurrence, FindingOccurrence.finding_id == Finding.id
-    ).where(
-        or_(Finding.audit_run_id == audit.id, FindingOccurrence.audit_run_id == audit.id)
-    ).distinct().order_by(Finding.created_at)))
+    executions = list(
+        db.scalars(
+            select(TestExecution)
+            .where(TestExecution.audit_run_id == audit.id)
+            .order_by(TestExecution.started_at)
+        )
+    )
+    evidence = list(
+        db.scalars(
+            select(Evidence).where(Evidence.audit_run_id == audit.id).order_by(Evidence.created_at)
+        )
+    )
+    events = list(
+        db.scalars(
+            select(AgentEvent)
+            .where(AgentEvent.audit_run_id == audit.id)
+            .order_by(AgentEvent.occurred_at)
+        )
+    )
+    findings = list(
+        db.scalars(
+            select(Finding)
+            .outerjoin(FindingOccurrence, FindingOccurrence.finding_id == Finding.id)
+            .where(
+                or_(Finding.audit_run_id == audit.id, FindingOccurrence.audit_run_id == audit.id)
+            )
+            .distinct()
+            .order_by(Finding.created_at)
+        )
+    )
+    historical_notices: list[str] = []
+    if not evidence:
+        historical_notices.append(
+            "No audit-linked evidence was captured by the version that created this record."
+        )
+    if audit.audit_type in {
+        "prompt_injection",
+        "jailbreak",
+        "custom_payload",
+        "adaptive_red_team",
+    } and not audit.configuration.get("test_mode"):
+        historical_notices.append(
+            "The historical test mode, criterion provenance, and marker provenance cannot be determined. The stored verdict has not been reinterpreted."
+        )
     return {
         "audit": jsonable_encoder(AuditRead.model_validate(audit)),
         "target": jsonable_encoder(target) if target else None,
@@ -337,16 +559,22 @@ async def audit_detail(audit_id: str, db: Session = Depends(get_db)) -> dict[str
         "evidence": [jsonable_encoder(item) for item in evidence],
         "events": [jsonable_encoder(item) for item in events],
         "findings": [jsonable_encoder(item) for item in findings],
-        "historical_data_notice": None if evidence else "No audit-linked evidence was captured by the version that created this record.",
+        "historical_data_notice": " ".join(historical_notices) or None,
     }
 
 
 @router.get("/audits/{audit_id}/export")
-async def export_audit(audit_id: str, format: str = "json", db: Session = Depends(get_db)) -> Response:
+async def export_audit(
+    audit_id: str, format: str = "json", db: Session = Depends(get_db)
+) -> Response:
     detail = await audit_detail(audit_id, db)
     if format == "json":
         content = json.dumps(jsonable_encoder(detail), ensure_ascii=False, indent=2).encode()
-        return Response(content, media_type="application/json", headers={"Content-Disposition": f'attachment; filename="audit-{audit_id}.json"'})
+        return Response(
+            content,
+            media_type="application/json",
+            headers={"Content-Disposition": f'attachment; filename="audit-{audit_id}.json"'},
+        )
     if format != "pdf":
         raise HTTPException(422, "Export format must be json or pdf")
     from reportlab.lib.pagesizes import A4  # type: ignore[import-untyped]
@@ -365,13 +593,28 @@ async def export_audit(audit_id: str, format: str = "json", db: Session = Depend
     story = [Paragraph(f"AgentSec Inspector — {audit_id}", styles["Title"]), Spacer(1, 12)]
     story.append(Preformatted(json.dumps(audit, ensure_ascii=False, indent=2), styles["Code"]))
     for section in ("executions", "events", "evidence", "findings"):
-        story.extend([Spacer(1, 12), Paragraph(section.title(), styles["Heading2"]), Preformatted(json.dumps(detail[section], ensure_ascii=False, indent=2)[:30_000], styles["Code"])])
+        story.extend(
+            [
+                Spacer(1, 12),
+                Paragraph(section.title(), styles["Heading2"]),
+                Preformatted(
+                    json.dumps(detail[section], ensure_ascii=False, indent=2)[:30_000],
+                    styles["Code"],
+                ),
+            ]
+        )
     document.build(story)
-    return Response(buffer.getvalue(), media_type="application/pdf", headers={"Content-Disposition": f'attachment; filename="audit-{audit_id}.pdf"'})
+    return Response(
+        buffer.getvalue(),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="audit-{audit_id}.pdf"'},
+    )
 
 
 @router.get("/attack-chain-layout/{project_id}")
-async def get_attack_chain_layout(project_id: str, db: Session = Depends(get_db)) -> dict[str, object]:
+async def get_attack_chain_layout(
+    project_id: str, db: Session = Depends(get_db)
+) -> dict[str, object]:
     if not db.get(Project, project_id):
         raise HTTPException(404, "Project not found")
     item = db.get(AppSetting, f"attack-chain-layout:{project_id}")
@@ -379,11 +622,15 @@ async def get_attack_chain_layout(project_id: str, db: Session = Depends(get_db)
 
 
 @router.put("/attack-chain-layout/{project_id}")
-async def save_attack_chain_layout(project_id: str, body: GraphLayoutUpdate, db: Session = Depends(get_db)) -> dict[str, object]:
+async def save_attack_chain_layout(
+    project_id: str, body: GraphLayoutUpdate, db: Session = Depends(get_db)
+) -> dict[str, object]:
     if not db.get(Project, project_id):
         raise HTTPException(404, "Project not found")
     key = f"attack-chain-layout:{project_id}"
-    value: dict[str, object] = {"nodes": {name: position.model_dump() for name, position in body.nodes.items()}}
+    value: dict[str, object] = {
+        "nodes": {name: position.model_dump() for name, position in body.nodes.items()}
+    }
     item = db.get(AppSetting, key)
     if item:
         item.value = value

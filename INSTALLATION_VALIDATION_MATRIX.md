@@ -1,42 +1,48 @@
-# Installation Validation Matrix
+# Installation validation matrix
 
-État au 2026-10-30. Preuve Windows 1.1.0 : [run GitHub Actions `41108334253`](https://github.com/St0rn/agentsec-inspector/actions/runs/41108334253), runner `windows-2022`, succès sur le commit `791cb580dee5fda3308e564c7882b8c233463195`. « Statique uniquement » signifie que le script a été analysé sous PowerShell 5.1/7 et PSScriptAnalyzer, mais que son chemin nominal complet n’a pas été exécuté dans ce job. Les résultats Linux CI proviennent du [run `41108334280`](https://github.com/St0rn/agentsec-inspector/actions/runs/41108334280).
+Status date: 2026-11-01. “Current workspace” means the Linux development environment used for v1.5.0 source validation. Windows and packaged Linux results must come from GitHub Actions for the exact commit or tag; the last published package proof before v1.5.0 is v1.4.0 ([Windows 41224219837](https://github.com/St0rn/agentsec-inspector/actions/runs/41224219837), [Linux 41224219868](https://github.com/St0rn/agentsec-inspector/actions/runs/41224219868)).
 
-| Script | Syntaxe | Exécution | Tests d’erreur | Résultat | Statut |
+## PowerShell scripts
+
+PowerShell is unavailable in the current Linux workspace. The table therefore does not transfer historical v1.4.0 results to v1.5.0. The Windows workflow parses and analyzes every script, runs Pester in PowerShell 7 and 5.1, builds both installers, and exercises the installation path.
+
+| Script | Syntax | Execution | Error tests | Result | v1.5.0 status before tagged CI |
 |---|---|---|---|---|---|
-| install.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | MSI ×2 et NSIS ×2 | Réexécution/idempotence vérifiée | Quatre installations avec vérification réussies | Validé CI Windows |
-| install-dev.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | Non exécutée dans ce job | Venv incomplet couvert par Pester | — | Statique + régression ciblée |
-| check-prerequisites.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | Exécutée avec `-ForBuild` | Détections strictes couvertes par Pester | WebView2, MSVC x64, SDK, headers et probe C++ réussis | Validé CI Windows |
-| setup-backend.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | Non exécutée séparément | Venv absent/incomplet couvert | Backend verrouillé construit par PyInstaller | Statique + intégration build |
-| setup-frontend.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | Non exécutée séparément | `stderr`/codes natifs couverts | Frontend construit dans `build-windows.ps1` | Statique + intégration build |
-| setup-database.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | Exécutée deux fois sous PS7 et deux fois sous PS5.1 | Idempotence et intégrité SQLite | Migration idempotente réussie | Validé CI Windows |
-| start-dev.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | Non exécutée dans ce job | Contrôle statique | — | Statique uniquement |
-| start-production.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | Non exécutée directement | Découverte du vrai binaire packagé couverte | Desktop lancé par `verify-installation.ps1` | Statique + intégration install |
-| build-windows.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | Exécutée | Absence MSI/NSIS bloquante | Backend, MSI et NSIS produits avec SHA-256 | Validé CI Windows |
-| test-all.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | Exécutée par le build | Seuils qualité bloquants | Backend/frontend/lint/typage réussis | Validé CI Windows |
-| verify-installation.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | MSI ×2 et NSIS ×2 | Auth 401, processus et nettoyage contrôlés | Fichiers, API, port dynamique, CORS Tauri, SQLite, CRUD, logs, desktop et sidecar réussis | Validé CI Windows |
-| update.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | Non exécutée dans ce job | Backup/migration/rollback analysés | — | Statique uniquement |
-| backup.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | Non exécutée dans ce job | Données absentes analysées | API backup couverte séparément | Statique uniquement Windows |
-| restore.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | Chemin de refus exécuté | Confirmation obligatoire vérifiée | Restauration nominale non lancée sur Windows | Partiel |
-| uninstall.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | Exécutée après MSI et NSIS | Données utilisateur préservées par défaut | Deux désinstallations réussies | Validé CI Windows |
-| clean.ps1 | PowerShell 5.1/7 + PSScriptAnalyzer réussis | Non exécutée dans ce job | Cibles bornées au dépôt | — | Statique uniquement |
+| `install.ps1` | Windows CI required | Windows CI required | Pester + packaged cycle | Pending exact-tag run | Not yet validated |
+| `install-dev.ps1` | Windows CI required | Not nominally exercised by package job | Incomplete venv covered by Pester | Pending exact-tag run | Partial by design |
+| `check-prerequisites.ps1` | Windows CI required | `-ForBuild` in Windows CI | Strict detection cases in Pester | Pending exact-tag run | Not yet validated |
+| `setup-backend.ps1` | Windows CI required | Integrated into build | Missing/incomplete venv cases | Pending exact-tag run | Not yet validated |
+| `setup-frontend.ps1` | Windows CI required | Integrated into build | Native process exit handling | Pending exact-tag run | Not yet validated |
+| `setup-database.ps1` | Windows CI required | Repeated under PS7 and PS5.1 | Idempotence/integrity | Pending exact-tag run | Not yet validated |
+| `start-dev.ps1` | Windows CI required | Not nominally exercised by package job | Static/Pester coverage | Pending exact-tag run | Partial by design |
+| `start-production.ps1` | Windows CI required | Exercised through installed desktop verification | Missing package/process cases | Pending exact-tag run | Not yet validated |
+| `build-windows.ps1` | Windows CI required | Full build in Windows CI | Missing MSI/NSIS is blocking | Pending exact-tag run | Not yet validated |
+| `test-all.ps1` | Windows CI required | Invoked by build | Quality thresholds are blocking | Pending exact-tag run | Not yet validated |
+| `verify-installation.ps1` | Windows CI required | MSI ×2 and NSIS ×2 | Auth, process, CORS, DB, CRUD, logs | Pending exact-tag run | Not yet validated |
+| `update.ps1` | Windows CI required | Not nominally exercised by package job | Backup/migration/rollback regression | Pending exact-tag run | Partial by design |
+| `backup.ps1` | Windows CI required | API backup covered separately | Missing-data regression | Pending exact-tag run | Partial by design |
+| `restore.ps1` | Windows CI required | Refusal path in Pester | Confirmation required | Pending exact-tag run | Partial by design |
+| `uninstall.ps1` | Windows CI required | After MSI and NSIS | User data preserved by default | Pending exact-tag run | Not yet validated |
+| `clean.ps1` | Windows CI required | Not run nominally | Repository-bounded targets | Pending exact-tag run | Partial by design |
 
-## Scripts Linux
+## Linux scripts
 
-| Script | Syntaxe | Exécution | Tests d’erreur | Résultat | Statut |
+| Script | Syntax | Execution | Error tests | Result | v1.5.0 status |
 |---|---|---|---|---|---|
-| check-prerequisites.sh | Bash `-n` réussi | Exécutée | Dépendances build absentes | Prérequis standard OK, message build exploitable | Validé localement |
-| install-dev.sh | Bash `-n` réussi | Exécutée deux fois | Prérequis séparés | Dépendances verrouillées, DB intègre | Validé localement |
-| setup-database.sh | Bash `-n` réussi | Exécutée plusieurs fois | Venv absent couvert | Migration idempotente | Validé localement |
-| start-dev.sh | Bash `-n` réussi | Exécutée | Auth sans jeton testée | Backend, frontend et arrêt propre OK | Validé localement |
-| test-all.sh | Bash `-n` réussi | Exécutée | Seuils bloquants | Tous les contrôles réussis | Validé localement |
-| test-scripts.sh | Bash `-n` réussi | Exécutée | Confirmation, downgrade, artefact invalide | Tous les cas isolés réussis | Validé localement |
-| backup.sh | Bash `-n` réussi | Exécutée | Données absentes couvertes | Archive et SHA-256 créés | Validé localement |
-| restore.sh | Bash `-n` réussi | Exécutée | Confirmation obligatoire | SQLite intègre, ancienne donnée préservée | Validé localement |
-| install.sh | Bash `-n` et ShellCheck réussis | AppImage réelle installée deux fois en CI | Artefact manquant/invalide | Copie atomique, checksum et idempotence vérifiés | Validé Linux CI |
-| verify-installation.sh | Bash `-n` et ShellCheck réussis | AppImage réelle vérifiée deux fois en CI | Rejet d’artefact invalide | Backend embarqué, auth, DB, CRUD et JSONL vérifiés | Validé Linux CI |
-| update.sh | Bash `-n` réussi | Chemins sans changement/downgrade testés | Downgrade refusé | Contrôles de version réussis | Partiel |
-| uninstall.sh | Bash `-n` réussi | Exécutée en environnement isolé | Confirmation suppression testée | Conservation/suppression explicite réussies | Validé localement |
-| build-linux.sh | Bash `-n` et ShellCheck réussis | AppImage et DEB construits en CI | Dépendances locales absentes | Artefacts `agentsec-linux-x64` publiés | Validé Linux CI |
-| start-production.sh | Bash `-n` réussi | AppImage lancée par la vérification CI | Installation absente couverte | Backend embarqué observé | Validé par intégration CI |
-| clean.sh | Bash `-n` réussi | Non exécutée | Cibles bornées au dépôt | — | Statique uniquement |
+| `check-prerequisites.sh` | `bash -n` passed | Exercised by lifecycle/build entry points | Missing build tools reported | Expected diagnostic | Validated locally for covered paths |
+| `install-dev.sh` | `bash -n` passed | Executed repeatedly by isolated lifecycle tests | Prerequisite and existing-state paths | Passed | Validated locally |
+| `setup-database.sh` | `bash -n` passed | Executed repeatedly | Missing environment and idempotence | Passed | Validated locally |
+| `start-dev.sh` | `bash -n` passed | Covered by development workflow, not left running | Backend auth/readiness checks | Passed in prior integration; exact package pending | Partial locally |
+| `test-all.sh` | `bash -n` passed | Component commands executed directly | Blocking quality thresholds | 101 backend and 56 frontend tests passed | Validated locally |
+| `test-scripts.sh` | `bash -n` passed | Executed | Confirmation, downgrade, invalid artifact, preservation/deletion | Passed | Validated locally |
+| `backup.sh` | `bash -n` passed | Executed in isolated cycle | Missing data/checksum | Passed | Validated locally |
+| `restore.sh` | `bash -n` passed | Executed in isolated cycle | Confirmation/integrity | Passed | Validated locally |
+| `install.sh` | `bash -n` passed | Isolated artifact cycle passed; real AppImage requires CI | Missing/invalid artifact and idempotence | Local regression passed | Platform validation pending |
+| `verify-installation.sh` | `bash -n` passed | Real AppImage verification requires CI | Invalid artifact/auth/CRUD/log checks | Local regression passed | Platform validation pending |
+| `update.sh` | `bash -n` passed | No-change/downgrade paths executed | Downgrade rejected; rollback path covered | Passed for covered paths | Partial locally |
+| `uninstall.sh` | `bash -n` passed | Executed in isolation | Preserve by default; explicit deletion confirmation | Passed | Validated locally |
+| `build-linux.sh` | `bash -n` passed | Requires platform build dependencies and Rust | Missing prerequisites are blocking | Exact-tag CI pending | Not yet package-validated |
+| `start-production.sh` | `bash -n` passed | Real AppImage startup requires CI | Missing installation handled | Exact-tag CI pending | Not yet package-validated |
+| `clean.sh` | `bash -n` passed | Not executed | Targets bounded to project outputs | Static only | Static only |
+
+The matrix is updated with exact v1.5.0 run URLs only after the tagged Windows and Linux jobs finish successfully.

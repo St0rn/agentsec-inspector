@@ -232,8 +232,7 @@ def build_report_data(
         )
     )
     targets = {
-        item.id: item
-        for item in db.scalars(select(Target).where(Target.project_id == project_id))
+        item.id: item for item in db.scalars(select(Target).where(Target.project_id == project_id))
     }
     executions = list(
         db.scalars(
@@ -245,9 +244,7 @@ def build_report_data(
     )
     evidence = list(
         db.scalars(
-            select(Evidence)
-            .where(Evidence.project_id == project_id)
-            .order_by(Evidence.created_at)
+            select(Evidence).where(Evidence.project_id == project_id).order_by(Evidence.created_at)
         )
     )
     events = list(
@@ -507,14 +504,92 @@ def render_report_pdf(data: dict[str, Any]) -> bytes:
     buffer = BytesIO()
 
     styles = getSampleStyleSheet()
-    styles.add(ParagraphStyle("ReportTitle", fontName=bold, fontSize=28, leading=33, textColor=colors.white, alignment=TA_LEFT, spaceAfter=7 * mm))
-    styles.add(ParagraphStyle("H1A", fontName=bold, fontSize=18, leading=22, textColor=navy, spaceBefore=6 * mm, spaceAfter=4 * mm, keepWithNext=True))
-    styles.add(ParagraphStyle("H2A", fontName=bold, fontSize=13, leading=17, textColor=colors.HexColor("#075985"), spaceBefore=4 * mm, spaceAfter=2 * mm, keepWithNext=True))
-    styles.add(ParagraphStyle("BodyA", fontName=font, fontSize=9.2, leading=13.2, textColor=colors.HexColor("#1e293b"), spaceAfter=2.5 * mm))
-    styles.add(ParagraphStyle("SmallA", parent=styles["BodyA"], fontSize=7.5, leading=10, textColor=slate))
-    styles.add(ParagraphStyle("CodeA", parent=styles["BodyA"], fontName=font, fontSize=7.2, leading=10, textColor=colors.HexColor("#dbeafe"), backColor=navy, borderPadding=7, borderColor=colors.HexColor("#1e3a5f"), borderWidth=0.5, borderRadius=3, spaceBefore=1 * mm, spaceAfter=3 * mm, splitLongWords=True))
-    styles.add(ParagraphStyle("Metric", fontName=bold, fontSize=18, leading=21, textColor=electric, alignment=TA_CENTER))
-    styles.add(ParagraphStyle("MetricLabel", fontName=font, fontSize=7, leading=9, textColor=slate, alignment=TA_CENTER))
+    styles.add(
+        ParagraphStyle(
+            "ReportTitle",
+            fontName=bold,
+            fontSize=28,
+            leading=33,
+            textColor=colors.white,
+            alignment=TA_LEFT,
+            spaceAfter=7 * mm,
+        )
+    )
+    styles.add(
+        ParagraphStyle(
+            "H1A",
+            fontName=bold,
+            fontSize=18,
+            leading=22,
+            textColor=navy,
+            spaceBefore=6 * mm,
+            spaceAfter=4 * mm,
+            keepWithNext=True,
+        )
+    )
+    styles.add(
+        ParagraphStyle(
+            "H2A",
+            fontName=bold,
+            fontSize=13,
+            leading=17,
+            textColor=colors.HexColor("#075985"),
+            spaceBefore=4 * mm,
+            spaceAfter=2 * mm,
+            keepWithNext=True,
+        )
+    )
+    styles.add(
+        ParagraphStyle(
+            "BodyA",
+            fontName=font,
+            fontSize=9.2,
+            leading=13.2,
+            textColor=colors.HexColor("#1e293b"),
+            spaceAfter=2.5 * mm,
+        )
+    )
+    styles.add(
+        ParagraphStyle("SmallA", parent=styles["BodyA"], fontSize=7.5, leading=10, textColor=slate)
+    )
+    styles.add(
+        ParagraphStyle(
+            "CodeA",
+            parent=styles["BodyA"],
+            fontName=font,
+            fontSize=7.2,
+            leading=10,
+            textColor=colors.HexColor("#dbeafe"),
+            backColor=navy,
+            borderPadding=7,
+            borderColor=colors.HexColor("#1e3a5f"),
+            borderWidth=0.5,
+            borderRadius=3,
+            spaceBefore=1 * mm,
+            spaceAfter=3 * mm,
+            splitLongWords=True,
+        )
+    )
+    styles.add(
+        ParagraphStyle(
+            "Metric",
+            fontName=bold,
+            fontSize=18,
+            leading=21,
+            textColor=electric,
+            alignment=TA_CENTER,
+        )
+    )
+    styles.add(
+        ParagraphStyle(
+            "MetricLabel",
+            fontName=font,
+            fontSize=7,
+            leading=9,
+            textColor=slate,
+            alignment=TA_CENTER,
+        )
+    )
 
     class AgentSecDocTemplate(BaseDocTemplate):
         def afterFlowable(self, flowable: Flowable) -> None:
@@ -535,9 +610,21 @@ def render_report_pdf(data: dict[str, Any]) -> bytes:
         bottomMargin=18 * mm,
         title=f"AgentSec Inspector — {project['engagement_name']}",
         author="AgentSec Inspector",
-        subject=t["technical_report"] if data["report_type"] == "technical" else t["executive_report"],
+        subject=t["technical_report"]
+        if data["report_type"] == "technical"
+        else t["executive_report"],
     )
-    body_frame = Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height, id="body", leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0)
+    body_frame = Frame(
+        doc.leftMargin,
+        doc.bottomMargin,
+        doc.width,
+        doc.height,
+        id="body",
+        leftPadding=0,
+        rightPadding=0,
+        topPadding=0,
+        bottomPadding=0,
+    )
     cover_frame = Frame(0, 0, A4[0], A4[1], id="cover", showBoundary=0)
 
     def cover_page(canvas: Any, _doc: Any) -> None:
@@ -581,7 +668,12 @@ def render_report_pdf(data: dict[str, Any]) -> bytes:
         canvas.drawRightString(width - 17 * mm, 7.5 * mm, f"{t['page']} {current_doc.page}")
         canvas.restoreState()
 
-    doc.addPageTemplates([PageTemplate(id="Cover", frames=[cover_frame], onPage=cover_page), PageTemplate(id="Body", frames=[body_frame], onPage=body_page)])
+    doc.addPageTemplates(
+        [
+            PageTemplate(id="Cover", frames=[cover_frame], onPage=cover_page),
+            PageTemplate(id="Body", frames=[body_frame], onPage=body_page),
+        ]
+    )
 
     def p(value: Any, style: str = "BodyA") -> Paragraph:
         text = str(value).strip() if value is not None else ""
@@ -599,35 +691,116 @@ def render_report_pdf(data: dict[str, Any]) -> bytes:
         return Paragraph(escape(title), styles["H1A"])
 
     def table(rows: list[list[Any]], widths: list[float] | None = None) -> Table:
-        converted = [[cell if isinstance(cell, Flowable) else p(cell, "SmallA") for cell in row] for row in rows]
+        converted = [
+            [cell if isinstance(cell, Flowable) else p(cell, "SmallA") for cell in row]
+            for row in rows
+        ]
         result = Table(converted, colWidths=widths, repeatRows=1, hAlign="LEFT", splitByRow=1)
-        result.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, 0), navy), ("TEXTCOLOR", (0, 0), (-1, 0), colors.white), ("FONTNAME", (0, 0), (-1, 0), bold), ("FONTSIZE", (0, 0), (-1, 0), 7.5), ("VALIGN", (0, 0), (-1, -1), "TOP"), ("GRID", (0, 0), (-1, -1), 0.35, line), ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f8fafc")]), ("LEFTPADDING", (0, 0), (-1, -1), 5), ("RIGHTPADDING", (0, 0), (-1, -1), 5), ("TOPPADDING", (0, 0), (-1, -1), 5), ("BOTTOMPADDING", (0, 0), (-1, -1), 5)]))
+        result.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), navy),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                    ("FONTNAME", (0, 0), (-1, 0), bold),
+                    ("FONTSIZE", (0, 0), (-1, 0), 7.5),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    ("GRID", (0, 0), (-1, -1), 0.35, line),
+                    (
+                        "ROWBACKGROUNDS",
+                        (0, 1),
+                        (-1, -1),
+                        [colors.white, colors.HexColor("#f8fafc")],
+                    ),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 5),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 5),
+                    ("TOPPADDING", (0, 0), (-1, -1), 5),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+                ]
+            )
+        )
         return result
 
-    report_label = t["technical_report"] if data["report_type"] == "technical" else t["executive_report"]
+    report_label = (
+        t["technical_report"] if data["report_type"] == "technical" else t["executive_report"]
+    )
     story: list[Flowable] = [
         Spacer(1, 52 * mm),
         Paragraph(escape(report_label.upper()), styles["SmallA"]),
         Paragraph(escape(project["engagement_name"]), styles["ReportTitle"]),
         HRFlowable(width="42%", color=cyan, thickness=2, hAlign="LEFT", spaceAfter=7 * mm),
-        Paragraph(f"<font color='#22d3ee'>{escape(t['prepared_for'])}</font><br/><font size='16'>{escape(project['client_name'])}</font>", ParagraphStyle("CoverClient", parent=styles["BodyA"], fontName=bold, fontSize=10, leading=20, textColor=colors.white)),
+        Paragraph(
+            f"<font color='#22d3ee'>{escape(t['prepared_for'])}</font><br/><font size='16'>{escape(project['client_name'])}</font>",
+            ParagraphStyle(
+                "CoverClient",
+                parent=styles["BodyA"],
+                fontName=bold,
+                fontSize=10,
+                leading=20,
+                textColor=colors.white,
+            ),
+        ),
         Spacer(1, 15 * mm),
-        Paragraph(f"<font color='#94a3b8'>{escape(t['scope'])}</font><br/>{escape(project['authorized_scope'] or t['none'])}", ParagraphStyle("CoverMeta", parent=styles["BodyA"], fontSize=9, leading=14, textColor=colors.white)),
+        Paragraph(
+            f"<font color='#94a3b8'>{escape(t['scope'])}</font><br/>{escape(project['authorized_scope'] or t['none'])}",
+            ParagraphStyle(
+                "CoverMeta", parent=styles["BodyA"], fontSize=9, leading=14, textColor=colors.white
+            ),
+        ),
         Spacer(1, 5 * mm),
-        Paragraph(f"<font color='#94a3b8'>{escape(t['period'])}</font><br/>{escape(project['start_date'] or '—')} — {escape(project['end_date'] or '—')}<br/><br/><font color='#94a3b8'>{escape(t['generated'])}</font><br/>{escape(data['generated_display'])}", ParagraphStyle("CoverMeta2", parent=styles["BodyA"], fontSize=9, leading=14, textColor=colors.white)),
+        Paragraph(
+            f"<font color='#94a3b8'>{escape(t['period'])}</font><br/>{escape(project['start_date'] or '—')} — {escape(project['end_date'] or '—')}<br/><br/><font color='#94a3b8'>{escape(t['generated'])}</font><br/>{escape(data['generated_display'])}",
+            ParagraphStyle(
+                "CoverMeta2", parent=styles["BodyA"], fontSize=9, leading=14, textColor=colors.white
+            ),
+        ),
         NextPageTemplate("Body"),
         PageBreak(),
         section(t["contents"]),
     ]
     toc = TableOfContents()
-    toc.levelStyles = [ParagraphStyle("TOC1", fontName=bold, fontSize=10, leading=15, leftIndent=0, textColor=navy), ParagraphStyle("TOC2", fontName=font, fontSize=8, leading=12, leftIndent=10, textColor=slate)]
+    toc.levelStyles = [
+        ParagraphStyle(
+            "TOC1", fontName=bold, fontSize=10, leading=15, leftIndent=0, textColor=navy
+        ),
+        ParagraphStyle(
+            "TOC2", fontName=font, fontSize=8, leading=12, leftIndent=10, textColor=slate
+        ),
+    ]
     story.extend([toc, PageBreak(), section(t["executive_summary"])])
 
-    metrics = [(data["statistics"]["findings"], t["total_findings"]), (data["statistics"]["audits"], t["total_audits"]), (data["statistics"]["confirmed"], t["confirmed"]), (data["statistics"]["remediated"], t["remediated"])]
-    metric_table = Table([[Paragraph(str(value), styles["Metric"]) for value, _ in metrics], [Paragraph(label, styles["MetricLabel"]) for _, label in metrics]], colWidths=[doc.width / 4] * 4)
-    metric_table.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#f0f9ff")), ("BOX", (0, 0), (-1, -1), 0.5, colors.HexColor("#bae6fd")), ("INNERGRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#bae6fd")), ("TOPPADDING", (0, 0), (-1, 0), 10), ("BOTTOMPADDING", (0, 1), (-1, 1), 10)]))
+    metrics = [
+        (data["statistics"]["findings"], t["total_findings"]),
+        (data["statistics"]["audits"], t["total_audits"]),
+        (data["statistics"]["confirmed"], t["confirmed"]),
+        (data["statistics"]["remediated"], t["remediated"]),
+    ]
+    metric_table = Table(
+        [
+            [Paragraph(str(value), styles["Metric"]) for value, _ in metrics],
+            [Paragraph(label, styles["MetricLabel"]) for _, label in metrics],
+        ],
+        colWidths=[doc.width / 4] * 4,
+    )
+    metric_table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#f0f9ff")),
+                ("BOX", (0, 0), (-1, -1), 0.5, colors.HexColor("#bae6fd")),
+                ("INNERGRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#bae6fd")),
+                ("TOPPADDING", (0, 0), (-1, 0), 10),
+                ("BOTTOMPADDING", (0, 1), (-1, 1), 10),
+            ]
+        )
+    )
     story.extend([metric_table, Spacer(1, 5 * mm), p(project["description"] or t["none"])])
-    story.extend([section(t["engagement"]), p(project["description"]), Paragraph(escape(t["scope"]), styles["H2A"]), p(project["authorized_scope"])])
+    story.extend(
+        [
+            section(t["engagement"]),
+            p(project["description"]),
+            Paragraph(escape(t["scope"]), styles["H2A"]),
+            p(project["authorized_scope"]),
+        ]
+    )
     story.extend([section(t["methodology"]), p(data["methodology"]), section(t["risk_overview"])])
     severity_rows: list[list[Any]] = [[t["severity"], t["total_findings"]]]
     for severity in SEVERITIES:
@@ -638,7 +811,9 @@ def render_report_pdf(data: dict[str, Any]) -> bytes:
     if data["findings"]:
         rows = [[t["identifier"], t["severity"], t["status"], t["title"]]]
         for finding in data["findings"]:
-            rows.append([finding["id"], finding["severity"].upper(), finding["status"], finding["title"]])
+            rows.append(
+                [finding["id"], finding["severity"].upper(), finding["status"], finding["title"]]
+            )
         story.append(table(rows, [32 * mm, 22 * mm, 29 * mm, doc.width - 83 * mm]))
     else:
         story.append(p(t["no_findings"]))
@@ -647,7 +822,9 @@ def render_report_pdf(data: dict[str, Any]) -> bytes:
     if data["audits"]:
         rows = [[t["date"], t["type"], t["target"], t["result"]]]
         for audit in data["audits"]:
-            rows.append([audit["created_at"][:19], audit["type"], audit["target"] or "—", audit["status"]])
+            rows.append(
+                [audit["created_at"][:19], audit["type"], audit["target"] or "—", audit["status"]]
+            )
         story.append(table(rows, [31 * mm, 42 * mm, 55 * mm, doc.width - 128 * mm]))
     else:
         story.append(p(t["no_audits"]))
@@ -659,9 +836,58 @@ def render_report_pdf(data: dict[str, Any]) -> bytes:
         if index > 1:
             story.append(PageBreak())
         severity_color = colors.HexColor(SEVERITY_COLORS.get(finding["severity"], "#64748b"))
-        heading = Table([[Paragraph(f"<b>{index:02d}</b>", ParagraphStyle("FindingIndex", parent=styles["H1A"], textColor=colors.white, alignment=TA_CENTER)), Paragraph(escape(finding["title"]), styles["H1A"])]], colWidths=[14 * mm, doc.width - 14 * mm])
-        heading.setStyle(TableStyle([("BACKGROUND", (0, 0), (0, 0), severity_color), ("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("LEFTPADDING", (0, 0), (-1, -1), 5), ("RIGHTPADDING", (0, 0), (-1, -1), 5)]))
-        story.extend([heading, Spacer(1, 2 * mm), table([[t["severity"], t["classification"], t["status"], t["confidence"]], [finding["severity"].upper(), finding["classification"], finding["status"], finding["confidence"]], [t["identifier"], t["component"], t["target"], t["date"]], [finding["id"], finding["component"], finding["target"], finding["created_at"][:19]]], [doc.width * 0.22, doc.width * 0.28, doc.width * 0.22, doc.width * 0.28])])
+        heading = Table(
+            [
+                [
+                    Paragraph(
+                        f"<b>{index:02d}</b>",
+                        ParagraphStyle(
+                            "FindingIndex",
+                            parent=styles["H1A"],
+                            textColor=colors.white,
+                            alignment=TA_CENTER,
+                        ),
+                    ),
+                    Paragraph(escape(finding["title"]), styles["H1A"]),
+                ]
+            ],
+            colWidths=[14 * mm, doc.width - 14 * mm],
+        )
+        heading.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (0, 0), severity_color),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 5),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 5),
+                ]
+            )
+        )
+        story.extend(
+            [
+                heading,
+                Spacer(1, 2 * mm),
+                table(
+                    [
+                        [t["severity"], t["classification"], t["status"], t["confidence"]],
+                        [
+                            finding["severity"].upper(),
+                            finding["classification"],
+                            finding["status"],
+                            finding["confidence"],
+                        ],
+                        [t["identifier"], t["component"], t["target"], t["date"]],
+                        [
+                            finding["id"],
+                            finding["component"],
+                            finding["target"],
+                            finding["created_at"][:19],
+                        ],
+                    ],
+                    [doc.width * 0.22, doc.width * 0.28, doc.width * 0.22, doc.width * 0.28],
+                ),
+            ]
+        )
         story.extend(label_value(t["description"], finding["description"]))
         story.extend(label_value(t["impact"], finding["impact"]))
         story.extend(label_value(t["conditions"], finding["exploitation_conditions"]))
@@ -670,34 +896,89 @@ def render_report_pdf(data: dict[str, Any]) -> bytes:
         story.extend(label_value(t["expected"], finding["expected_result"]))
         story.extend(label_value(t["recommendation"], finding["recommendation"]))
         if finding["frameworks"]:
-            story.extend([Paragraph(escape(t["frameworks"]), styles["H2A"]), code(finding["frameworks"])])
+            story.extend(
+                [Paragraph(escape(t["frameworks"]), styles["H2A"]), code(finding["frameworks"])]
+            )
         if finding["evidence"]:
             story.append(Paragraph(escape(t["evidence"]), styles["H2A"]))
             for record in finding["evidence"]:
-                story.extend([p(f"{record['title']} · {record['type']} · SHA-256 {record['sha256']}", "SmallA"), code(record["content"])])
+                story.extend(
+                    [
+                        p(
+                            f"{record['title']} · {record['type']} · SHA-256 {record['sha256']}",
+                            "SmallA",
+                        ),
+                        code(record["content"]),
+                    ]
+                )
         if finding["executions"]:
             story.append(Paragraph(escape(t["requests"]), styles["H2A"]))
             for execution in finding["executions"]:
-                story.append(p(f"{execution['scenario_id']}@{execution['scenario_version']} — {execution['status']}", "SmallA"))
+                story.append(
+                    p(
+                        f"{execution['scenario_id']}@{execution['scenario_version']} — {execution['status']}",
+                        "SmallA",
+                    )
+                )
                 turns = execution["request"].get("turns", [])
                 if not turns and execution["request"].get("messages"):
-                    turns = [{"step": 1, "exact_payload_sent": {"messages": execution["request"]["messages"]}}]
+                    turns = [
+                        {
+                            "step": 1,
+                            "exact_payload_sent": {"messages": execution["request"]["messages"]},
+                        }
+                    ]
                 for turn in turns:
-                    story.extend([Paragraph(escape(t["payload"]), styles["H2A"]), code(turn.get("exact_payload_sent", {}))])
-                story.append(code({"response": execution["response"], "analysis": execution["analysis"]}))
+                    story.extend(
+                        [
+                            Paragraph(escape(t["payload"]), styles["H2A"]),
+                            code(turn.get("exact_payload_sent", {})),
+                        ]
+                    )
+                story.append(
+                    code({"response": execution["response"], "analysis": execution["analysis"]})
+                )
         if finding["tool_calls"]:
-            story.extend([Paragraph(escape(t["tools"]), styles["H2A"]), code(finding["tool_calls"])])
+            story.extend(
+                [Paragraph(escape(t["tools"]), styles["H2A"]), code(finding["tool_calls"])]
+            )
 
     if data["report_type"] == "technical":
         story.extend([PageBreak(), section(t["audit_results"])])
         if not data["audits"]:
             story.append(p(t["no_audits"]))
         for audit in data["audits"]:
-            story.extend([Paragraph(escape(f"{audit['type']} — {audit['id']}"), styles["H2A"]), table([[t["target"], t["result"], t["type"], t["date"]], [audit["target"] or "—", audit["status"], t[audit["mode"]], audit["created_at"][:19]]], [doc.width * 0.32, doc.width * 0.2, doc.width * 0.18, doc.width * 0.3])])
+            story.extend(
+                [
+                    Paragraph(escape(f"{audit['type']} — {audit['id']}"), styles["H2A"]),
+                    table(
+                        [
+                            [t["target"], t["result"], t["type"], t["date"]],
+                            [
+                                audit["target"] or "—",
+                                audit["status"],
+                                t[audit["mode"]],
+                                audit["created_at"][:19],
+                            ],
+                        ],
+                        [doc.width * 0.32, doc.width * 0.2, doc.width * 0.18, doc.width * 0.3],
+                    ),
+                ]
+            )
             if audit["configuration"]:
-                story.extend([Paragraph(escape(t["configuration"]), styles["H2A"]), code(audit["configuration"])])
+                story.extend(
+                    [
+                        Paragraph(escape(t["configuration"]), styles["H2A"]),
+                        code(audit["configuration"]),
+                    ]
+                )
             if audit["summary"]:
-                story.extend([Paragraph(escape(t["executive_summary"]), styles["H2A"]), code(audit["summary"])])
+                story.extend(
+                    [
+                        Paragraph(escape(t["executive_summary"]), styles["H2A"]),
+                        code(audit["summary"]),
+                    ]
+                )
             if audit["error"]:
                 story.extend([Paragraph(escape(t["error"]), styles["H2A"]), code(audit["error"])])
             if audit["executions"]:
@@ -706,18 +987,42 @@ def render_report_pdf(data: dict[str, Any]) -> bytes:
                     story.append(p(f"{execution['scenario_id']} — {execution['status']}", "SmallA"))
                     turns = execution["request"].get("turns", [])
                     if not turns and execution["request"].get("messages"):
-                        turns = [{"step": 1, "exact_payload_sent": {"messages": execution["request"]["messages"]}}]
+                        turns = [
+                            {
+                                "step": 1,
+                                "exact_payload_sent": {
+                                    "messages": execution["request"]["messages"]
+                                },
+                            }
+                        ]
                     for turn in turns:
-                        story.extend([Paragraph(escape(t["payload"]), styles["H2A"]), code(turn.get("exact_payload_sent", {}))])
-                    story.append(code({"response": execution["response"], "analysis": execution["analysis"]}))
+                        story.extend(
+                            [
+                                Paragraph(escape(t["payload"]), styles["H2A"]),
+                                code(turn.get("exact_payload_sent", {})),
+                            ]
+                        )
+                    story.append(
+                        code({"response": execution["response"], "analysis": execution["analysis"]})
+                    )
             if audit["tool_calls"]:
-                story.extend([Paragraph(escape(t["tools"]), styles["H2A"]), code(audit["tool_calls"])])
+                story.extend(
+                    [Paragraph(escape(t["tools"]), styles["H2A"]), code(audit["tool_calls"])]
+                )
             if audit["events"]:
                 story.extend([Paragraph(escape(t["events"]), styles["H2A"]), code(audit["events"])])
             if audit["evidence"]:
                 story.append(Paragraph(escape(t["evidence"]), styles["H2A"]))
                 for record in audit["evidence"]:
-                    story.extend([p(f"{record['title']} · {record['type']} · SHA-256 {record['sha256']}", "SmallA"), code(record["content"])])
+                    story.extend(
+                        [
+                            p(
+                                f"{record['title']} · {record['type']} · SHA-256 {record['sha256']}",
+                                "SmallA",
+                            ),
+                            code(record["content"]),
+                        ]
+                    )
             story.append(Spacer(1, 3 * mm))
 
     story.extend([PageBreak(), section(t["limitations"]), p(data["limitations"])])
@@ -725,7 +1030,14 @@ def render_report_pdf(data: dict[str, Any]) -> bytes:
         story.append(section(t["recommendations"]))
         for finding in data["findings"]:
             if finding["recommendation"]:
-                story.append(KeepTogether([Paragraph(escape(finding["title"]), styles["H2A"]), p(finding["recommendation"])]))
+                story.append(
+                    KeepTogether(
+                        [
+                            Paragraph(escape(finding["title"]), styles["H2A"]),
+                            p(finding["recommendation"]),
+                        ]
+                    )
+                )
 
     doc.multiBuild(story)
     return buffer.getvalue()
@@ -759,7 +1071,15 @@ def generate_report(
         raise ValueError("Unsupported report format")
     output = output_dir / f"{stem}.{output_format}"
     output.write_bytes(content)
-    report = Report(project_id=project_id, report_type=report_type, language=language, format=output_format, template_name=template_name, path=str(output), sha256=hashlib.sha256(content).hexdigest())
+    report = Report(
+        project_id=project_id,
+        report_type=report_type,
+        language=language,
+        format=output_format,
+        template_name=template_name,
+        path=str(output),
+        sha256=hashlib.sha256(content).hexdigest(),
+    )
     db.add(report)
     db.commit()
     db.refresh(report)

@@ -3,8 +3,12 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from base64 import b64decode
+from binascii import Error as Base64Error
+from io import BytesIO
 
 from fastapi import APIRouter, Depends, HTTPException
+from pypdf import PdfReader
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -24,12 +28,53 @@ async def import_document(
 ) -> dict[str, object]:
     if not db.get(Project, body.project_id):
         raise HTTPException(404, "Project not found")
-    digest = hashlib.sha256(body.content.encode()).hexdigest()
+    raw: bytes
+    content = body.content
+    if body.content_base64:
+        try:
+            raw = b64decode(body.content_base64, validate=True)
+        except (Base64Error, ValueError) as exc:
+            raise HTTPException(422, "Document content_base64 is invalid") from exc
+        if len(raw) > 2_000_000:
+            raise HTTPException(413, "Document exceeds the 2 MB import limit")
+        if body.document_format == "pdf":
+            try:
+                reader = PdfReader(BytesIO(raw), strict=True)
+                if reader.is_encrypted:
+                    raise HTTPException(422, "Encrypted PDF documents are not supported")
+                if len(reader.pages) > 100:
+                    raise HTTPException(413, "PDF exceeds the 100-page extraction limit")
+                content = "\n\n".join((page.extract_text() or "") for page in reader.pages)
+            except HTTPException:
+                raise
+            except Exception as exc:
+                raise HTTPException(422, "PDF text extraction failed") from exc
+            if not content.strip():
+                raise HTTPException(422, "PDF does not contain extractable text")
+            if len(content) > 2_000_000:
+                raise HTTPException(413, "Extracted PDF text exceeds the 2 MB limit")
+        else:
+            try:
+                content = raw.decode("utf-8", errors="strict")
+            except UnicodeDecodeError as exc:
+                raise HTTPException(422, "Text documents must use UTF-8") from exc
+    else:
+        raw = content.encode()
+    digest = hashlib.sha256(raw).hexdigest()
+    metadata = dict(body.metadata)
+    metadata["agentsec_document"] = {
+        "format": body.document_format,
+        "source": body.source,
+        "test_objective": body.test_objective,
+        "markers": body.markers,
+        "ingestion_status": "local_imported",
+        "raw_size_bytes": len(raw),
+    }
     item = RAGDocument(
         project_id=body.project_id,
         name=body.name,
-        content=body.content,
-        metadata_data=body.metadata,
+        content=content,
+        metadata_data=metadata,
         sha256=digest,
         is_lab_document=body.is_lab_document,
     )
@@ -94,6 +139,13 @@ def _document(item: RAGDocument) -> dict[str, object]:
         "instruction_indicators": [
             match.group(0) for match in INSTRUCTION_PATTERN.finditer(item.content)
         ][:100],
+        "document_format": item.metadata_data.get("agentsec_document", {}).get("format", "txt"),
+        "source": item.metadata_data.get("agentsec_document", {}).get("source", "unknown"),
+        "test_objective": item.metadata_data.get("agentsec_document", {}).get("test_objective", ""),
+        "markers": item.metadata_data.get("agentsec_document", {}).get("markers", []),
+        "ingestion_status": item.metadata_data.get("agentsec_document", {}).get(
+            "ingestion_status", "historical_unknown"
+        ),
         "created_at": item.created_at,
     }
 

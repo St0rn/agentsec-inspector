@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="AGENTSEC_", env_file=".env", extra="ignore")
 
     app_name: str = "AgentSec Inspector"
-    version: str = "1.4.0"
+    version: str = "1.5.0"
     host: str = "127.0.0.1"
     port: int = Field(default=8765, ge=1024, le=65535)
     data_dir: Path = Field(
@@ -22,8 +22,7 @@ class Settings(BaseSettings):
     database_url: str | None = None
     api_token: str | None = None
     allowed_origins: str = (
-        "http://tauri.localhost,tauri://localhost,"
-        "http://localhost:1420,http://127.0.0.1:1420"
+        "http://tauri.localhost,tauri://localhost,http://localhost:1420,http://127.0.0.1:1420"
     )
     log_level: str = "INFO"
     max_response_bytes: int = 2_000_000

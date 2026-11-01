@@ -7,11 +7,13 @@ from typing import Any
 SENSITIVE_TOOL_NAMES = re.compile(
     r"(?:^|[_\-\s])(delete|remove|exec|execute|shell|admin|write|upload|"
     r"credential|secret|token|password|transfer|send|create|update|book|reply)"
-    r"(?:$|[_\-\s])", re.I
+    r"(?:$|[_\-\s])",
+    re.I,
 )
 SENSITIVE_DESCRIPTION_ACTIONS = re.compile(
     r"\b(delete|remove|execute|run commands?|transfer money|"
-    r"write (?:a |the )?(?:file|record)|administrative delete)\b", re.I
+    r"write (?:a |the )?(?:file|record)|administrative delete)\b",
+    re.I,
 )
 INSTRUCTION_TEXT = re.compile(
     r"(ignore (all|previous)|system prompt|do not tell|override instruction|act as)", re.I
@@ -183,59 +185,226 @@ def analyse_vulnerabilities(discovery: dict[str, Any]) -> list[dict[str, Any]]:
         schema = tool.get("inputSchema") or {}
         annotations = tool.get("annotations") or {}
         if not isinstance(schema, dict):
-            findings.append(_item(
-                name, "Invalid MCP input schema",
-                "Tool inputSchema is not an object; clients cannot reliably validate arguments.",
-                repr(schema), "medium", "high", "Risk potential",
-                "Publish a valid JSON Schema object and validate arguments server-side.",
-            ))
+            findings.append(
+                _item(
+                    name,
+                    "Invalid MCP input schema",
+                    "Tool inputSchema is not an object; clients cannot reliably validate arguments.",
+                    repr(schema),
+                    "medium",
+                    "high",
+                    "Risk potential",
+                    "Publish a valid JSON Schema object and validate arguments server-side.",
+                )
+            )
             continue
-        if is_sensitive_tool(tool) and isinstance(annotations, dict) and annotations.get("readOnlyHint") is True:
-            findings.append(_item(
-                name, "Potentially dangerous tool marked read-only",
-                "Tool capability or description suggests mutation despite readOnlyHint=true.",
-                json.dumps({"description": description, "annotations": annotations}, ensure_ascii=False),
-                "medium", "medium", "Risk potential",
-                "Correct annotations and enforce authorization, approval and server-side permissions.",
-            ))
+        if (
+            is_sensitive_tool(tool)
+            and isinstance(annotations, dict)
+            and annotations.get("readOnlyHint") is True
+        ):
+            findings.append(
+                _item(
+                    name,
+                    "Potentially dangerous tool marked read-only",
+                    "Tool capability or description suggests mutation despite readOnlyHint=true.",
+                    json.dumps(
+                        {"description": description, "annotations": annotations}, ensure_ascii=False
+                    ),
+                    "medium",
+                    "medium",
+                    "Risk potential",
+                    "Correct annotations and enforce authorization, approval and server-side permissions.",
+                )
+            )
         properties = schema.get("properties") or {}
         if not isinstance(properties, dict):
-            findings.append(_item(
-                name, "Malformed MCP input properties",
-                "Input properties is not a JSON Schema object.",
-                repr(properties), "medium", "high", "Risk potential",
-                "Publish well-formed input properties and validate all inputs.",
-            ))
+            findings.append(
+                _item(
+                    name,
+                    "Malformed MCP input properties",
+                    "Input properties is not a JSON Schema object.",
+                    repr(properties),
+                    "medium",
+                    "high",
+                    "Risk potential",
+                    "Publish well-formed input properties and validate all inputs.",
+                )
+            )
         elif schema.get("additionalProperties") is True and is_sensitive_tool(tool):
-            findings.append(_item(
-                name, "Sensitive tool explicitly accepts arbitrary arguments",
-                "Tool declares additionalProperties=true on a potentially mutating capability.",
-                json.dumps(schema, ensure_ascii=False)[:5000], "medium", "medium", "Risk potential",
-                "Use an allowlisted schema and enforce strict server-side input validation.",
-            ))
+            findings.append(
+                _item(
+                    name,
+                    "Sensitive tool explicitly accepts arbitrary arguments",
+                    "Tool declares additionalProperties=true on a potentially mutating capability.",
+                    json.dumps(schema, ensure_ascii=False)[:5000],
+                    "medium",
+                    "medium",
+                    "Risk potential",
+                    "Use an allowlisted schema and enforce strict server-side input validation.",
+                )
+            )
     for resource in discovery.get("resources", []):
         if not isinstance(resource, dict):
             continue
         uri = str(resource.get("uri", ""))
-        if not uri or any(uri.lower().startswith(prefix) for prefix in (
-            "file:///etc/", "file:///root/", "file:///home/", "file:///c:/windows/"
-        )):
-            findings.append(_item(
-                uri[:200] or "unnamed resource", "Exposed or invalid resource URI",
-                "A listed resource has no URI or advertises a sensitive local filesystem location.",
-                json.dumps(resource, ensure_ascii=False)[:5000],
-                "medium", "medium", "Risk potential",
-                "Publish least-privilege resource URIs and enforce resource access controls.",
-            ))
+        if not uri or any(
+            uri.lower().startswith(prefix)
+            for prefix in ("file:///etc/", "file:///root/", "file:///home/", "file:///c:/windows/")
+        ):
+            findings.append(
+                _item(
+                    uri[:200] or "unnamed resource",
+                    "Exposed or invalid resource URI",
+                    "A listed resource has no URI or advertises a sensitive local filesystem location.",
+                    json.dumps(resource, ensure_ascii=False)[:5000],
+                    "medium",
+                    "medium",
+                    "Risk potential",
+                    "Publish least-privilege resource URIs and enforce resource access controls.",
+                )
+            )
     for prompt in discovery.get("prompts", []):
         if not isinstance(prompt, dict):
             continue
         description = str(prompt.get("description", ""))
         if INSTRUCTION_TEXT.search(description):
-            findings.append(_item(
-                str(prompt.get("name", "unnamed")), "Instruction-like MCP prompt metadata",
-                "Advertised prompt metadata includes instruction-like content that may influence agents.",
-                description, "medium", "medium", "Risk potential",
-                "Separate untrusted metadata from trusted instructions and audit prompt sources.",
-            ))
+            findings.append(
+                _item(
+                    str(prompt.get("name", "unnamed")),
+                    "Instruction-like MCP prompt metadata",
+                    "Advertised prompt metadata includes instruction-like content that may influence agents.",
+                    description,
+                    "medium",
+                    "medium",
+                    "Risk potential",
+                    "Separate untrusted metadata from trusted instructions and audit prompt sources.",
+                )
+            )
     return findings
+
+
+def compare_identity_permissions(discoveries: list[dict[str, Any]]) -> dict[str, Any]:
+    """Compare advertised surfaces without treating differences as exploits."""
+    surfaces: list[dict[str, Any]] = []
+    for item in discoveries:
+        discovery = item.get("discovery", {})
+        surfaces.append(
+            {
+                "identity": item.get("identity", "default"),
+                "tools": sorted(
+                    str(tool.get("name"))
+                    for tool in discovery.get("tools", [])
+                    if isinstance(tool, dict) and tool.get("name")
+                ),
+                "resources": sorted(
+                    str(resource.get("uri"))
+                    for resource in discovery.get("resources", [])
+                    if isinstance(resource, dict) and resource.get("uri")
+                ),
+                "prompts": sorted(
+                    str(prompt.get("name"))
+                    for prompt in discovery.get("prompts", [])
+                    if isinstance(prompt, dict) and prompt.get("name")
+                ),
+            }
+        )
+    differences: list[dict[str, Any]] = []
+    if surfaces:
+        baseline = surfaces[0]
+        for surface in surfaces[1:]:
+            for field in ("tools", "resources", "prompts"):
+                left = set(baseline[field])
+                right = set(surface[field])
+                if left != right:
+                    differences.append(
+                        {
+                            "surface": field,
+                            "baseline_identity": baseline["identity"],
+                            "compared_identity": surface["identity"],
+                            "only_baseline": sorted(left - right),
+                            "only_compared": sorted(right - left),
+                            "classification": "Observation",
+                        }
+                    )
+    return {
+        "identities": surfaces,
+        "differences": differences,
+        "conclusion": "Differences require auditor review; discovery alone does not prove broken access control.",
+    }
+
+
+def build_attack_chains(
+    discovery: dict[str, Any],
+    issues: list[dict[str, Any]],
+    active_results: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Correlate MCP evidence into conservative potential or observed paths."""
+    issue_by_component: dict[str, list[dict[str, Any]]] = {}
+    for issue in issues:
+        issue_by_component.setdefault(str(issue.get("component", "")), []).append(issue)
+    executions = {
+        str(item.get("tool_name")): item
+        for item in active_results
+        if item.get("status") == "SUCCESS"
+    }
+    chains: list[dict[str, Any]] = []
+    resources = [
+        str(item.get("uri"))
+        for item in discovery.get("resources", [])
+        if isinstance(item, dict) and item.get("uri")
+    ]
+    for tool in discovery.get("tools", []):
+        if not isinstance(tool, dict):
+            continue
+        name = str(tool.get("name", "unnamed"))
+        related = issue_by_component.get(name, [])
+        schema_text = json.dumps(tool.get("inputSchema", {}), ensure_ascii=False)
+        linked_resources = [uri for uri in resources if uri in schema_text]
+        if not related and not is_sensitive_tool(tool) and not linked_resources:
+            continue
+        execution = executions.get(name)
+        observed = execution is not None
+        chains.append(
+            {
+                "id": f"mcp-chain-{len(chains) + 1}",
+                "classification": "observed" if observed else "potential",
+                "validated": observed,
+                "nodes": [
+                    {"id": "client", "type": "trust_boundary", "label": "MCP client"},
+                    {"id": f"tool:{name}", "type": "tool", "label": name},
+                    *[
+                        {"id": f"resource:{uri}", "type": "resource", "label": uri}
+                        for uri in linked_resources
+                    ],
+                ],
+                "edges": [
+                    {
+                        "source": "client",
+                        "target": f"tool:{name}",
+                        "relation": "invoked" if observed else "can potentially invoke",
+                    },
+                    *[
+                        {
+                            "source": f"tool:{name}",
+                            "target": f"resource:{uri}",
+                            "relation": "schema reference",
+                        }
+                        for uri in linked_resources
+                    ],
+                ],
+                "prerequisites": ["Authorised MCP session", "Server-side permission"],
+                "evidence": {
+                    "issues": related,
+                    "execution": execution,
+                    "schema": tool.get("inputSchema", {}),
+                },
+                "impact": (
+                    "The explicitly authorised tool call completed; review its returned evidence and effective permissions."
+                    if observed
+                    else "Requires validation; capability exposure alone is not exploitation."
+                ),
+                "remediation": "Enforce least privilege and server-side authorisation for each tool and resource.",
+            }
+        )
+    return chains

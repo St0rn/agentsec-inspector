@@ -68,19 +68,25 @@ def test_sondahub_read_only_descriptions_not_rated_sensitive() -> None:
 
 
 def test_explicitly_mutating_tool_always_requires_confirmation() -> None:
-    assert is_sensitive_tool({
-        "name": "delete_record",
-        "description": "Delete a record",
-        "annotations": {"readOnlyHint": True, "destructiveHint": False},
-    })
-    assert is_sensitive_tool({
-        "name": "manage_record",
-        "description": "Administrative delete operation",
-        "annotations": {"readOnlyHint": True},
-    })
-    assert is_sensitive_tool({
-        "name": "mutate",
-        "description": "Takes action",
-        "annotations": {"readOnlyHint": False},
-    })
+    assert is_sensitive_tool(
+        {
+            "name": "delete_record",
+            "description": "Delete a record",
+            "annotations": {"readOnlyHint": True, "destructiveHint": False},
+        }
+    )
+    assert is_sensitive_tool(
+        {
+            "name": "manage_record",
+            "description": "Administrative delete operation",
+            "annotations": {"readOnlyHint": True},
+        }
+    )
+    assert is_sensitive_tool(
+        {
+            "name": "mutate",
+            "description": "Takes action",
+            "annotations": {"readOnlyHint": False},
+        }
+    )
     assert not is_sensitive_tool("add")

@@ -1,4 +1,25 @@
-# Rapport de validation — 2026-10-31
+# Rapport de validation
+
+## Candidat v1.5.0 — 2026-11-01
+
+### Validation locale Linux réellement exécutée
+
+- Backend : 101 tests réussis, couverture totale 85,19 % avec seuil bloquant à 80 %, Ruff et mypy réussis.
+- Frontend : 56 tests réussis, couverture des lignes 80,15 % avec seuils bloquants, ESLint, TypeScript et build Vite de production réussis.
+- Sécurité : `pip-audit` ne détecte aucune vulnérabilité Python connue ; Bandit ne relève aucun problème moyen/élevé ; le contrôle `npm audit --audit-level=high` réussit.
+- Dépendances frontend : npm signale 12 alertes modérées `minimatch` dans la chaîne de lint de développement. Aucune alerte haute ou critique n’est masquée ; aucune correction forcée avec changement cassant n’a été appliquée.
+- Captures : génération exécutée contre le backend FastAPI et le laboratoire MCP/LLM/RAG locaux réels. Le script vérifie les erreurs JavaScript et la présence de fichiers non triviaux.
+- Scripts Linux : syntaxe Bash réussie et suite `scripts/linux/test-scripts.sh` réussie pour les chemins nominaux et les principales erreurs.
+
+### Validation de plateforme
+
+Les tests locaux ne valident ni MSI/NSIS ni AppImage/DEB. Les identifiants des runs Windows/Linux v1.5.0 et les empreintes des quatre paquets seront inscrits après réussite des workflows sur le tag exact. Jusqu’à cette étape, la dernière preuve publiée reste la v1.4.0 : [Windows 41224219837](https://github.com/St0rn/agentsec-inspector/actions/runs/41224219837), [Linux 41224219868](https://github.com/St0rn/agentsec-inspector/actions/runs/41224219868) et [release v1.4.0](https://github.com/St0rn/agentsec-inspector/releases/tag/v1.4.0).
+
+PowerShell, WebView2 et la chaîne MSVC ne sont pas disponibles dans cet environnement Linux. Aucune exécution Windows locale n’est revendiquée.
+
+---
+
+## Historique de validation v1.1.0/v1.2.0 — 2026-10-31
 
 ## Environnement observé
 

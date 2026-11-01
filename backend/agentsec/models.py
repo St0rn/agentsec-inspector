@@ -196,7 +196,9 @@ class Finding(Base):
     frameworks: Mapped[list[dict[str, str]]] = mapped_column(JSON, default=list)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
-    __table_args__ = (UniqueConstraint("project_id", "fingerprint", name="uq_findings_project_fingerprint"),)
+    __table_args__ = (
+        UniqueConstraint("project_id", "fingerprint", name="uq_findings_project_fingerprint"),
+    )
     project: Mapped[Project] = relationship(back_populates="findings")
     occurrences: Mapped[list[FindingOccurrence]] = relationship(cascade="all, delete-orphan")
     evidence: Mapped[list[Evidence]] = relationship(

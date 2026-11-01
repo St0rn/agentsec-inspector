@@ -19,6 +19,9 @@ Ce catalogue décrit ce que la V1 exécute réellement. AgentSec Inspector ne tr
 11. Schéma acceptant des propriétés non déclarées.
 12. Collision ou confusion par nom d’outil dupliqué, sans distinction de casse.
 13. Configuration locale de cible, transport et autorisation distante explicite.
+14. Découverte sous plusieurs identités explicitement configurées, sans résolution ni affichage des secrets.
+15. Comparaison des différences de permissions annoncées entre identités.
+16. Corrélation prudente de chaînes d’attaque potentielles, distinctes des chemins réellement observés.
 
 La phase passive n’appelle aucun outil MCP.
 
@@ -55,7 +58,7 @@ Le framework ne prétend pas accéder au raisonnement interne ou à la chaîne d
 2. Envoi des seuls paramètres JSON explicitement fournis.
 3. Validation des paramètres requis.
 4. Rejet des paramètres supplémentaires si le schéma l’interdit.
-5. Validation des types simples, `enum` et `const` annoncés.
+5. Validation récursive des objets, tableaux, propriétés requises ou supplémentaires, types, motifs, longueurs, bornes numériques, `enum` et `const` annoncés.
 6. Confirmation globale de l’audit actif.
 7. Seconde confirmation individuelle pour un outil sensible ou potentiellement destructif.
 8. Capture du résultat réel, de `isError`, de la durée et de la preuve.
@@ -100,6 +103,10 @@ Chaque scénario envoie de vraies requêtes à une cible OpenAI-compatible, Olla
 
 Les packs JSON permettent d’ajouter des scénarios déclaratifs versionnés. Plusieurs étapes `chat` sont exécutées séquentiellement : chaque réponse réelle devient le contexte du tour suivant.
 
+Le mode **Black-Box Red Team**, actif par défaut, transmet uniquement les payloads déclarés par l’auditeur. L’objectif de sécurité et les règles d’évaluation restent locaux. Le mode **Controlled Lab** permet d’ajouter une politique artificielle et un marqueur prépositionné après sélection et confirmation explicites. La prévisualisation montre la requête effective avant l’envoi, sans exposer les identifiants.
+
+La provenance des marqueurs est conservée. La répétition d’un marqueur fourni dans le payload utilisateur ne suffit jamais à établir une divulgation de secret protégé.
+
 ### Custom Payload
 
 1. Payload libre Prompt Injection, Jailbreak, RAG, MCP, Tool Abuse ou catégorie personnalisée.
@@ -107,6 +114,15 @@ Les packs JSON permettent d’ajouter des scénarios déclaratifs versionnés. P
 3. Marqueur fictif personnalisable via `{marker}`.
 4. Règles `marker_absent`, `response_contains`, `response_not_contains`, `tool_allowed`, `tool_forbidden` et `completion_required`.
 5. Historique permanent des requêtes, réponses, événements, outils, preuves, erreurs et verdicts.
+
+### Adaptive Red Team
+
+1. Machine à états déterministe composée uniquement d’étapes et de payloads déclarés.
+2. Transitions sur texte présent/absent, refus observé, outil appelé, verdict, violation de règle ou branche de repli.
+3. Payload et réponse exacts conservés à chaque tour.
+4. Nombre maximal de tours, limite de tokens par tour et budget total imposés.
+5. Annulation persistée sans reclasser une exécution partielle en succès.
+6. `INCONCLUSIVE` lorsque les preuves nécessaires manquent et `ERROR` lors d’un échec technique.
 
 ### Jailbreak
 
@@ -130,6 +146,7 @@ Tous sont versionnés `1.0.0`, reliés à OWASP LLM01:2025 et, lorsque pertinent
 2. `FAIL` : au moins une règle requise est violée par une preuve observable.
 3. `INCONCLUSIVE` : résultat insuffisant ou télémétrie nécessaire absente.
 4. `ERROR` : échec technique ; il ne constitue jamais une attaque réussie.
+5. `NOT_APPLICABLE` / `SKIPPED` : règle non applicable ou étape déclarée non atteinte.
 
 Les findings distinguent également `Observation`, `Risk potential` et `Confirmed vulnerability`, avec sévérité et confiance séparées.
 

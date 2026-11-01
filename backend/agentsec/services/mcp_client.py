@@ -42,7 +42,6 @@ def _decode_response(text: str, content_type: str) -> dict[str, Any]:
     return value
 
 
-
 async def _collect_mcp_pages(
     call: Any, method: str, field: str, *, max_pages: int | None = None
 ) -> list[dict[str, Any]]:
@@ -76,6 +75,7 @@ async def _collect_mcp_pages(
     raise MCPProtocolError(
         f"{method} exceeded {max_pages} pages; raise AGENTSEC_MCP_MAX_PAGES explicitly"
     )
+
 
 class HTTPMCPClient:
     def __init__(
@@ -127,19 +127,25 @@ class HTTPMCPClient:
             {
                 "protocolVersion": "2025-03-26",
                 "capabilities": {},
-                "clientInfo": {"name": "AgentSec Inspector", "version": "1.4.0"},
+                "clientInfo": {"name": "AgentSec Inspector", "version": "1.5.0"},
             },
         )
         await self.call("notifications/initialized", notification=True)
         capabilities = initialized.get("capabilities", {})
-        tools = await _collect_mcp_pages(self.call, "tools/list", "tools") if "tools" in capabilities else []
+        tools = (
+            await _collect_mcp_pages(self.call, "tools/list", "tools")
+            if "tools" in capabilities
+            else []
+        )
         resources = (
             await _collect_mcp_pages(self.call, "resources/list", "resources")
-            if "resources" in capabilities else []
+            if "resources" in capabilities
+            else []
         )
         prompts = (
             await _collect_mcp_pages(self.call, "prompts/list", "prompts")
-            if "prompts" in capabilities else []
+            if "prompts" in capabilities
+            else []
         )
         return MCPDiscovery(
             initialized.get("serverInfo", {}), capabilities, tools, resources, prompts
@@ -220,19 +226,25 @@ class StdioMCPClient:
             {
                 "protocolVersion": "2025-03-26",
                 "capabilities": {},
-                "clientInfo": {"name": "AgentSec Inspector", "version": "1.4.0"},
+                "clientInfo": {"name": "AgentSec Inspector", "version": "1.5.0"},
             },
         )
         await self.call("notifications/initialized", notification=True)
         capabilities = initialized.get("capabilities", {})
-        tools = await _collect_mcp_pages(self.call, "tools/list", "tools") if "tools" in capabilities else []
+        tools = (
+            await _collect_mcp_pages(self.call, "tools/list", "tools")
+            if "tools" in capabilities
+            else []
+        )
         resources = (
             await _collect_mcp_pages(self.call, "resources/list", "resources")
-            if "resources" in capabilities else []
+            if "resources" in capabilities
+            else []
         )
         prompts = (
             await _collect_mcp_pages(self.call, "prompts/list", "prompts")
-            if "prompts" in capabilities else []
+            if "prompts" in capabilities
+            else []
         )
         return MCPDiscovery(
             initialized.get("serverInfo", {}), capabilities, tools, resources, prompts

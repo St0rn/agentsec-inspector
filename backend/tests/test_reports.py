@@ -198,12 +198,16 @@ def test_detailed_report_preserves_findings_payloads_tools_and_large_evidence(
     assert finding["description"] == "Le modèle suit une instruction non fiable."
     assert finding["exploitation_conditions"] == "Accès au formulaire de conversation."
     assert finding["evidence"][0]["content"] == evidence_content
-    assert finding["executions"][0]["request"]["turns"][0]["exact_payload_sent"]["message"].startswith("Ignore")
+    assert finding["executions"][0]["request"]["turns"][0]["exact_payload_sent"][
+        "message"
+    ].startswith("Ignore")
     assert finding["tool_calls"][0]["name"] == "search_records"
 
     detail = client.get(f"/api/v1/findings/{finding_id}/detail", headers=headers)
     assert detail.status_code == 200
-    assert detail.json()["executions"][0]["request_data"]["turns"][0]["exact_payload_sent"]["message"].startswith("Ignore")
+    assert detail.json()["executions"][0]["request_data"]["turns"][0]["exact_payload_sent"][
+        "message"
+    ].startswith("Ignore")
 
     html = generated["html"].decode()
     assert ">Payload<" in html
@@ -271,6 +275,12 @@ def test_v101_database_migration_preserves_existing_audits_and_scenarios(tmp_pat
     with sqlite3.connect(database) as connection:
         assert connection.execute("SELECT name FROM scenarios").fetchone() == ("Legacy",)
         assert connection.execute("SELECT content FROM evidence").fetchone() == ("preserve me",)
-        assert connection.execute("SELECT version_num FROM alembic_version").fetchone() == ("0003_finding_dedup",)
-        assert "expected_marker" in {row[1] for row in connection.execute("PRAGMA table_info(scenarios)")}
-        assert "audit_run_id" in {row[1] for row in connection.execute("PRAGMA table_info(evidence)")}
+        assert connection.execute("SELECT version_num FROM alembic_version").fetchone() == (
+            "0003_finding_dedup",
+        )
+        assert "expected_marker" in {
+            row[1] for row in connection.execute("PRAGMA table_info(scenarios)")
+        }
+        assert "audit_run_id" in {
+            row[1] for row in connection.execute("PRAGMA table_info(evidence)")
+        }

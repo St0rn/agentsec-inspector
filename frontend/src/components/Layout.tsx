@@ -27,6 +27,7 @@ const nav = [
   ["Prompt Injection", "/prompt-injection", ShieldAlert],
   ["Jailbreak", "/jailbreak", ShieldOff],
   ["Custom Payload", "/custom-payload", FileCode2],
+  ["Adaptive Red Team", "/adaptive-red-team", GitBranch],
   ["RAG Security", "/rag", FileSearch],
   ["Agent Behavior", "/agent-behavior", Activity],
   ["LLM Security", "/llm", BrainCircuit],
@@ -123,7 +124,7 @@ export function Layout() {
         <header className="sticky top-0 z-10 flex h-16 items-center border-b border-slate-800 bg-ink/75 px-8 backdrop-blur">
           <h1 className="text-lg font-semibold text-white">{current}</h1>
           <div className="ml-auto text-xs text-slate-500">
-          Audit passif par défaut · v1.4.0
+            Audit passif par défaut · v1.5.0
           </div>
         </header>
         <div className="p-8">

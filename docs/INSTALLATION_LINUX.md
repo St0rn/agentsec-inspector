@@ -4,7 +4,7 @@ AgentSec Inspector prend en charge Linux x86_64 sous la forme d’une AppImage a
 
 ## Installation d’une AppImage publiée
 
-Téléchargement direct : [AgentSec Inspector 1.2.0 AppImage x86_64](https://github.com/St0rn/agentsec-inspector/releases/download/v1.2.0/AgentSec-Inspector_1.2.0_amd64.AppImage). Le [paquet DEB](https://github.com/St0rn/agentsec-inspector/releases/download/v1.2.0/AgentSec-Inspector_1.2.0_amd64.deb) est publié dans la même release.
+Téléchargement direct : [AgentSec Inspector 1.5.0 AppImage x86_64](https://github.com/St0rn/agentsec-inspector/releases/download/v1.5.0/AgentSec-Inspector_1.5.0_amd64.AppImage). Le [paquet DEB](https://github.com/St0rn/agentsec-inspector/releases/download/v1.5.0/AgentSec-Inspector_1.5.0_amd64.deb) est publié dans la même release.
 
 Téléchargez l’artefact `AgentSec Inspector_*.AppImage`, puis exécutez depuis la racine du dépôt :
 
@@ -39,7 +39,7 @@ scripts/linux/start-production.sh
 La mise à jour crée d’abord une sauvegarde des données, installe le nouvel artefact, vérifie son intégrité et restaure l’ancienne application si la vérification échoue :
 
 ```bash
-scripts/linux/update.sh /chemin/vers/nouvelle-version.AppImage 1.2.0
+scripts/linux/update.sh /chemin/vers/nouvelle-version.AppImage 1.5.0
 ```
 
 ## Sauvegarde et restauration

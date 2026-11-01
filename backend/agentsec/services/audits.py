@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import os
+import re
 from datetime import UTC, datetime
 from time import perf_counter
 from typing import Any
@@ -28,10 +29,17 @@ from .mcp_analysis import (
     analyse_discovery,
     analyse_tool_result,
     analyse_vulnerabilities,
+    build_attack_chains,
+    compare_identity_permissions,
     is_sensitive_tool,
 )
 from .mcp_client import HTTPMCPClient, StdioMCPClient
-from .scenarios import evaluate, scenario_messages
+from .scenarios import (
+    controlled_lab_system_message,
+    evaluate,
+    render_attack_payload,
+    scenario_messages,
+)
 
 log = structlog.get_logger()
 
@@ -58,44 +66,79 @@ async def run_mcp_audit(audit_id: str) -> None:
             config = target.configuration
             requested_calls = list(audit.configuration.get("active_tool_calls", []))
             active_results: list[dict[str, Any]] = []
+            identity_discoveries: list[dict[str, Any]] = []
             if target.target_type == "mcp_http":
-                headers = dict(config.get("headers", {}))
-                auth_env = str(config.get("auth_env", ""))
-                if auth_env:
-                    token = os.getenv(auth_env)
-                    if not token:
-                        raise RuntimeError(
-                            f"Configured credential environment variable {auth_env!r} is unavailable"
-                        )
-                    headers["Authorization"] = f"Bearer {token}"
-                http_client = HTTPMCPClient(
-                    target.endpoint or "", headers, settings, target.remote_authorized
-                )
-                discovered = await http_client.discover()
+                configured_identities = {
+                    str(item.get("name")): item
+                    for item in config.get("identities", [])
+                    if isinstance(item, dict) and item.get("name")
+                }
+                requested_identities = list(audit.configuration.get("identity_names", []))
+                if not requested_identities:
+                    requested_identities = ["default"]
+                clients: list[tuple[str, HTTPMCPClient]] = []
+                for identity_name in requested_identities:
+                    identity = (
+                        {}
+                        if identity_name == "default"
+                        else configured_identities.get(identity_name)
+                    )
+                    if identity is None:
+                        raise ValueError(f"Unknown configured MCP identity {identity_name!r}")
+                    headers = dict(config.get("headers", {}))
+                    headers.update(identity.get("headers", {}))
+                    auth_env = str(identity.get("auth_env") or config.get("auth_env", ""))
+                    if auth_env:
+                        token = os.getenv(auth_env)
+                        if not token:
+                            raise RuntimeError(
+                                f"Configured credential environment variable {auth_env!r} is unavailable"
+                            )
+                        headers["Authorization"] = f"Bearer {token}"
+                    client = HTTPMCPClient(
+                        target.endpoint or "", headers, settings, target.remote_authorized
+                    )
+                    current = await client.discover()
+                    current_payload = {
+                        "server_info": current.server_info,
+                        "capabilities": current.capabilities,
+                        "tools": current.tools,
+                        "resources": current.resources,
+                        "prompts": current.prompts,
+                    }
+                    identity_discoveries.append(
+                        {"identity": identity_name, "discovery": current_payload}
+                    )
+                    clients.append((identity_name, client))
+                discovered_payload = identity_discoveries[0]["discovery"]
                 if not audit.passive:
                     active_results = await execute_active_tool_calls(
-                        http_client, discovered.tools, requested_calls
+                        clients[0][1], discovered_payload["tools"], requested_calls
                     )
             elif target.target_type == "mcp_stdio":
                 async with StdioMCPClient(
                     str(config.get("command", "")), list(config.get("args", [])), settings
                 ) as stdio_client:
                     discovered = await stdio_client.discover()
+                    discovered_payload = {
+                        "server_info": discovered.server_info,
+                        "capabilities": discovered.capabilities,
+                        "tools": discovered.tools,
+                        "resources": discovered.resources,
+                        "prompts": discovered.prompts,
+                    }
+                    identity_discoveries.append(
+                        {"identity": "local-process", "discovery": discovered_payload}
+                    )
                     if not audit.passive:
                         active_results = await execute_active_tool_calls(
                             stdio_client, discovered.tools, requested_calls
                         )
             else:
                 raise ValueError("Selected target is not an MCP target")
-            payload = {
-                "server_info": discovered.server_info,
-                "capabilities": discovered.capabilities,
-                "tools": discovered.tools,
-                "resources": discovered.resources,
-                "prompts": discovered.prompts,
-            }
+            payload = discovered_payload
             await event_hub.publish(
-                audit_id, {"stage": "analysing", "progress": 60, "tools": len(discovered.tools)}
+                audit_id, {"stage": "analysing", "progress": 60, "tools": len(payload["tools"])}
             )
             scan_mode = str(audit.configuration.get("scan_mode", "discovery"))
             issues = analyse_discovery(payload)
@@ -104,6 +147,8 @@ async def run_mcp_audit(audit_id: str) -> None:
             for execution in active_results:
                 if execution["status"] == "SUCCESS":
                     issues.extend(analyse_tool_result(execution["tool_name"], execution["result"]))
+            permission_analysis = compare_identity_permissions(identity_discoveries)
+            attack_chains = build_attack_chains(payload, issues, active_results)
             evidence_text = _bounded_json(payload)
             evidence = Evidence(
                 project_id=audit.project_id,
@@ -149,9 +194,9 @@ async def run_mcp_audit(audit_id: str) -> None:
                     actor="AgentSec",
                     target=target.name,
                     payload={
-                        "tool_count": len(discovered.tools),
-                        "resource_count": len(discovered.resources),
-                        "prompt_count": len(discovered.prompts),
+                        "tool_count": len(payload["tools"]),
+                        "resource_count": len(payload["resources"]),
+                        "prompt_count": len(payload["prompts"]),
                     },
                 )
             )
@@ -172,9 +217,9 @@ async def run_mcp_audit(audit_id: str) -> None:
                     )
                 )
             audit.summary = {
-                "tools": len(discovered.tools),
-                "resources": len(discovered.resources),
-                "prompts": len(discovered.prompts),
+                "tools": len(payload["tools"]),
+                "resources": len(payload["resources"]),
+                "prompts": len(payload["prompts"]),
                 "observations": len(issues),
                 "findings": issues,
                 "security_counts": {
@@ -185,6 +230,8 @@ async def run_mcp_audit(audit_id: str) -> None:
                 "discovery": payload,
                 "mode": "passive" if audit.passive else "active",
                 "active_tool_calls": active_results,
+                "permission_analysis": permission_analysis,
+                "attack_chains": attack_chains,
             }
             audit.status = AuditStatus.completed
             audit.finished_at = utcnow()
@@ -247,13 +294,32 @@ async def run_prompt_test(audit_id: str, request: dict[str, Any]) -> None:
             if not chat_steps:
                 raise ValueError("Scenario has no supported declarative chat step")
             if custom_payloads:
-                messages = [
-                    {"role": "system", "content": request["system_instruction"]},
-                    {"role": "user", "content": chat_steps[0]["template"].replace("{marker}", request["fictional_marker"])},
-                ]
+                messages = []
+                if request.get("test_mode", "black_box") == "controlled_lab":
+                    messages.append(
+                        {
+                            "role": "system",
+                            "content": controlled_lab_system_message(
+                                request["system_instruction"], request["fictional_marker"]
+                            ),
+                        }
+                    )
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": render_attack_payload(
+                            chat_steps[0]["template"],
+                            request["fictional_marker"],
+                            request.get("test_mode", "black_box"),
+                        ),
+                    }
+                )
             else:
                 messages = scenario_messages(
-                    scenario, request["fictional_marker"], request["system_instruction"]
+                    scenario,
+                    request["fictional_marker"],
+                    request["system_instruction"],
+                    request.get("test_mode", "black_box"),
                 )
             execution = TestExecution(
                 audit_run_id=audit.id,
@@ -262,8 +328,13 @@ async def run_prompt_test(audit_id: str, request: dict[str, Any]) -> None:
                 status="RUNNING",
                 request_data={
                     "messages": messages,
+                    "attack_payload": [step["template"] for step in chat_steps],
                     "security_objective": request["security_objective"],
                     "security_rules": request.get("security_rules", []),
+                    "test_mode": request.get("test_mode", "black_box"),
+                    "marker_provenance": request.get("marker_provenance", "user_payload"),
+                    "criteria_provenance": "auditor_local_rules",
+                    "evaluation_engine_version": "2.0.0",
                 },
             )
             db.add(execution)
@@ -275,7 +346,11 @@ async def run_prompt_test(audit_id: str, request: dict[str, Any]) -> None:
                     messages.append(
                         {
                             "role": "user",
-                            "content": step["template"].replace("{marker}", request["fictional_marker"]),
+                            "content": render_attack_payload(
+                                step["template"],
+                                request["fictional_marker"],
+                                request.get("test_mode", "black_box"),
+                            ),
                         }
                     )
                 result = await send_chat(target, messages, int(request["max_tokens"]), settings)
@@ -313,6 +388,8 @@ async def run_prompt_test(audit_id: str, request: dict[str, Any]) -> None:
                 scenario["expected_marker"],
                 request.get("security_rules"),
                 completed=turns[-1]["completed"],
+                marker_provenance=request.get("marker_provenance", "user_payload"),
+                evaluation_engine_version="2.0.0",
             )
             execution.status = status
             execution.request_data = {
@@ -327,6 +404,11 @@ async def run_prompt_test(audit_id: str, request: dict[str, Any]) -> None:
                 ],
                 "security_objective": request["security_objective"],
                 "security_rules": request.get("security_rules", []),
+                "attack_payload": [step["template"] for step in chat_steps],
+                "test_mode": request.get("test_mode", "black_box"),
+                "marker_provenance": request.get("marker_provenance", "user_payload"),
+                "criteria_provenance": "auditor_local_rules",
+                "evaluation_engine_version": "2.0.0",
             }
             execution.response_data = {
                 "text": turns[-1]["response"],
@@ -409,6 +491,8 @@ async def run_prompt_test(audit_id: str, request: dict[str, Any]) -> None:
                 "events": [event for turn in turns for event in turn["events"]],
                 "metadata": turns[-1]["metadata"],
                 "completed": turns[-1]["completed"],
+                "test_mode": request.get("test_mode", "black_box"),
+                "evaluation_engine_version": "2.0.0",
             }
             audit.status = AuditStatus.completed
             audit.finished_at = utcnow()
@@ -481,17 +565,21 @@ async def execute_active_tool_calls(
 
 
 def validate_mcp_arguments(schema: dict[str, Any], arguments: dict[str, Any]) -> None:
+    _validate_json_schema_value(schema, arguments, "arguments")
+
+
+def _validate_json_schema_value(schema: dict[str, Any], value: Any, path: str) -> None:
     if not isinstance(schema, dict) or not schema:
         return
-    required = schema.get("required", [])
-    missing = [name for name in required if name not in arguments]
-    if missing:
-        raise ValueError(f"Missing required MCP arguments: {', '.join(missing)}")
-    properties = schema.get("properties", {})
-    if schema.get("additionalProperties") is False:
-        unknown = sorted(set(arguments) - set(properties))
-        if unknown:
-            raise ValueError(f"Unknown MCP arguments: {', '.join(unknown)}")
+    if value is None:
+        allowed = schema.get("type") == "null" or (
+            isinstance(schema.get("type"), list) and "null" in schema["type"]
+        )
+        if not allowed:
+            raise ValueError(f"MCP argument {path!r} does not allow null")
+        return
+    expected = schema.get("type")
+    expected_values = expected if isinstance(expected, list) else [expected] if expected else []
     type_checks: dict[str, Any] = {
         "string": str,
         "integer": int,
@@ -499,23 +587,56 @@ def validate_mcp_arguments(schema: dict[str, Any], arguments: dict[str, Any]) ->
         "boolean": bool,
         "object": dict,
         "array": list,
+        "null": type(None),
     }
-    for name, value in arguments.items():
-        definition = properties.get(name, {})
-        if not isinstance(definition, dict):
-            continue
-        expected = definition.get("type")
-        expected_type = type_checks.get(expected) if isinstance(expected, str) else None
-        if expected_type and (
-            not isinstance(value, expected_type)
-            or expected == "integer"
-            and isinstance(value, bool)
-        ):
-            raise ValueError(f"MCP argument {name!r} must be of type {expected}")
-        if "enum" in definition and value not in definition["enum"]:
-            raise ValueError(f"MCP argument {name!r} is outside its advertised enum")
-        if "const" in definition and value != definition["const"]:
-            raise ValueError(f"MCP argument {name!r} does not match its advertised constant")
+    if expected_values:
+        valid_type = any(
+            item in type_checks
+            and isinstance(value, type_checks[item])
+            and not (item in {"integer", "number"} and isinstance(value, bool))
+            for item in expected_values
+        )
+        if not valid_type:
+            raise ValueError(f"MCP argument {path!r} must be of type {expected}")
+    if "enum" in schema and value not in schema["enum"]:
+        raise ValueError(f"MCP argument {path!r} is outside its advertised enum")
+    if "const" in schema and value != schema["const"]:
+        raise ValueError(f"MCP argument {path!r} does not match its advertised constant")
+    if isinstance(value, dict):
+        properties = schema.get("properties", {})
+        properties = properties if isinstance(properties, dict) else {}
+        missing = [name for name in schema.get("required", []) if name not in value]
+        if missing:
+            raise ValueError(f"Missing required MCP arguments at {path}: {', '.join(missing)}")
+        if schema.get("additionalProperties") is False:
+            unknown = sorted(set(value) - set(properties))
+            if unknown:
+                raise ValueError(f"Unknown MCP arguments at {path}: {', '.join(unknown)}")
+        for name, child in value.items():
+            definition = properties.get(name)
+            if isinstance(definition, dict):
+                _validate_json_schema_value(definition, child, f"{path}.{name}")
+    if isinstance(value, list):
+        if len(value) < int(schema.get("minItems", 0)):
+            raise ValueError(f"MCP argument {path!r} has too few array items")
+        if "maxItems" in schema and len(value) > int(schema["maxItems"]):
+            raise ValueError(f"MCP argument {path!r} has too many array items")
+        item_schema = schema.get("items")
+        if isinstance(item_schema, dict):
+            for index, child in enumerate(value):
+                _validate_json_schema_value(item_schema, child, f"{path}[{index}]")
+    if isinstance(value, str):
+        if len(value) < int(schema.get("minLength", 0)):
+            raise ValueError(f"MCP argument {path!r} is shorter than minLength")
+        if "maxLength" in schema and len(value) > int(schema["maxLength"]):
+            raise ValueError(f"MCP argument {path!r} exceeds maxLength")
+        if schema.get("pattern") and re.search(str(schema["pattern"]), value) is None:
+            raise ValueError(f"MCP argument {path!r} does not match its advertised pattern")
+    if isinstance(value, int | float) and not isinstance(value, bool):
+        if "minimum" in schema and value < schema["minimum"]:
+            raise ValueError(f"MCP argument {path!r} is below minimum")
+        if "maximum" in schema and value > schema["maximum"]:
+            raise ValueError(f"MCP argument {path!r} is above maximum")
 
 
 def redact_secrets(value: Any) -> Any:
