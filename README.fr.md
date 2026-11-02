@@ -27,7 +27,7 @@ Une application desktop pour auditer, dans un cadre autorisé, des chatbots, des
 
 [🇬🇧 English](README.md) · [🇫🇷 Français](README.fr.md)
 
-[Capacités](#ce-que-couvre-agentsec-inspector) · [Tests](#catalogue-des-tests-de-sécurité) · [Manuel](#manuel-dutilisation) · [Architecture](#architecture-locale-sécurisée) · [Installation](#installation) · [Validation](#résultats-des-validations)
+[Capacités](#ce-que-couvre-agentsec-inspector) · [Tests](#catalogue-des-tests-de-sécurité) · [Architecture](#architecture-locale-sécurisée) · [Installation](#installation) · [Burp Suite](#utiliser-agentsec-inspector-avec-burp-suite) · [Manuel](#manuel-dutilisation) · [Validation](#résultats-des-validations)
 
 </div>
 
@@ -321,6 +321,142 @@ Consultez les procédures exactes : [installation Windows](docs/INSTALLATION_WIN
 scripts/linux/check-prerequisites.sh --build
 scripts/linux/install-dev.sh
 scripts/linux/start-dev.sh
+```
+
+## Utiliser AgentSec Inspector avec Burp Suite
+
+Burp Suite permet d’examiner le trafic HTTP(S) envoyé par AgentSec Inspector pendant un audit autorisé. Cette configuration sert notamment à contrôler le payload exact d’un test de Prompt Injection ou de Jailbreak, à analyser les échanges d’un agent LLM, à observer les communications RAG et MCP HTTP, puis à modifier ou rejouer manuellement une requête dans Burp Repeater.
+
+La procédure ci-dessous a été testée sous Windows avec Burp Suite en écoute sur l’interface de bouclage locale.
+
+Le proxy s’applique aux **requêtes HTTP(S) sortantes du backend Python/FastAPI intégré**, et pas uniquement à l’interface Tauri. AgentSec ne dispose pas actuellement d’un réglage de proxy natif dans son interface. Les connecteurs compatibles OpenAI, Ollama, chatbot générique, RAG et MCP Streamable HTTP utilisent HTTPX avec sa prise en charge standard des variables d’environnement. Les serveurs MCP reliés par `stdio` n’utilisent pas HTTP et ne passent donc jamais par Burp.
+
+> [!IMPORTANT]
+> Utilisez cette configuration uniquement sur des cibles couvertes par l’autorisation de la mission. Le passage par un proxy ne désactive ni les protections SSRF, ni l’autorisation explicite des cibles distantes, ni les délais, limites de taille et restrictions de redirection d’AgentSec.
+
+### 1. Configurer Burp Suite
+
+1. Lancez Burp Suite, puis ouvrez **Proxy → Proxy settings**.
+2. Vérifiez qu’un listener écoute sur `127.0.0.1:8080`.
+3. Ouvrez **Import / export CA certificate**.
+4. Exportez le certificat CA public au format DER vers `C:\Temp\burp-ca.der`.
+
+Exportez uniquement le certificat CA public. **N’exportez jamais la clé privée de l’autorité de certification de Burp.**
+
+### 2. Préparer le bundle de certificats TLS
+
+HTTPX doit reconnaître l’autorité de certification de Burp pour que l’interception HTTPS ne provoque pas d’erreur de validation. Les commandes suivantes créent un environnement Python isolé uniquement pour récupérer le bundle d’autorités de `certifi`. AgentSec intègre son propre backend Python et n’a pas besoin d’une installation globale de Python pour fonctionner.
+
+Exécutez ces commandes dans PowerShell sur un poste disposant du lanceur Python :
+
+```powershell
+New-Item -ItemType Directory -Force "C:\Temp" | Out-Null
+
+py -m venv "$env:TEMP\agentsec-cert"
+
+& "$env:TEMP\agentsec-cert\Scripts\python.exe" -m pip install --upgrade pip certifi
+```
+
+Convertissez ensuite le certificat DER de Burp et ajoutez-le au bundle standard :
+
+```powershell
+$py = "$env:TEMP\agentsec-cert\Scripts\python.exe"
+$certifiPem = & $py -m certifi
+
+certutil -encode "C:\Temp\burp-ca.der" "C:\Temp\burp-ca.pem"
+
+Get-Content -Path $certifiPem, "C:\Temp\burp-ca.pem" |
+    Set-Content "C:\Temp\agentsec-ca.pem" -Encoding ascii
+```
+
+Le fichier `C:\Temp\agentsec-ca.pem` contient maintenant les autorités publiques fournies par `certifi` et le certificat CA public de Burp Suite. Conservez ce fichier comme un élément de configuration de la mission, même s’il ne contient aucune clé privée.
+
+### 3. Démarrer AgentSec avec le proxy
+
+Fermez d’abord toute instance d’AgentSec Inspector. Dans une nouvelle session PowerShell, définissez les variables avant de lancer l’application :
+
+```powershell
+$env:HTTP_PROXY = "http://127.0.0.1:8080"
+$env:HTTPS_PROXY = "http://127.0.0.1:8080"
+$env:NO_PROXY = "127.0.0.1,localhost"
+$env:SSL_CERT_FILE = "C:\Temp\agentsec-ca.pem"
+```
+
+Ces variables concernent uniquement le processus PowerShell actuel et les processus qu’il démarre. L’application Tauri doit être lancée depuis ce même terminal afin que son backend intégré en hérite. Si le dépôt est disponible, le script de production retrouve automatiquement l’exécutable installé :
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+.\scripts\start-production.ps1
+```
+
+Vous pouvez aussi lancer directement l’exécutable installé en adaptant le chemin à l’installation réelle :
+
+```powershell
+$agentSec = "$env:LOCALAPPDATA\Programs\AgentSec Inspector\AgentSec Inspector.exe"
+
+if (-not (Test-Path -LiteralPath $agentSec -PathType Leaf)) {
+    throw "AgentSec Inspector est introuvable dans $agentSec ; adaptez le chemin à cette installation."
+}
+
+Start-Process -FilePath $agentSec
+```
+
+`NO_PROXY` maintient volontairement les communications loopback hors de Burp. Une cible dont l’URL utilise elle-même `127.0.0.1` ou `localhost` n’apparaîtra donc pas dans Burp avec cette configuration. Ne supprimez pas ces exclusions sans discernement : adaptez-les uniquement si vous maîtrisez les connexions locales à intercepter.
+
+### 4. Vérifier l’interception
+
+1. Démarrez AgentSec Inspector depuis la session PowerShell configurée.
+2. Ajoutez ou sélectionnez une cible HTTP(S) autorisée.
+3. Lancez un test Prompt Injection, Jailbreak, Custom Payload, RAG ou MCP Streamable HTTP.
+4. Ouvrez **Proxy → HTTP history** dans Burp Suite.
+5. Contrôlez l’URL, les en-têtes, le corps JSON, la réponse et le payload exact envoyé à la cible.
+6. Utilisez si nécessaire **Send to Repeater** pour modifier et rejouer manuellement une copie de la requête.
+
+Lorsque **Intercept is on**, Burp conserve la requête jusqu’à ce que vous cliquiez sur **Forward**. Transmettez-la rapidement pour éviter l’expiration du délai côté AgentSec. Un rejeu depuis Repeater constitue une nouvelle action active : vérifiez qu’il reste dans le périmètre autorisé et évitez de rejouer une opération susceptible de modifier des données.
+
+### Dépannage
+
+#### Échec de validation du certificat TLS
+
+```text
+[SSL: CERTIFICATE_VERIFY_FAILED]
+certificate verify failed:
+self-signed certificate in certificate chain
+```
+
+Vérifiez que `burp-ca.der` provient bien de l’instance Burp en cours, que `agentsec-ca.pem` contient les deux bundles et que `SSL_CERT_FILE` désigne ce fichier dans le terminal qui lance AgentSec. Examinez également le certificat présenté par la cible et tout réglage TLS explicite du connecteur sélectionné. N’utilisez pas `verify=False` comme contournement permanent.
+
+#### Aucune requête n’apparaît dans Burp
+
+- Vérifiez que le listener écoute sur `127.0.0.1:8080`.
+- Contrôlez `HTTP_PROXY`, `HTTPS_PROXY`, `SSL_CERT_FILE` et `NO_PROXY` dans le terminal qui a lancé AgentSec.
+- Arrêtez complètement AgentSec, puis relancez-le après toute modification ; un lancement depuis le menu Démarrer n’hérite pas de la session PowerShell.
+- Vérifiez si l’hôte cible est exclu par `NO_PROXY`. Les cibles loopback le sont dans l’exemple fourni.
+- Confirmez que le connecteur utilise HTTP(S). Le trafic MCP `stdio` ne peut pas apparaître dans Burp.
+
+#### L’environnement isolé signale une erreur pip
+
+```text
+ModuleNotFoundError:
+No module named 'pip._vendor.rich._emoji_codes'
+```
+
+Cette erreur indique généralement une installation pip endommagée. Supprimez et recréez uniquement l’environnement virtuel temporaire `agentsec-cert`, puis vérifiez que `py -m venv` parvient à initialiser son propre pip avant d’installer `certifi`. Cet environnement de préparation des certificats est indépendant du backend intégré à AgentSec.
+
+#### Les requêtes restent bloquées ou expirent
+
+Ouvrez l’onglet **Intercept** de Burp et vérifiez si une requête attend l’action **Forward**. Désactiver temporairement Intercept continue d’enregistrer le trafic dans **HTTP history** et convient souvent mieux aux tests multi-tours ou en streaming.
+
+### Sécurité et nettoyage
+
+- Ne désactivez jamais durablement la validation TLS ni les protections SSRF d’AgentSec.
+- L’historique et les fichiers de projet Burp peuvent contenir des clés API, des en-têtes d’autorisation, des prompts, des preuves ou des données client. Protégez-les et ne les exportez pas sans autorisation.
+- Préférez le bundle CA limité à la session plutôt que d’installer l’autorité de Burp dans le magasin de confiance global du système.
+- Maintenez les actions Repeater dans le périmètre autorisé, en particulier pour les endpoints MCP et d’ingestion RAG.
+- À la fin de l’audit, fermez AgentSec puis supprimez les variables de proxy de la session PowerShell :
+
+```powershell
+Remove-Item Env:HTTP_PROXY, Env:HTTPS_PROXY, Env:NO_PROXY, Env:SSL_CERT_FILE -ErrorAction SilentlyContinue
 ```
 
 ## Manuel d’utilisation
